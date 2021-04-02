@@ -4,8 +4,6 @@ import random
 
 import utils
 
-random.seed(1995)
-
 # 0.01 consumed per week per pop
 FOOD      = 0
 # Used to build stuff
@@ -59,6 +57,7 @@ class Community(object):
 
 		self.pop_archetype = poparch
 		self.population = {}
+		self.space_used = 0
 
 		self.init_population()
 
@@ -85,8 +84,6 @@ class Community(object):
 		self.happiness = 0
 		self.net_growth_rate = 0
 
-		self.space_used = 0
-
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
@@ -98,6 +95,7 @@ class Community(object):
 			self.population[HUMAN] = total_pop
 
 		self.space_used = self.get_total_pop() / 100.0
+
 
 	def get_total_pop(self):
 		total = 0
@@ -203,12 +201,25 @@ class Community(object):
 		
 		# Update pops
 		
-		# br increases as wealth decreases
-		base_birth_rate = 3.69
-		# dr increases as wealth decreases
-		base_death_rate = 1.91
+		# br increases as accumulated wealth decreases
+		# base_birth_rate = 3.69
+		base_birth_rate = 1.0
+		brf_space = ((self.location.space*0.5) / self.space_used)
+		brf_wealth = (self.ressource_stockpile[WEALTH]/100.0)
+		if self.happiness > 0:
+			brf_happ = self.happiness / 100.0
+		actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ))
 
-		self.net_growth_rate = (base_birth_rate-base_death_rate)
+		# dr increases as accumulated wealth decreases
+		# base_death_rate = 1.91
+		base_death_rate = 1.0
+		drf_space = max(0, self.space_used - self.location.space) / 100.0
+		drf_wealth = 1 - (self.ressource_stockpile[WEALTH]/self.actual_storage[WEALTH])
+		actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth)
+
+		# print(actual_birth_rate, actual_death_rate)
+
+		self.net_growth_rate = (actual_birth_rate-actual_death_rate)
 
 		for race in self.population.keys():
 			self.population[race] = int(self.population[race] * (1 + (self.net_growth_rate/100.0)))
@@ -216,7 +227,7 @@ class Community(object):
 		self.space_used = self.get_total_pop() / 100.0
 
 
-	def serialise(self):
+	def to_string(self):
 		s = "{}\n".format(self.name)
 		s += "{}\n".format(self.location.archetype)
 		str_popprop = ""
@@ -230,6 +241,27 @@ class Community(object):
 
 		return s
 
+	def serialise(self, header=False):
+
+		if header:
+			s = "Total pop, Happiness, Net growth rate,"
+			for r in self.ressource_stockpile:
+				s += str(r) + ","
+
+			s += "% space used"
+
+			return s
+
+		s = ""
+
+		s += "{},{},{},".format(self.get_total_pop(),self.happiness,self.net_growth_rate)
+		for r in self.ressource_stockpile:
+			tmp = "{},".format(self.ressource_stockpile[r])
+			s += tmp
+		
+		s += str(self.space_used / self.location.space)
+
+		return s
 
 
 class Race(object):
@@ -276,28 +308,100 @@ class Population(object):
 
 		pass
 
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import csv
+
 if __name__=='__main__':
+
+	# random.seed(1995)
+
 	location1 = Location("PLAINS")
 
 	community1 = Community("Saint Just", location1, "HUMAN_CITY")
 
 	clear = lambda: os.system('cls')
 
-	day = 0
-	while True:
-		clear()
+	data_file = open("../data/data.csv", 'w')
+	data_file.write("day,"+community1.serialise(header=True)+"\n")
 
+	day = 1
+	while day < 10000:
+		# clear()
 		if day%7 == 0:
 			community1.a_week_passed()
+			
+			data_file.write("{},{}\n".format(day, community1.serialise()))
 
 		community1.a_day_passed()
 
 		day += 1
 
-		print("Day {}".format(day))
-		print(community1.serialise())
+		# print("Day {}".format(day))
+		# print(community1.to_string())
 
-		time.sleep(0.05)
+		# time.sleep(0.05)
+
+	data_file.close()
+
+	data_file = open("../data/data.csv", 'r')
+
+	# data = np.genfromtxt("../data/data.csv", delimiter=",", names=["x", "y"])
+	# plt.plot(data['x'], data['y'])
+
+	csv_file = csv.reader(data_file, delimiter=",")
+
+	_days = []
+	_pop  = []
+	_happ = []
+	_ngr  = []
+	_food = []
+	_mat  = []
+	_weal = []
+	_spa  = []
+
+	for i, row in enumerate(csv_file):
+		if i > 1:
+			_days.append(float(row[0]))
+			_pop.append(float(row[1]))  
+			_happ.append(float(row[2])) 
+			_ngr.append(float(row[3]))  
+			_food.append(float(row[4])) 
+			_mat.append(float(row[5]))  
+			_weal.append(float(row[6])) 
+			_spa.append(float(row[7])*100)
+
+	fig, axes = plt.subplots(2, 3)
+
+	fig.set_size_inches((14.96, 8.27), forward=False)
+
+	fig.suptitle('Data plots')
+
+	axes[0,0].plot(_days, _pop, label="Pop")
+	axes[0,0].set(ylabel='Population')
+
+	axes[0,1].plot(_days, _happ, 'tab:orange', label="Happiness")
+	axes[0,1].set(ylabel='Happiness')
+
+	axes[0,2].plot(_days, _ngr, 'tab:green', label="Net Growth")
+	axes[0,2].set(ylabel='Net Growth')
+
+	axes[1,0].plot(_days, _food, 'tab:green', label="Food")
+	axes[1,0].plot(_days, _mat, 'tab:brown', label="Materials")
+	axes[1,0].legend()
+	axes[1,0].set(ylabel='Food & Materials')
+
+	axes[1,1].plot(_days, _weal, 'tab:olive', label="Wealth")
+	axes[1,1].set(ylabel='Wealth')
+
+	axes[1,2].plot(_days, _spa, 'tab:cyan', label="% Space")
+	axes[1,2].set(ylabel='% Space')
+
+	plt.savefig("../data/data_fig.png", dpi=500)
+	plt.show()
+
+	# data_file.close()
 
 
 
