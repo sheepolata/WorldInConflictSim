@@ -372,31 +372,78 @@ if __name__=='__main__':
 			_weal.append(float(row[6])) 
 			_spa.append(float(row[7])*100)
 
-	fig, axes = plt.subplots(2, 3)
+	fig, axes = plt.subplots(2, 1)
 
 	fig.set_size_inches((14.96, 8.27), forward=False)
 
 	fig.suptitle('Data plots')
 
-	axes[0,0].plot(_days, _pop, label="Pop")
-	axes[0,0].set(ylabel='Population')
+	fig.subplots_adjust(right=0.8)
 
-	axes[0,1].plot(_days, _happ, 'tab:orange', label="Happiness")
-	axes[0,1].set(ylabel='Happiness')
+	## FIRST PLOT
 
-	axes[0,2].plot(_days, _ngr, 'tab:green', label="Net Growth")
-	axes[0,2].set(ylabel='Net Growth')
+	twin1 = axes[0].twinx()
+	twin2 = axes[0].twinx()
+	twin3 = axes[0].twinx()
 
-	axes[1,0].plot(_days, _food, 'tab:green', label="Food")
-	axes[1,0].plot(_days, _mat, 'tab:brown', label="Materials")
-	axes[1,0].legend()
-	axes[1,0].set(ylabel='Food & Materials')
+	twin2.spines.right.set_position(("axes", 1.08))
+	twin3.spines.right.set_position(("axes", 1.16))
 
-	axes[1,1].plot(_days, _weal, 'tab:olive', label="Wealth")
-	axes[1,1].set(ylabel='Wealth')
+	p0, = axes[0].plot(_days, _pop, label="Pop")
+	p1, = twin1.plot(_days, _happ, 'tab:orange', label="Happ.")	
+	p2, = twin2.plot(_days, _spa, 'tab:purple', label="%space")
+	p3, = twin3.plot(_days, _ngr, 'tab:green', label="Net Growth")
 
-	axes[1,2].plot(_days, _spa, 'tab:cyan', label="% Space")
-	axes[1,2].set(ylabel='% Space')
+	twin2.set_ylim(0, 200)
+
+	axes[0].set(ylabel='Population')
+	twin1.set_ylabel("Happiness")
+	twin2.set_ylabel("% Space")
+	twin3.set_ylabel("Net Growth Rate")
+
+	axes[0].yaxis.label.set_color(p0.get_color())
+	twin1.yaxis.label.set_color(p1.get_color())
+	twin2.yaxis.label.set_color(p2.get_color())
+	twin3.yaxis.label.set_color(p3.get_color())
+
+	tkw = dict(size=4, width=1.5)
+	axes[0].tick_params(axis='y', colors=p0.get_color(), **tkw)
+	twin1.tick_params(axis='y', colors=p1.get_color(), **tkw)
+	twin2.tick_params(axis='y', colors=p2.get_color(), **tkw)
+	twin3.tick_params(axis='y', colors=p3.get_color(), **tkw)
+	axes[0].tick_params(axis='x', **tkw)
+
+	axes[0].legend(handles=[p0, p1, p2, p3])
+
+	## SECOND PLOT
+
+	twin1 = axes[1].twinx()
+	twin2 = axes[1].twinx()
+
+	twin2.spines.right.set_position(("axes", 1.08))
+
+	p0, = axes[1].plot(_days, _food, 'tab:green', label="Food")
+	p1, = twin1.plot(_days, _mat, 'tab:brown', label="Materials")
+	p2, = twin2.plot(_days, _weal, 'tab:olive', label="Wealth")
+
+	axes[1].set(ylabel='Food', xlabel='Days')
+	twin1.set_ylabel("Materials")
+	twin2.set_ylabel("Wealth")
+
+	axes[1].yaxis.label.set_color(p0.get_color())
+	twin1.yaxis.label.set_color(p1.get_color())
+	twin2.yaxis.label.set_color(p2.get_color())
+
+	tkw = dict(size=4, width=1.5)
+	axes[1].tick_params(axis='y', colors=p0.get_color(), **tkw)
+	twin1.tick_params(axis='y', colors=p1.get_color(), **tkw)
+	twin2.tick_params(axis='y', colors=p2.get_color(), **tkw)
+	axes[0].tick_params(axis='x', **tkw)
+	
+	axes[1].legend(handles=[p0, p1, p2])
+
+	for ax in fig.get_axes():
+		ax.label_outer()
 
 	plt.savefig("../data/data_fig.png", dpi=500)
 	plt.show()
