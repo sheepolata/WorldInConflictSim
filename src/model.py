@@ -317,39 +317,47 @@ if __name__=='__main__':
 
 	# random.seed(1995)
 
-	location1 = Location("PLAINS")
-
-	community1 = Community("Saint Just", location1, "HUMAN_CITY")
-
 	clear = lambda: os.system('cls')
 
-	data_file = open("../data/data.csv", 'w')
-	data_file.write("day,"+community1.serialise(header=True)+"\n")
+	nb_run = 1
 
-	day = 1
-	while day < 10000:
-		# clear()
-		if day%7 == 0:
-			community1.a_week_passed()
-			
-			data_file.write("{},{}\n".format(day, community1.serialise()))
+	for i in range(nb_run):
 
-		community1.a_day_passed()
+		run_id = i
 
-		day += 1
+		location1 = Location("PLAINS")
 
-		# print("Day {}".format(day))
-		# print(community1.to_string())
+		city_namelist = open("../data/namelists/cities.txt")
 
-		# time.sleep(0.05)
+		city_name = random.choice(city_namelist.readlines())[:-1]
+		print(city_name)
+		community1 = Community(city_name, location1, "HUMAN_CITY")
 
-	data_file.close()
+		city_namelist.close()
 
-	data_file = open("../data/data.csv", 'r')
+		data_file = open("../data/results/data{}.csv".format(run_id), 'w')
+		data_file.write("runID,day,"+community1.serialise(header=True)+"\n")
 
-	# data = np.genfromtxt("../data/data.csv", delimiter=",", names=["x", "y"])
-	# plt.plot(data['x'], data['y'])
+		day = 1
+		while day < 10000:
+			# clear()
+			if day%7 == 0:
+				community1.a_week_passed()
+				
+				data_file.write("{},{},{}\n".format(run_id, day, community1.serialise()))
 
+			community1.a_day_passed()
+
+			day += 1
+
+			# print("Day {}".format(day))
+			# print(community1.to_string())
+
+			# time.sleep(0.05)
+
+		data_file.close()
+
+	data_file = open("../data/results/data0.csv", 'r')
 	csv_file = csv.reader(data_file, delimiter=",")
 
 	_days = []
@@ -363,14 +371,14 @@ if __name__=='__main__':
 
 	for i, row in enumerate(csv_file):
 		if i > 1:
-			_days.append(float(row[0]))
-			_pop.append(float(row[1]))  
-			_happ.append(float(row[2])) 
-			_ngr.append(float(row[3]))  
-			_food.append(float(row[4])) 
-			_mat.append(float(row[5]))  
-			_weal.append(float(row[6])) 
-			_spa.append(float(row[7])*100)
+			_days.append(float(row[0+1]))
+			_pop.append(float(row[1+1]))  
+			_happ.append(float(row[2+1])) 
+			_ngr.append(float(row[3+1]))  
+			_food.append(float(row[4+1])) 
+			_mat.append(float(row[5+1]))
+			_weal.append(float(row[6+1])) 
+			_spa.append(float(row[7+1])*100)
 
 	fig, axes = plt.subplots(2, 1)
 
@@ -445,10 +453,10 @@ if __name__=='__main__':
 	for ax in fig.get_axes():
 		ax.label_outer()
 
-	plt.savefig("../data/data_fig.png", dpi=500)
+	plt.savefig("../data/results/data_fig.png", dpi=500)
 	plt.show()
 
-	# data_file.close()
+	data_file.close()
 
 
 
