@@ -33,11 +33,11 @@ class Location(object):
 
 			self.base_storage[FOOD] = 250.0
 			self.base_storage[MATERIALS] = 500.0
-			self.base_storage[WEALTH] = 100.0
+			self.base_storage[WEALTH] = 120.0
 
 			self.bonus_per_100_pop[FOOD] = 0.1
-			self.bonus_per_100_pop[MATERIALS] = 0.05
-			self.bonus_per_100_pop[WEALTH] = 0.01
+			self.bonus_per_100_pop[MATERIALS] = 0.04
+			self.bonus_per_100_pop[WEALTH] = 0.08
 
 			self.attractiveness = 8 + random.random()*4
 			self.space = 20 + random.random()*10
@@ -82,7 +82,12 @@ class Community(object):
 			self.effective_consumption[r] = 0
 
 		self.happiness = 0
+		self.happiness_from_surplus = {}
+		for r in RESSOURCES:
+			self.happiness_from_surplus[r] = 0
 		self.net_growth_rate = 0
+
+		self.food_shortage = 0
 
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
@@ -100,7 +105,7 @@ class Community(object):
 	def get_total_pop(self):
 		total = 0
 		for race in self.population.keys():
-			total += self.population[race]
+			total += int(self.population[race])
 
 		return total
 
@@ -110,14 +115,18 @@ class Community(object):
 		total = self.get_total_pop()
 
 		for race in self.population.keys():
-			pop_prop[race] = self.population[race] / total
+			try:
+				pop_prop[race] = int(self.population[race]) / total
+			except ZeroDivisionError:
+				pop_prop[race] = 0
 
 		return pop_prop
 
 
 	def update_actual_prod_and_store(self):
 		for r in RESSOURCES:
-			self.actual_production[r] = self.location.base_production[r] * (1.0 + self.ressource_production_bonus[r])
+			self.actual_production[r] = self.location.base_production[r] * (self.ressource_production_bonus[r])
+			# self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
 			self.actual_storage[r] = self.location.base_storage[r] * (1.0 + self.ressource_storage_bonus[r])
 
 	def update_production_bonus(self):
@@ -150,10 +159,19 @@ class Community(object):
 			self.effective_gain[r] += self.actual_production[r]
 
 		for r in set(RESSOURCES)-set([WEALTH]):
-			self.ressource_stockpile[r] = utils.clamp(self.ressource_stockpile[r] + self.effective_gain[r] - self.effective_consumption[r], 0, self.actual_storage[r])
-			if r != WEALTH:
-				if self.ressource_stockpile[r] >= self.actual_storage[r]:
-					self.effective_gain[WEALTH] += (self.effective_gain[r] - self.effective_consumption[r])*self.trade_factor
+			self.ressource_stockpile[r] = utils.clamp(self.ressource_stockpile[r] + self.effective_gain[r] - self.effective_consumption[r], 0, self.actual_storage[r])	
+			if self.ressource_stockpile[r] >= self.actual_storage[r]:
+				self.effective_gain[WEALTH] += (self.effective_gain[r] - self.effective_consumption[r])*self.trade_factor
+
+		if self.ressource_stockpile[FOOD] <= 0:
+			# self.food_shortage += self.effective_gain[FOOD] - self.effective_consumption[FOOD]
+			self.food_shortage += abs(self.effective_gain[FOOD] - self.effective_consumption[FOOD]) * 10
+		else:
+			# self.food_shortage = max(0, self.food_shortage - 1)
+			self.food_shortage = round(self.food_shortage * 0.9)
+
+		# print(self.food_shortage)
+		# print(abs(self.effective_gain[FOOD] - self.effective_consumption[FOOD]))
 
 		# Consume WEALTH
 
@@ -171,16 +189,24 @@ class Community(object):
 		# Happ from location
 		self.happiness = self.location.attractiveness
 
+		# Unrest from food shortage
+		self.happiness -= self.food_shortage*0.1
+
 		# Happ from raw production
 		for r in set(RESSOURCES):
 			r_net_worth = self.effective_gain[r] - self.effective_consumption[r]
 			self.happiness += r_net_worth * 2
 
-		# Happ from surplu ressources
+		# Happ from surplus ressources
 		for r in set(RESSOURCES) - set([WEALTH]):
+			r_net_worth = self.effective_gain[r] - self.effective_consumption[r]
 			if self.ressource_stockpile[r] >= self.actual_storage[r]:
-				r_net_worth = self.effective_gain[r] - self.effective_consumption[r]
-				self.happiness += r_net_worth * 5
+				# self.happiness += r_net_worth * 5
+				self.happiness_from_surplus[r] = min(self.happiness_from_surplus[r] + (r_net_worth * 0.01), r_net_worth*5)
+			else:
+				self.happiness_from_surplus[r] = max(self.happiness_from_surplus[r] - (r_net_worth*5*0.1), 0)
+
+		self.happiness += sum(self.happiness_from_surplus.values())
 
 		# Happ from net wealth production
 		wealth_net_worth = self.effective_gain[WEALTH] - self.effective_consumption[WEALTH]
@@ -193,9 +219,19 @@ class Community(object):
 		# Unrest from overpopulation
 		overpop_unrest = self.location.space - self.space_used
 		self.happiness += overpop_unrest
-		
+
+		# Happ from wealth consumption
+		if self.ressource_stockpile[WEALTH] > 0:
+			self.happiness += self.effective_consumption[WEALTH] * 5
+
+		# Clamp happiness
+		self.happiness = utils.clamp(self.happiness, -100, 100)
+		if self.get_total_pop() <= 0:
+			self.happiness = 0
+
 		# Calculate Wealth
 		self.ressource_stockpile[WEALTH] = utils.clamp(self.ressource_stockpile[WEALTH] + self.effective_gain[WEALTH] - self.effective_consumption[WEALTH], 0, self.actual_storage[WEALTH])
+		
 
 	def a_week_passed(self):
 		
@@ -204,25 +240,39 @@ class Community(object):
 		# br increases as accumulated wealth decreases
 		# base_birth_rate = 3.69
 		base_birth_rate = 1.0
-		brf_space = ((self.location.space*0.5) / self.space_used)
+		try:
+			brf_space = ((self.location.space*0.5) / self.space_used)
+		except ZeroDivisionError:
+			brf_space = 0
 		brf_wealth = (self.ressource_stockpile[WEALTH]/100.0)
-		if self.happiness > 0:
+		brf_happ = 0
+		if self.happiness > 50:
 			brf_happ = self.happiness / 100.0
 		actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ))
+
+		if self.food_shortage > 0:
+			actual_birth_rate = 0
 
 		# dr increases as accumulated wealth decreases
 		# base_death_rate = 1.91
 		base_death_rate = 1.0
-		drf_space = max(0, self.space_used - self.location.space) / 100.0
+		# drf_space = max(0, self.space_used - self.location.space) / 100.0
+		drf_space = self.space_used / self.location.space
 		drf_wealth = 1 - (self.ressource_stockpile[WEALTH]/self.actual_storage[WEALTH])
-		actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth)
+		drf_food = self.food_shortage * 0.1
+		drf_happ = 0
+		if self.happiness < 0:
+			drf_happ = abs(self.happiness * 0.1)
+		actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
 
 		# print(actual_birth_rate, actual_death_rate)
 
 		self.net_growth_rate = (actual_birth_rate-actual_death_rate)
+		if self.get_total_pop() <= 0:
+			self.net_growth_rate = 0
 
 		for race in self.population.keys():
-			self.population[race] = int(self.population[race] * (1 + (self.net_growth_rate/100.0)))
+			self.population[race] = (float(self.population[race]) * (1 + (self.net_growth_rate/100.0)))
 		
 		self.space_used = self.get_total_pop() / 100.0
 
@@ -237,7 +287,7 @@ class Community(object):
 		s += "{} inhabitants : {}\n".format(self.get_total_pop(), str_popprop)
 		s += "Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}\n".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space)
 		for r in self.ressource_stockpile:
-			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], self.effective_gain[r]-self.effective_consumption[r], self.location.base_production[r], self.ressource_production_bonus[r]*100, self.effective_consumption[r])
+			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}x{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], self.effective_gain[r]-self.effective_consumption[r], self.location.base_production[r], self.ressource_production_bonus[r]*100, self.effective_consumption[r])
 
 		return s
 
@@ -315,7 +365,7 @@ import csv
 
 if __name__=='__main__':
 
-	# random.seed(1995)
+	random.seed(1995)
 
 	clear = lambda: os.system('cls')
 
@@ -340,20 +390,21 @@ if __name__=='__main__':
 
 		day = 1
 		while day < 10000:
-			# clear()
+
 			if day%7 == 0:
 				community1.a_week_passed()
 				
 				data_file.write("{},{},{}\n".format(run_id, day, community1.serialise()))
 
+			if day%30 == 0:
+				clear()
+				print("Day {}".format(day))
+				print(community1.to_string())
+				time.sleep(0.05)
+
 			community1.a_day_passed()
 
 			day += 1
-
-			# print("Day {}".format(day))
-			# print(community1.to_string())
-
-			# time.sleep(0.05)
 
 		data_file.close()
 
