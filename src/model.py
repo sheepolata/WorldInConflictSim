@@ -27,20 +27,61 @@ class Location(object):
 
 		self.archetype = archetype
 		if self.archetype == "PLAINS":
-			self.base_production[FOOD] = 0.15 * 10
-			self.base_production[MATERIALS] = 1.0
-			self.base_production[WEALTH] = 0.5
+			self.base_production[FOOD] = 1.0
+			self.base_production[MATERIALS] = 0.1
+			self.base_production[WEALTH] = 0.1
 
+			self.bonus_per_100_pop[FOOD] = 0.08
+			self.bonus_per_100_pop[MATERIALS] = 0.05
+			self.bonus_per_100_pop[WEALTH] = 0.02
+			
 			self.base_storage[FOOD] = 250.0
 			self.base_storage[MATERIALS] = 500.0
 			self.base_storage[WEALTH] = 120.0
 
-			self.bonus_per_100_pop[FOOD] = 0.1
-			self.bonus_per_100_pop[MATERIALS] = 0.04
-			self.bonus_per_100_pop[WEALTH] = 0.08
+			self.trade_factor = random.random()*0.05
 
 			self.attractiveness = 8 + random.random()*4
 			self.space = 20 + random.random()*10
+
+		elif self.archetype == "MOUNTAINS":
+
+			self.base_production[FOOD] = 1.0
+			self.base_production[MATERIALS] = 2.0
+			self.base_production[WEALTH] = 1.0
+
+			self.bonus_per_100_pop[FOOD] = 0.12
+			self.bonus_per_100_pop[MATERIALS] = 0.08
+			self.bonus_per_100_pop[WEALTH] = 0.12
+			
+			self.base_storage[FOOD] = 300.0
+			self.base_storage[MATERIALS] = 800.0
+			self.base_storage[WEALTH] = 250.0
+
+			self.trade_factor = 0.05 + random.random()*0.05
+
+			self.attractiveness = -10 - random.random()*5
+			self.space = 15 + random.random()*8
+
+		elif self.archetype == "SEASIDE":
+
+			self.base_production[FOOD] = 2.0
+			self.base_production[MATERIALS] = 0.5
+			self.base_production[WEALTH] = 0.8
+
+			self.bonus_per_100_pop[FOOD] = 0.12
+			self.bonus_per_100_pop[MATERIALS] = 0.04
+			self.bonus_per_100_pop[WEALTH] = 0.08
+			
+			self.base_storage[FOOD] = 250.0
+			self.base_storage[MATERIALS] = 300.0
+			self.base_storage[WEALTH] = 500.0
+
+			self.trade_factor = 0.1 + random.random()*0.1
+
+			self.attractiveness = 15 + random.random()*5
+			self.space = 20 + random.random()*15
+
 
 
 class Community(object):
@@ -64,15 +105,18 @@ class Community(object):
 		self.ressource_production_bonus = {}
 		self.ressource_storage_bonus = {}
 		self.ressource_stockpile = {}
-		for r in RESSOURCES:
+		for r in set(RESSOURCES)-set([WEALTH]):
 			self.ressource_production_bonus[r] = 0.0
 			self.ressource_storage_bonus[r] = 0.0
 			self.ressource_stockpile[r] = self.location.base_storage[r] / 8.0
+		self.ressource_production_bonus[WEALTH] = 0.0
+		self.ressource_storage_bonus[WEALTH] = 0.0
+		self.ressource_stockpile[WEALTH] = 0.0
 
 		self.actual_storage = {}
 		self.actual_production = {}
 
-		self.trade_factor = 0.05
+		self.trade_factor = 0.05 + self.location.trade_factor
 
 		self.effective_gain = {}
 		self.effective_consumption = {}
@@ -125,7 +169,7 @@ class Community(object):
 
 	def update_actual_prod_and_store(self):
 		for r in RESSOURCES:
-			self.actual_production[r] = self.location.base_production[r] * (self.ressource_production_bonus[r])
+			self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
 			# self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
 			self.actual_storage[r] = self.location.base_storage[r] * (1.0 + self.ressource_storage_bonus[r])
 
@@ -161,14 +205,18 @@ class Community(object):
 		for r in set(RESSOURCES)-set([WEALTH]):
 			self.ressource_stockpile[r] = utils.clamp(self.ressource_stockpile[r] + self.effective_gain[r] - self.effective_consumption[r], 0, self.actual_storage[r])	
 			if self.ressource_stockpile[r] >= self.actual_storage[r]:
-				self.effective_gain[WEALTH] += (self.effective_gain[r] - self.effective_consumption[r])*self.trade_factor
+				if r != FOOD:
+					self.effective_gain[WEALTH] += (self.effective_gain[r] - self.effective_consumption[r])*self.trade_factor
+					self.effective_consumption[r] += self.effective_gain[r]
 
 		if self.ressource_stockpile[FOOD] <= 0:
 			# self.food_shortage += self.effective_gain[FOOD] - self.effective_consumption[FOOD]
-			self.food_shortage += abs(self.effective_gain[FOOD] - self.effective_consumption[FOOD]) * 10
+			# self.food_shortage += abs(self.effective_gain[FOOD] - self.effective_consumption[FOOD])
+			self.food_shortage += 1.0/7.0
 		else:
-			# self.food_shortage = max(0, self.food_shortage - 1)
-			self.food_shortage = round(self.food_shortage * 0.9)
+			# self.food_shortage = round(self.food_shortage * 0.9, 1)
+			# self.food_shortage = round(self.food_shortage * 0.5)
+			self.food_shortage = max(0, self.food_shortage - 1)
 
 		# print(self.food_shortage)
 		# print(abs(self.effective_gain[FOOD] - self.effective_consumption[FOOD]))
@@ -189,8 +237,9 @@ class Community(object):
 		# Happ from location
 		self.happiness = self.location.attractiveness
 
+		# print(self.food_shortage)
 		# Unrest from food shortage
-		self.happiness -= self.food_shortage*0.1
+		self.happiness -= self.food_shortage
 
 		# Happ from raw production
 		for r in set(RESSOURCES):
@@ -248,10 +297,14 @@ class Community(object):
 		brf_happ = 0
 		if self.happiness > 50:
 			brf_happ = self.happiness / 100.0
-		actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ))
+		
+		# if self.food_shortage > 0:
+		# 	actual_birth_rate = 0
+		brf_food = 0
+		# brf_food = self.food_shortage
 
-		if self.food_shortage > 0:
-			actual_birth_rate = 0
+		actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food))
+
 
 		# dr increases as accumulated wealth decreases
 		# base_death_rate = 1.91
@@ -259,7 +312,7 @@ class Community(object):
 		# drf_space = max(0, self.space_used - self.location.space) / 100.0
 		drf_space = self.space_used / self.location.space
 		drf_wealth = 1 - (self.ressource_stockpile[WEALTH]/self.actual_storage[WEALTH])
-		drf_food = self.food_shortage * 0.1
+		drf_food = (self.food_shortage*7) * 0.1
 		drf_happ = 0
 		if self.happiness < 0:
 			drf_happ = abs(self.happiness * 0.1)
@@ -287,7 +340,7 @@ class Community(object):
 		s += "{} inhabitants : {}\n".format(self.get_total_pop(), str_popprop)
 		s += "Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}\n".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space)
 		for r in self.ressource_stockpile:
-			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}x{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], self.effective_gain[r]-self.effective_consumption[r], self.location.base_production[r], self.ressource_production_bonus[r]*100, self.effective_consumption[r])
+			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], self.effective_gain[r]-self.effective_consumption[r], self.location.base_production[r], self.ressource_production_bonus[r]*100, self.effective_consumption[r])
 
 		return s
 
@@ -296,7 +349,9 @@ class Community(object):
 		if header:
 			s = "Total pop, Happiness, Net growth rate,"
 			for r in self.ressource_stockpile:
-				s += str(r) + ","
+				s += "stpl" + str(r) + ","
+			for r in self.effective_gain:
+				s += "ntpr" + str(r) + ","
 
 			s += "% space used"
 
@@ -307,6 +362,9 @@ class Community(object):
 		s += "{},{},{},".format(self.get_total_pop(),self.happiness,self.net_growth_rate)
 		for r in self.ressource_stockpile:
 			tmp = "{},".format(self.ressource_stockpile[r])
+			s += tmp
+		for r in self.effective_gain:
+			tmp = "{},".format(self.effective_gain[r] - self.effective_consumption[r])
 			s += tmp
 		
 		s += str(self.space_used / self.location.space)
@@ -329,35 +387,6 @@ HUMAN = Race("Humans")
 
 RACES = [HUMAN]
 
-class Population(object):
-	global_id = 0
-
-	def __init__(self):
-		self.id = Population.global_id
-		Population.global_id += 1
-
-		self.name = "pop"
-		self.age = 0
-
-		self.happiness = 50
-
-		self.race = Race("race")
-
-		self.community = None
-
-		self.job = None
-
-	def day(self):
-		### Every day behaviour
-
-		# Produce and/or consume ressources from job
-
-		# Consume ressources
-
-		# Update values (age, happiness, etc)
-
-		pass
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -376,6 +405,8 @@ if __name__=='__main__':
 		run_id = i
 
 		location1 = Location("PLAINS")
+		# location1 = Location("MOUNTAINS")
+		# location1 = Location("SEASIDE")
 
 		city_namelist = open("../data/namelists/cities.txt")
 
@@ -396,11 +427,11 @@ if __name__=='__main__':
 				
 				data_file.write("{},{},{}\n".format(run_id, day, community1.serialise()))
 
-			if day%30 == 0:
-				clear()
-				print("Day {}".format(day))
-				print(community1.to_string())
-				time.sleep(0.05)
+			# if day%30 == 0:
+			# 	clear()
+			# 	print("Day {}".format(day))
+			# 	print(community1.to_string())
+			# 	time.sleep(0.1)
 
 			community1.a_day_passed()
 
@@ -426,10 +457,10 @@ if __name__=='__main__':
 			_pop.append(float(row[1+1]))  
 			_happ.append(float(row[2+1])) 
 			_ngr.append(float(row[3+1]))  
-			_food.append(float(row[4+1])) 
-			_mat.append(float(row[5+1]))
-			_weal.append(float(row[6+1])) 
-			_spa.append(float(row[7+1])*100)
+			_food.append(float(row[4+1+3])) 
+			_mat.append(float(row[5+1+3]))
+			_weal.append(float(row[6+1+3])) 
+			_spa.append(float(row[7+1+3])*100)
 
 	fig, axes = plt.subplots(2, 1)
 
@@ -453,6 +484,7 @@ if __name__=='__main__':
 	p2, = twin2.plot(_days, _spa, 'tab:purple', label="%space")
 	p3, = twin3.plot(_days, _ngr, 'tab:green', label="Net Growth")
 
+	twin1.set_ylim(-100, 100)
 	twin2.set_ylim(0, 200)
 
 	axes[0].set(ylabel='Population')
@@ -484,6 +516,10 @@ if __name__=='__main__':
 	p0, = axes[1].plot(_days, _food, 'tab:green', label="Food")
 	p1, = twin1.plot(_days, _mat, 'tab:brown', label="Materials")
 	p2, = twin2.plot(_days, _weal, 'tab:olive', label="Wealth")
+
+	axes[1].set_ylim(1.2*min([min(_food),min(_mat),min(_weal)]), 1.2*max([max(_food),max(_mat),max(_weal)]))
+	twin1.set_ylim  (1.2*min([min(_food),min(_mat),min(_weal)]), 1.2*max([max(_food),max(_mat),max(_weal)]))
+	twin2.set_ylim  (1.2*min([min(_food),min(_mat),min(_weal)]), 1.2*max([max(_food),max(_mat),max(_weal)]))
 
 	axes[1].set(ylabel='Food', xlabel='Days')
 	twin1.set_ylabel("Materials")
