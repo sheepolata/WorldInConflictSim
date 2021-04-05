@@ -4,6 +4,9 @@
 `git config alias.updatesubs '!git submodule foreach git pull origin main'`
 So `git updatesubs` will update all submodules from the main branch.
 
+`git config --global alias.updateall "!git pull && git updatesubs"`
+So `git updateall` should pull the main git repo and all the main submodules.
+
 ## Notes :
 
 A simulation of a medfan world composed of different races and communities.
