@@ -445,7 +445,7 @@ import csv
 
 if __name__=='__main__':
 
-	random.seed(1995)
+	# random.seed(1995)
 
 	clear = lambda: os.system('cls')
 
