@@ -11,7 +11,7 @@ sys.path.append('./GraphEngine')
 # import ggraph
 # import console
 import graphdisplay as gd
-
+import view
 import myglobals
 
 
@@ -33,6 +33,8 @@ def main():
 
     selected = None
     paused = False
+
+    day = 0
 
     # main loop
     while running:
@@ -63,10 +65,16 @@ def main():
 
         if not paused:
             # Update model
-            pass
 
+            # myglobals.InfoConsole.log("test", day)
+
+
+            day += 1
+
+        myglobals.InfoConsole.clear()
         # update_info()
-        # InfoConsole.push_front("{:.1f} FPS".format(display.clock.get_fps()))
+        myglobals.InfoConsole.log("{}".format(view.LogConsole.get_date_to_string(day)))
+        myglobals.InfoConsole.push_front("{:.1f} FPS".format(display.clock.get_fps()))
         display.main_loop_end()
 
      
