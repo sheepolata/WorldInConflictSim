@@ -36,7 +36,7 @@ So `git updateall` should pull the main git repo and all the main submodules.
 
 A simulation of a medfan world composed of different races and communities.
 
-###Ressources: 
+### Ressources: 
 
 - Wealth
 - Materials
@@ -46,7 +46,7 @@ Each day it can be produced by creating or transforming it.
 
 Ressources are produced passively by pops.
 
-###Location:
+### Location:
 
 Represent the environment and the buildings present somewhere in the world.
 
@@ -56,7 +56,7 @@ Represent the environment and the buildings present somewhere in the world.
 - Has buildings
 - Has quarters (potentially, not sure how to implement it yet)
 
-###Communities:
+### Communities:
 
 - Has a location
 - Composed of several races
@@ -64,7 +64,7 @@ Represent the environment and the buildings present somewhere in the world.
 
 Based on happiness (itself based on several factor, detailed explanation coming later), the population of a community increase or decrease.
 
-###Buildings:
+### Buildings:
 
 TO BE IMPLEMENTED
 
@@ -76,7 +76,7 @@ Each building cost materials and possibly wealth.
 - Warehouse: +xx% max ressources
 - Luxury: +xx Weatlh; -xx materials
 
-###Population:
+### Population:
 - Race
 
 Rest TBD
