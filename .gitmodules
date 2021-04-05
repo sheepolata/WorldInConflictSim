@@ -1,0 +1,3 @@
+[submodule "src/GraphEngine"]
+	path = src/GraphEngine
+	url = https://github.com/sheepolata/GraphEngine.git
