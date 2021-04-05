@@ -6,6 +6,16 @@ Next, an UI will be put in place, using the GraphEngine.
 
 For now, everything will go through the `main` branch. Will see according to the development of the project if several branches are needed.
 
+## Setup
+
+### How to install it from scratch
+
+How to install python, all the libs and how to run it. TODO.
+
+### How to run it
+
+Need to implement a basic UI and some sort of interaction of monitoring. Then TODO.
+
 ## Model & Behaviours
 
 TODO
