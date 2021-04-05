@@ -1,5 +1,9 @@
 # WorldInConflictSim
 
+## Update git:
+`git config alias.updatesubs '!git submodule foreach git pull origin main'`
+So `git updatesubs` will update all submodules from the main branch.
+
 ## Notes :
 
 A simulation of a medfan world composed of different races and communities.
