@@ -7,24 +7,18 @@ import numpy as np
 import sys
 sys.path.append('./GraphEngine')
 
-# import drawer
-# import ggraph
-# import console
 import graphdisplay as gd
 import view
 import myglobals
-
-
-
-# GlobalLog = console.Console()
-# InfoConsole = console.Console()
 
 # define a main function
 def main():
     # define a variable to control the main loop
     running = True
 
-    graph = None
+    graph = view.CityGraph()
+
+    graph.complete_graph(3)
 
     display = gd.GraphDisplay(graph, caption="A World in Conflict", fps=120)
 

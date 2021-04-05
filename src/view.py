@@ -5,6 +5,24 @@ import math
 from datetime import datetime
 
 import console
+import ggraph
+
+class CityNode(ggraph.gNode):
+
+	def __init__(self, _id):
+		super(CityNode, self).__init__(_id)
+
+		self.info["pos"]    = (0, 0)
+		self.info["radius"] = 8
+
+		
+
+class CityGraph(ggraph.gGraph):
+
+	def __init__(self):
+		super(CityGraph, self).__init__(node_type=CityNode, oriented=False)
+
+		self._draw_delaunay = False
 
 class LogConsole(console.Console):
 
@@ -36,6 +54,7 @@ class LogConsole(console.Console):
 
 
 if __name__=='__main__':
+	print("#### LogConsole TESTS ####")
 	log = LogConsole()
 
 	log.log("Hello", 0)
@@ -46,3 +65,6 @@ if __name__=='__main__':
 	log.push_front("Hello", 10000)
 
 	log.print()
+
+	print("##########################\n")
+
