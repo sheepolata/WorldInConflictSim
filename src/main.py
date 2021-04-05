@@ -26,7 +26,7 @@ def main():
 
     graph = None
 
-    display = gd.GraphDisplay(graph, caption="A World in Conflict")
+    display = gd.GraphDisplay(graph, caption="A World in Conflict", fps=120)
 
     display.set_log(myglobals.LogConsole)
     display.set_info(myglobals.InfoConsole)
