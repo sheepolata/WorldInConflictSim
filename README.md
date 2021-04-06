@@ -2,7 +2,11 @@
 
 ## Upcoming updates
 
-Next, an UI will be put in place, using the GraphEngine.
+Basic GUI in place, using the GraphEngine.
+
+Nodes are selectable to display more info on them.
+
+Next step is implementing a map and auto generation of locations and communities, according to the map, itself procedurally generated.
 
 For now, everything will go through the `main` branch. Will see according to the development of the project if several branches are needed.
 

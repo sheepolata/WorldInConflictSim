@@ -20,12 +20,12 @@ The Delightful City
 The Modest City
 Marluçon
 Bourrault
-Belbéliard
+Belbeliard
 Pabagne
-Épibonne
-Fréssis
+epibonne
+Fressis
 Bourault
-Épinesse
+epinesse
 Haguelliers
 Drasir
 Aubernoît
@@ -55,16 +55,16 @@ slywick
 spiritrest
 deepham
 wolfglen
-Caría
+Caria
 Marbedoba
-Fevilés
+Feviles
 Gravila
 Zalbao
 Alicia
 Pamadura
 Girorez
 Tavila
-Málés
+Males
 ghosthost
 windgulch
 silverland
@@ -76,7 +76,7 @@ Guadalavega
 Gagoza
 Catanes
 Tenedoba
-Cólaga
+Colaga
 Cataciras
 Castra Vetera
 Consentia

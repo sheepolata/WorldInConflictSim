@@ -2,7 +2,14 @@ import time
 import os
 import random
 
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import csv
+
 import utils
+import threading
 
 # 0.01 consumed per week per pop
 FOOD      = 0
@@ -12,10 +19,102 @@ MATERIALS = 1
 WEALTH    = 2
 
 RESSOURCES = [FOOD, MATERIALS, WEALTH]
+RESSOURCES_STR = {
+	FOOD:"FOOD",
+	MATERIALS:"MATERIALS",
+	WEALTH:"WEALTH"
+}
+LOCATION_ARCHETYPES = ["PLAINS", "MOUNTAINS", "SEASIDE"]
+
+class SimThread(threading.Thread):
+
+	def __init__(self, model):
+		super(SimThread, self).__init__()
+		self.model = model
+		self._stop = False
+		self._paused = False
+
+		self.freq = 10.0
+
+	def run(self):
+		while not self._stop:
+
+			if not self._paused:
+				self.model.loop()
+
+			time.sleep(1.0/self.freq)
+
+	def stop(self):
+		self._stop = True
+
+	def pause(self):
+		self._paused = not self._paused
+
+class Model(object):
+
+	def __init__(self):
+		self.is_init = False
+
+		self.nb_location  = 0
+		self.nb_community = 0
+
+		self.locations   = []
+		self.communities = []
+
+		self.day = 0
+
+	def loop(self):
+		if not self.is_init:
+			return
+
+		for community in self.communities:
+			community.a_day_passed()
+			if self.day%7 == 0:
+				community.a_week_passed()
+
+		self.day += 1
+
+
+	def test_model_init(self):
+		self.nb_location  = 3
+		self.nb_community = 3
+
+		city_namelist = open("./data/namelists/cities.txt")
+		city_names_from_file = city_namelist.readlines()
+		city_namelist.close()
+
+		location_namelist = open("./data/namelists/locations.txt")
+		location_names_from_file = location_namelist.readlines()
+		location_namelist.close()
+
+		city_names = np.random.choice(city_names_from_file, len(LOCATION_ARCHETYPES), replace=False)
+		location_names = np.random.choice(location_names_from_file, len(LOCATION_ARCHETYPES), replace=False)
+
+		city_names = [s.title() for s in city_names]
+		location_names = [s.title() for s in location_names]
+
+		for i, archetype in enumerate(LOCATION_ARCHETYPES):
+			location = Location(archetype, location_names[i][:-1])
+			city_name = city_names[i][:-1]
+			community = Community(city_name, location, "HUMAN_CITY")
+
+			self.locations.append(location)
+			self.communities.append(community)
+
+		self.is_init = True
+
+	def to_string_summary(self):
+		lines = []
+		for comm in self.communities:
+			s = "{} at {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.get_total_pop(), comm.happiness)
+			lines.append(s)
+		return lines
 
 class Location(object):
 
-	def __init__(self, archetype):
+	def __init__(self, archetype, name):
+
+		self.name = name
 		# Base happiness for pops living here
 		self.attractiveness = 0
 		# Base space to welcome pops, 1 space <=> 100 pops
@@ -81,6 +180,12 @@ class Location(object):
 
 			self.attractiveness = 10 + random.random()*5
 			self.space = 10 + random.random()*5
+
+	def to_string_list(self):
+		lines = []
+		lines.append(self.name)
+		lines.append("Attractiveness: {}; Space available: {}".format(self.attractiveness, self.space))
+		return lines
 
 class Community(object):
 
@@ -391,9 +496,27 @@ class Community(object):
 		for r in self.ressource_stockpile:
 			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values()))
 
-		s += "\nFood Shortage value:{}; Fcpp:{}\n".format(self.food_shortage, self.food_consumption_per_pop)
+		s += "\nFood Shortage value:{}; Fcpp:{:.3f}\n".format(self.food_shortage, self.food_consumption_per_pop)
 
 		return s
+
+	def to_string_list(self):
+		lines = []
+
+		lines.append("{}".format(self.name))
+		lines.append("at {} ({})".format(self.location.name, self.location.archetype))
+		str_popprop = ""
+		popprop = self.get_pop_proportion()
+		for race in popprop:
+			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
+		lines.append("{} inhabitants : {}".format(self.get_total_pop(), str_popprop))
+		lines.append("Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space))
+		for r in self.ressource_stockpile:
+			lines.append("{} : {:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})".format(RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
+
+		lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
+
+		return lines
 
 	def serialise(self, header=False):
 
@@ -422,7 +545,6 @@ class Community(object):
 
 		return s
 
-
 class Race(object):
 
 	def __init__(self, name):
@@ -438,21 +560,13 @@ HUMAN = Race("Humans")
 
 RACES = [HUMAN]
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import csv
-
 if __name__=='__main__':
 
 	# random.seed(1995)
 
 	clear = lambda: os.system('cls')
 
-
 	nb_run = 1
-
-	LOCATION_ARCHETYPES = ["PLAINS", "MOUNTAINS", "SEASIDE"]
 
 	for i, archetype in enumerate(LOCATION_ARCHETYPES):
 
@@ -462,11 +576,16 @@ if __name__=='__main__':
 		# location1 = Location("MOUNTAINS")
 		# location1 = Location("SEASIDE")
 
-		location1 = Location(archetype)
+		location_namelist = open("./data/namelists/locations.txt")
+
+		location_name = random.choice(location_namelist.readlines())[:-1]
+		print(location_name)
+		location1 = Location(archetype, location_name)
+
+		location_namelist.close()
 
 
-
-		city_namelist = open("../data/namelists/cities.txt")
+		city_namelist = open("./data/namelists/cities.txt")
 
 		city_name = random.choice(city_namelist.readlines())[:-1]
 		print(city_name)
@@ -474,7 +593,7 @@ if __name__=='__main__':
 
 		city_namelist.close()
 
-		filename = "../data/results/data{}{}".format(run_id, community1.location.archetype)
+		filename = "./data/results/data{}{}".format(run_id, community1.location.archetype)
 
 		data_file = open(filename+".csv", 'w')
 		data_file.write("runID,day,"+community1.serialise(header=True)+"\n")
@@ -501,7 +620,7 @@ if __name__=='__main__':
 
 	for i, archetype in enumerate(LOCATION_ARCHETYPES):
 
-		filename = "../data/results/data{}{}".format(i, archetype)
+		filename = "./data/results/data{}{}".format(i, archetype)
 
 		data_file = open(filename+".csv", 'r')
 		csv_file = csv.reader(data_file, delimiter=",")
