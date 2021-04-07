@@ -10,31 +10,63 @@ Next step is implementing a map and auto generation of locations and communities
 
 For now, everything will go through the `main` branch. Will see according to the development of the project if several branches are needed.
 
-## Setup
+## Setup and usage
 
-### How to install it from scratch
+### Setup: How to install it from scratch
 
-How to install python, all the libs and how to run it. TODO.
+Install Python version >= 3.8 from [here](https://www.python.org/downloads/).
+
+Install Git Bash from [here](https://git-scm.com/downloads). You can also install Git Desktop from [here](https://docs.github.com/en/desktop/installing-and-configuring-github-desktop/installing-github-desktop#downloading-and-installing-github-desktop) if you wish, but Git Bash is necessary nonetheless.
+
+Clone, fork or download the project.
+
+Open a terminal (I personally use *Windows PowerShell*) in the root of the project, if not done yet.
+
+Run 
+
+`git submodule update --init --recursive`
+
+### How to update the repo
+
+If you're using it for a one time experience, just skip this. If you intend to follow it closely and regularly pull the code to stay up to date, here is how.
+
+To update the main repository, run:
+
+`git pull`
+
+Or use GitHub Desktop interface.
+
+To update the submodules, run:
+
+`git submodule foreach git pull origin main`
+
+You can also set a git alias using
+
+`git config alias.updatesubs '!git submodule foreach git pull origin main'`
+
+and then run
+
+`git updatesubs`
+
+You can also setup a global alias that does everything for you, if you don't have time to loose:
+
+`git config --global alias.updateall '!git pull && git submodule foreach git pull origin main'`
+
+and run `git updateall` when you want to update your repository.
 
 ### How to run it
 
-Need to implement a basic UI and some sort of interaction of monitoring. Then TODO.
+After the setup (that needs to be done only once), you can run the simulation with:
+
+`python ./src/main.py`
+
+or if you use Windows:
+
+`python .\src\main.py`
 
 ## Model & Behaviours
 
 TODO
-
-## Update repo with git:
-
-This is personnal notes, you can use it as is if you wish but you'll need to set it up. (`git submodules` are new to me at the creation of this repo)
-
-`git config alias.updatesubs '!git submodule foreach git pull origin main'`
-
-So `git updatesubs` will update all submodules from the main branch.
-
-`git config --global alias.updateall "!git pull && git updatesubs"`
-
-So `git updateall` should pull the main git repo and all the main submodules.
 
 ## Notes :
 
