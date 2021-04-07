@@ -31,7 +31,6 @@ def main():
 	display.set_log(myglobals.LogConsole)
 	display.set_info(myglobals.InfoConsole)
 
-	thread.freq = 10
 	thread.start()
 
 	# main loop
@@ -73,8 +72,10 @@ def main():
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_r:
 					pass
-				if event.key == K_c:
-					pass
+				if event.key == K_RIGHT:
+					thread.increase_speed()
+				if event.key == K_LEFT:
+					thread.decrease_speed()
 				if event.key == K_SPACE:
 					thread.pause()
 				if event.key == K_s:
@@ -85,6 +86,7 @@ def main():
 					pass
 
 		display.update_info_tab()
+		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause)".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
 
 		display.main_loop_end()
 

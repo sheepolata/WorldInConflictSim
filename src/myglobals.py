@@ -5,5 +5,5 @@ import console
 
 import view
 
-InfoConsole = console.Console()
+InfoConsole = console.Console(max_lines=50)
 LogConsole = view.LogConsole()

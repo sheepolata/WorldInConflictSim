@@ -36,7 +36,18 @@ class SimThread(threading.Thread):
 		self._stop = False
 		self._paused = False
 
-		self.freq = 10.0
+
+		self.freq_list = [1, 7, 30, 90, 182, 365, -1]
+		self.freq_index = 1
+		self.freq = self.freq_list[self.freq_index]
+
+	def increase_speed(self):
+		self.freq_index = min(len(self.freq_list) - 1, self.freq_index + 1)
+		self.freq = self.freq_list[self.freq_index]
+
+	def decrease_speed(self):
+		self.freq_index = max(0, self.freq_index - 1)
+		self.freq = self.freq_list[self.freq_index]
 
 	def run(self):
 		while not self._stop:
@@ -76,7 +87,7 @@ class Model(object):
 				community.a_week_passed()
 			if self.day%30 == 0:
 				community.a_month_passed()
-			if self.day%91 == 0:
+			if self.day%90 == 0:
 				community.a_quarter_passed()
 			if self.day%182 == 0:
 				community.a_semester_passed()

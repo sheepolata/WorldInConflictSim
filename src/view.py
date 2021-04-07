@@ -64,6 +64,9 @@ class UserInterface(gd.GraphDisplay):
 
 		self.info_console.push_front("{:.1f} FPS".format(self.clock.get_fps()))
 
+	def insert_info_console(self, s, pos):
+		self.info_console.insert(s, pos)
+
 	def main_loop_end(self):
 		self.update_node_info()
 		super(UserInterface, self).main_loop_end()
@@ -139,7 +142,7 @@ class LogConsole(console.Console):
 		_month = (math.floor(day/28))%12
 		_day = day%28
 		d = myDatetime(day)
-		h = "{} - {:02d}/{:02d}/{:04d}".format(day, d.day, d.month, d.year)
+		h = "{:02d}/{:02d}/{:04d}".format(d.day, d.month, d.year)
 		return h
 
 	def set_head(self, day):
