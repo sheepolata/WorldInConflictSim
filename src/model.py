@@ -44,7 +44,8 @@ class SimThread(threading.Thread):
 			if not self._paused:
 				self.model.loop()
 
-			time.sleep(1.0/self.freq)
+			if self.freq > 0:
+				time.sleep(1.0/self.freq)
 
 	def stop(self):
 		self._stop = True
@@ -364,7 +365,6 @@ class Community(object):
 			self.food_consumption_per_pop = fcpp_new_decreased_value
 
 		# Consume WEALTH
-
 		wealth_consumption = (self.get_total_pop() * 0.01) / 30.0
 		wc_happiness_factor = 0
 		if self.happiness > 0:
@@ -492,8 +492,6 @@ class Community(object):
 		pass
 
 	def a_year_passed(self):
-		# self.randomness_of_life["birth_rate_factor"] = np.random.random() * 0.5
-		# self.randomness_of_life["death_rate_factor"] = np.random.random() * 0.5
 		pass
 
 

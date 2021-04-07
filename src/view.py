@@ -2,7 +2,8 @@ import sys
 sys.path.append('./GraphEngine')
 
 import math
-from datetime import datetime
+# from datetime import datetime, timedelta
+import datetime
 import random
 
 import console
@@ -119,6 +120,15 @@ class CityGraph(ggraph.gGraph):
 					self.addEdge(n, n2)
 
 
+class myDatetime(object):
+
+	def __init__(self, simu_day):
+		self.simu_day = simu_day
+
+		self.day   = ((self.simu_day % 365) % 30) + 1
+		self.month = (((self.simu_day % 365) // 30) % 12) + 1
+		self.year  = (self.simu_day // 365) + 1
+
 class LogConsole(console.Console):
 
 	def __init__(self):
@@ -128,9 +138,8 @@ class LogConsole(console.Console):
 		_year = math.floor(day/(12*28))
 		_month = (math.floor(day/28))%12
 		_day = day%28
-		d = datetime.fromtimestamp(day*24*60*60)
-		# d = d.replace(year=(d.year-1969))
-		h = "{:02d}/{:02d}/{:04d}".format(d.day, d.month, d.year-1969)
+		d = myDatetime(day)
+		h = "{} - {:02d}/{:02d}/{:04d}".format(day, d.day, d.month, d.year)
 		return h
 
 	def set_head(self, day):
