@@ -611,7 +611,7 @@ if __name__=='__main__':
 
 
 		day = 1
-		while day < 10000:
+		while day < 50000:
 			community1.a_day_passed()
 			if day%7 == 0:
 				community1.a_week_passed()
