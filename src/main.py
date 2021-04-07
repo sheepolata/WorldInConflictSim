@@ -31,7 +31,7 @@ def main():
 	display.set_log(myglobals.LogConsole)
 	display.set_info(myglobals.InfoConsole)
 
-	thread.freq = 10
+	thread.freq = 200
 	thread.start()
 
 	# main loop

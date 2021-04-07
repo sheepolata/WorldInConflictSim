@@ -26,6 +26,8 @@ RESSOURCES_STR = {
 }
 LOCATION_ARCHETYPES = ["PLAINS", "MOUNTAINS", "SEASIDE"]
 
+np.random.seed(1995)
+
 class SimThread(threading.Thread):
 
 	def __init__(self, model):
@@ -71,6 +73,14 @@ class Model(object):
 			community.a_day_passed()
 			if self.day%7 == 0:
 				community.a_week_passed()
+			if self.day%30 == 0:
+				community.a_month_passed()
+			if self.day%91 == 0:
+				community.a_quarter_passed()
+			if self.day%182 == 0:
+				community.a_semester_passed()
+			if self.day%365 == 0:
+				community.a_year_passed()
 
 		self.day += 1
 
@@ -138,10 +148,10 @@ class Location(object):
 			self.base_storage[MATERIALS] = 500.0
 			self.base_storage[WEALTH] = 120.0
 
-			self.trade_factor = random.random()*0.05
+			self.trade_factor = np.random.random()*0.05
 
-			self.attractiveness = 8 + random.random()*4
-			self.space = 20 + random.random()*5
+			self.attractiveness = 8 + np.random.random()*4
+			self.space = 20 + np.random.random()*5
 
 		elif self.archetype == "MOUNTAINS":
 
@@ -157,10 +167,10 @@ class Location(object):
 			self.base_storage[MATERIALS] = 800.0
 			self.base_storage[WEALTH] = 300.0
 
-			self.trade_factor = 0.02 + random.random()*0.08
+			self.trade_factor = 0.02 + np.random.random()*0.08
 
-			self.attractiveness = -10 - random.random()*5
-			self.space = 12 + random.random()*5
+			self.attractiveness = -10 - np.random.random()*5
+			self.space = 12 + np.random.random()*5
 
 		elif self.archetype == "SEASIDE":
 
@@ -176,10 +186,10 @@ class Location(object):
 			self.base_storage[MATERIALS] = 350.0
 			self.base_storage[WEALTH] = 600.0
 
-			self.trade_factor = 0.05 + random.random()*0.07
+			self.trade_factor = 0.05 + np.random.random()*0.07
 
-			self.attractiveness = 10 + random.random()*5
-			self.space = 10 + random.random()*5
+			self.attractiveness = 10 + np.random.random()*5
+			self.space = 10 + np.random.random()*5
 
 	def to_string_list(self):
 		lines = []
@@ -248,12 +258,16 @@ class Community(object):
 
 		self.food_consumption_from_pop = 0
 
+		self.randomness_of_life = {}
+		self.randomness_of_life["birth_rate_factor"] = 0
+		self.randomness_of_life["death_rate_factor"] = 0
+
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
 
 		if self.pop_archetype == "HUMAN_CITY":
-			base_pop_factor = 0.2 + random.random()*0.2
+			base_pop_factor = 0.2 + np.random.random()*0.2
 			total_pop = int(self.location.space * base_pop_factor * 100)
 
 			self.population[HUMAN] = total_pop
@@ -444,7 +458,7 @@ class Community(object):
 		brf_food = self.ressource_stockpile[FOOD]/1000.0
 		# brf_food = self.food_shortage
 
-		actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food))
+		self.actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food + self.randomness_of_life["birth_rate_factor"]))
 
 		# if self.food_shortage > 0:
 		# 	actual_birth_rate = actual_birth_rate * (1.0/self.food_shortage)
@@ -465,11 +479,11 @@ class Community(object):
 		if self.happiness < 0:
 			drf_happ = abs(self.happiness * 0.1)
 
-		actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
+		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ + self.randomness_of_life["death_rate_factor"])
 
 		# print(actual_birth_rate, actual_death_rate)
 
-		self.net_growth_rate = (actual_birth_rate-actual_death_rate)
+		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate)
 		if self.get_total_pop() <= 0:
 			self.net_growth_rate = 0
 
@@ -482,6 +496,26 @@ class Community(object):
 		# 	self.food_consumption_per_pop = min(self.food_consumption_per_pop + self.food_consumption_per_pop_step, self.food_consumption_per_pop_max)
 		# elif self.ressources_prev_net_worth[FOOD] <= 0:		
 		# 	self.food_consumption_per_pop = max(self.food_consumption_per_pop - self.food_consumption_per_pop_step, self.food_consumption_per_pop_min)
+
+
+	def a_month_passed(self):
+		pass
+
+	def a_quarter_passed(self):
+		self.randomness_of_life["birth_rate_factor"] += -0.1 + np.random.random() * 0.2
+		self.randomness_of_life["death_rate_factor"] += -0.1 + np.random.random() * 0.2
+
+		self.randomness_of_life["birth_rate_factor"] = utils.clamp(self.randomness_of_life["birth_rate_factor"], 0, 1)
+		self.randomness_of_life["death_rate_factor"] = utils.clamp(self.randomness_of_life["death_rate_factor"], 0, 1)
+		pass
+
+	def a_semester_passed(self):
+		pass
+
+	def a_year_passed(self):
+		# self.randomness_of_life["birth_rate_factor"] = np.random.random() * 0.5
+		# self.randomness_of_life["death_rate_factor"] = np.random.random() * 0.5
+		pass
 
 
 	def to_string(self):
@@ -510,11 +544,13 @@ class Community(object):
 		for race in popprop:
 			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
 		lines.append("{} inhabitants : {}".format(self.get_total_pop(), str_popprop))
-		lines.append("Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space))
+		lines.append("Happiness : {:.2f}; Growth rate : {:.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
 		for r in self.ressource_stockpile:
 			lines.append("{} : {:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})".format(RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
 
 		lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
+
+		lines.append("{}".format(self.randomness_of_life))
 
 		return lines
 
@@ -605,7 +641,15 @@ if __name__=='__main__':
 			community1.a_day_passed()
 			if day%7 == 0:
 				community1.a_week_passed()
+			if day%30 == 0:
+				community1.a_month_passed()
 				data_file.write("{},{},{}\n".format(run_id, day, community1.serialise()))
+			if day%91 == 0:
+				community1.a_quarter_passed()
+			if day%182 == 0:
+				community1.a_semester_passed()
+			if day%365 == 0:
+				community1.a_year_passed()
 
 			if day%500 == 0:
 				clear()
