@@ -37,10 +37,6 @@ def main():
 	# main loop
 	while running:
 
-		t = pygame.time.get_ticks()
-		# deltaTime in seconds.
-		# deltaTime = (t - getTicksLastFrame) / 1000.0
-
 		display.clear_info_console()
 
 		# event handling, gets all event from the event queue

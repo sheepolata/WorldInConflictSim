@@ -385,27 +385,6 @@ class Community(object):
 		# Unrest from food shortage
 		self.happiness -= self.food_shortage
 
-		# Happ from raw production
-		# for r in set(RESSOURCES)-set([WEALTH,FOOD]):
-		# 	r_net_worth = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
-		# 	self.happiness += r_net_worth * 2
-
-		# Happ from surplus ressources
-		# for r in set(RESSOURCES) - set([WEALTH]):
-		# 	r_net_worth = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
-		# 	if self.ressource_stockpile[r] >= self.actual_storage[r]:
-		# 		# self.happiness += r_net_worth * 5
-		# 		self.happiness_from_surplus[r] = min(self.happiness_from_surplus[r] + (r_net_worth * 0.01), r_net_worth*5)
-		# 	else:
-		# 		self.happiness_from_surplus[r] = max(self.happiness_from_surplus[r] - (r_net_worth*5*0.1), 0)
-
-		# self.happiness += sum(self.happiness_from_surplus.values())
-
-		# Happ from net wealth production
-		# wealth_net_worth = sum(self.effective_gain[WEALTH].values()) - sum(self.effective_consumption[WEALTH].values())
-		# if wealth_net_worth > 0:
-		# 	self.happiness += wealth_net_worth * 10
-
 		# Happ from stockpiled wealth
 		self.happiness += self.ressource_stockpile[WEALTH] * 0.2
 
@@ -608,10 +587,6 @@ if __name__=='__main__':
 
 		run_id = i
 
-		# location1 = Location("PLAINS")
-		# location1 = Location("MOUNTAINS")
-		# location1 = Location("SEASIDE")
-
 		location_namelist = open("./data/namelists/locations.txt")
 
 		location_name = random.choice(location_namelist.readlines())[:-1]
@@ -637,7 +612,6 @@ if __name__=='__main__':
 
 		day = 1
 		while day < 10000:
-
 			community1.a_day_passed()
 			if day%7 == 0:
 				community1.a_week_passed()
