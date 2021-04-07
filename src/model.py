@@ -132,6 +132,29 @@ class Model(object):
 			lines.append(s)
 		return lines
 
+class Map(object):
+
+	def __init__(self, width, height):
+		
+		self.tiles = []
+
+		for x in range(width):
+			_rowx = []
+			for y in range(height):
+				_rowx.append(Tile(x, y))
+			self.tiles.append(_rowx)
+
+
+class Tile(object):
+
+	TYPES = ["WATER", "PLAINS", "MOUNTAINS"]
+
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+
+		self.type = np.random.choice(Tile.TYPES)
+
 class Location(object):
 
 	def __init__(self, archetype, name):

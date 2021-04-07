@@ -69,8 +69,14 @@ class UserInterface(gd.GraphDisplay):
 
 	def main_loop_end(self):
 		self.update_node_info()
-		super(UserInterface, self).main_loop_end()
 
+		super(UserInterface, self).fill_surfaces()
+
+		super(UserInterface, self).main_loop_logic()
+
+		super(UserInterface, self).blit_surfaces()
+
+		super(UserInterface, self).pygame_update_and_tick()
 
 class CityNode(ggraph.gNode):
 
@@ -83,7 +89,6 @@ class CityNode(ggraph.gNode):
 
 		self.info["location"] = None
 		self.info["community"] = None
-
 
 class CityGraph(ggraph.gGraph):
 
@@ -121,7 +126,6 @@ class CityGraph(ggraph.gGraph):
 			for n2 in self.nodes:
 				if n != n2:
 					self.addEdge(n, n2)
-
 
 class myDatetime(object):
 
