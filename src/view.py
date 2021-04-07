@@ -5,11 +5,13 @@ import math
 # from datetime import datetime, timedelta
 import datetime
 import random
+import pygame
 
 import console
 import ggraph
 import graphdisplay as gd
 import utils
+import model
 
 LOCATION_COLORS = {
 	"PLAINS"    : (86, 125, 70),
@@ -18,6 +20,12 @@ LOCATION_COLORS = {
 }
 
 class UserInterface(gd.GraphDisplay):
+
+	TILE_TYPE_COLORS = {
+		model.Tile.WATER     : (0, 0, 255),
+		model.Tile.PLAINS    : (0, 168, 0),
+		model.Tile.MOUNTAINS : (128, 0, 0)
+	}
 
 	def __init__(self, model, graph, fps=60):
 		super(UserInterface, self).__init__(graph, caption="A World in Conflict", fps=fps)
@@ -67,10 +75,45 @@ class UserInterface(gd.GraphDisplay):
 	def insert_info_console(self, s, pos):
 		self.info_console.insert(s, pos)
 
+	def draw_map(self):
+
+		tw = self.graph_surface_size[0] // self.model.map.width
+		th = self.graph_surface_size[1] // self.model.map.height
+
+		tw = int(tw)
+		th = int(th)
+
+		# print("{}/{}={}".format(self.graph_surface_size[0], self.model.map.width, self.graph_surface_size[0] / self.model.map.width))
+		# print("{}/{}={}".format(self.graph_surface_size[1], self.model.map.height, self.graph_surface_size[1] / self.model.map.height))
+		# print(self.graph_surface_size)
+
+		tile_size = (tw, th)
+
+		width_r  = list(range(0, int(self.graph_surface_size[0]), tw))
+		height_r = list(range(0, int(self.graph_surface_size[1]), th))
+
+		pygame.draw.rect(self.graph_surface, (0,0,0), pygame.Rect((0,0), self.graph_surface_size))
+
+		for x, posx in enumerate(width_r[:-1]):
+			for y, posy in enumerate(height_r[:-1]):
+
+				t = self.model.map.tiles[x][y]
+				c = UserInterface.TILE_TYPE_COLORS[t.type]
+
+				# _x = x * tile_size[0]
+				# _y = y * tile_size[1]
+				_pos = (posx, posy)
+
+				pygame.draw.rect(self.graph_surface, c, pygame.Rect(_pos, tile_size), 1)
+
+
+
 	def main_loop_end(self):
 		self.update_node_info()
 
 		super(UserInterface, self).fill_surfaces()
+
+		self.draw_map()
 
 		super(UserInterface, self).main_loop_logic()
 

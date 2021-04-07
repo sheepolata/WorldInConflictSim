@@ -77,6 +77,8 @@ class Model(object):
 
 		self.day = 0
 
+		self.map = Map(20, 20)
+
 	def loop(self):
 		if not self.is_init:
 			return
@@ -135,8 +137,10 @@ class Model(object):
 class Map(object):
 
 	def __init__(self, width, height):
-		
-		self.tiles = []
+			
+		self.width  = width
+		self.height = height
+		self.tiles  = []
 
 		for x in range(width):
 			_rowx = []
@@ -147,7 +151,15 @@ class Map(object):
 
 class Tile(object):
 
-	TYPES = ["WATER", "PLAINS", "MOUNTAINS"]
+	WATER     = 0
+	PLAINS    = 1
+	MOUNTAINS = 2
+	TYPES = [WATER, PLAINS, MOUNTAINS]
+	TYPES_STR = {
+		WATER:"WATER",
+		PLAINS:"PLAINS",
+		MOUNTAINS:"MOUNTAINS"
+	}
 
 	def __init__(self, x, y):
 		self.x = x
