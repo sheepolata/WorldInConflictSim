@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 import sys
-sys.path.append('./src/GraphEngine')
+sys.path.append('./GraphEngine')
 
 import graphdisplay as gd
 import view

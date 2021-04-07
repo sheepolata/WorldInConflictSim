@@ -16,3 +16,6 @@ numpy >= 1.20.2
 # D:\Projets\WorldInConflictSim\src\GraphEngine\main.py: 2,3
 # D:\Projets\WorldInConflictSim\src\main.py: 2,3
 pygame >= 2.0.1
+
+#D:\Projets\WorldInConflictSim\src\model.py
+matplotlib

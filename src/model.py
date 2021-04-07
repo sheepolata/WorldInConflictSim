@@ -89,11 +89,11 @@ class Model(object):
 		self.nb_location  = 3
 		self.nb_community = 3
 
-		city_namelist = open("./data/namelists/cities.txt")
+		city_namelist = open("../data/namelists/cities.txt")
 		city_names_from_file = city_namelist.readlines()
 		city_namelist.close()
 
-		location_namelist = open("./data/namelists/locations.txt")
+		location_namelist = open("../data/namelists/locations.txt")
 		location_names_from_file = location_namelist.readlines()
 		location_namelist.close()
 
@@ -587,7 +587,7 @@ if __name__=='__main__':
 
 		run_id = i
 
-		location_namelist = open("./data/namelists/locations.txt")
+		location_namelist = open("../data/namelists/locations.txt")
 
 		location_name = random.choice(location_namelist.readlines())[:-1]
 		print(location_name)
@@ -596,7 +596,7 @@ if __name__=='__main__':
 		location_namelist.close()
 
 
-		city_namelist = open("./data/namelists/cities.txt")
+		city_namelist = open("../data/namelists/cities.txt")
 
 		city_name = random.choice(city_namelist.readlines())[:-1]
 		print(city_name)
@@ -604,7 +604,7 @@ if __name__=='__main__':
 
 		city_namelist.close()
 
-		filename = "./data/results/data{}{}".format(run_id, community1.location.archetype)
+		filename = "../data/results/data{}{}".format(run_id, community1.location.archetype)
 
 		data_file = open(filename+".csv", 'w')
 		data_file.write("runID,day,"+community1.serialise(header=True)+"\n")
@@ -638,7 +638,7 @@ if __name__=='__main__':
 
 	for i, archetype in enumerate(LOCATION_ARCHETYPES):
 
-		filename = "./data/results/data{}{}".format(i, archetype)
+		filename = "../data/results/data{}{}".format(i, archetype)
 
 		data_file = open(filename+".csv", 'r')
 		csv_file = csv.reader(data_file, delimiter=",")

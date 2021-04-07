@@ -56,13 +56,14 @@ and run `git updateall` when you want to update your repository.
 
 ### How to run it
 
+First, put yourself in the `src` folder with your terminal.
 After the setup (that needs to be done only once), you can run the simulation with:
 
-`python ./src/main.py`
+`python ./main.py`
 
 or if you use Windows:
 
-`python .\src\main.py`
+`python .\main.py`
 
 ## Model & Behaviours
 
