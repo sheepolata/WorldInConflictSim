@@ -14,22 +14,23 @@ import model
 
 # define a main function
 def main():
+
+	print("START INIT")
 	# define a variable to control the main loop
 	running = True
 
-	mymodel = model.Model(map_size=200)
+	mymodel = model.Model(map_size=500)
 	mymodel.test_model_init()
-
 	thread = model.SimThread(mymodel)
-
 	graph = mymodel.generate_graph()
-
 	display = view.UserInterface(mymodel, graph)
 
 	display.set_log(myglobals.LogConsole)
 	display.set_info(myglobals.InfoConsole)
 
 	thread.start()
+
+	print("START SIM")
 
 	# main loop
 	while running:
@@ -95,6 +96,7 @@ def main():
 
 		display.main_loop_end()
 
+	print("END SIM")
 	 
 	 
 # run the main function only if this module is executed as the main script
@@ -102,5 +104,3 @@ def main():
 if __name__=="__main__":
 	# call the main function
 	main()
-
-	print("END")

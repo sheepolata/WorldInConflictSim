@@ -43,6 +43,8 @@ class SimThread(threading.Thread):
 		self.freq_index = 1
 		self.freq = self.freq_list[self.freq_index]
 
+		print("Creating SimThread")
+
 	def increase_speed(self):
 		self.freq_index = min(len(self.freq_list) - 1, self.freq_index + 1)
 		self.freq = self.freq_list[self.freq_index]
@@ -80,6 +82,8 @@ class Model(object):
 		self.communities = []
 
 		self.day = 0
+
+		print("Creating model")
 
 		self.map = Map(self.map_size, self.map_size)
 
@@ -150,6 +154,8 @@ class Model(object):
 		return lines
 
 	def generate_graph(self):
+		print("Generating Graph")
+
 		g = view.CityGraph()
 
 		nodes = []
@@ -188,9 +194,11 @@ class Map(object):
 
 		for x in range(self.width):
 			_rowx = []
+			print("Creating tiles column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
 				_rowx.append(Tile(x, y))
 			self.tiles.append(_rowx)
+		print("")
 
 		self.generate_from_perlin_noise()
 		self.smooth_map()
@@ -200,11 +208,13 @@ class Map(object):
 
 		noise = []
 		for x in range(self.width):
+			print("Generating noise map column {}".format(x), end='\r', flush=True)
 			noise.append([])
 			for y in range(self.height):
 				noise_value = PNFactory(float(x)/self.width,float(y)/self.height)
 				noise[x].append(noise_value)
 				# print(noise_value)
+		print("")
 
 
 		def flatten(seq):
@@ -215,15 +225,21 @@ class Map(object):
 					yield el
 
 		new_noise = []
+		noise_min = min(flatten(noise))
+		noise_max = max(flatten(noise))
 		for x in range(len(noise)):
-			new_noise.append(utils.normalise_list2(noise[x], min(flatten(noise)), max(flatten(noise))))
+			print("Normalising noise column {}".format(x), end='\r', flush=True)
+			new_noise.append(utils.normalise_list2(noise[x], noise_min, noise_max))
 		noise = new_noise
+		print("")
 
 		for x in range(self.width):
+			print("Setting type and noise for tile, column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
 				# print(noise[x][y])
 				self.tiles[x][y].info["noise"] = noise[x][y]
 				self.tiles[x][y].set_type_from_noise()
+		print("")
 
 	def get_neighbours_coord(self, pos):
 		res = []
@@ -239,6 +255,7 @@ class Map(object):
 
 	def smooth_map(self):
 		for x in range(self.width):
+			print("Smoothing map column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
 				t = self.tiles[x][y]
 				nposlis = self.get_neighbours_coord((x, y))
@@ -249,6 +266,7 @@ class Map(object):
 				if len(neigh_types) > 0: 
 					if len(set(neigh_types)) <= 1 and t.type != neigh_types[0]:
 						t.type = neigh_types[0]
+		print("")
 
 class Tile(object):
 

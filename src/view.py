@@ -41,6 +41,8 @@ class UserInterface(gd.GraphDisplay):
 		self.map_image = None
 		self.map_image_rect = None
 
+		print("Creating UserInterface")
+
 		self.set_node_colors()
 		self.save_map_image()
 
@@ -50,12 +52,14 @@ class UserInterface(gd.GraphDisplay):
 
 	def set_node_colors(self):
 		if self.graph != None:
-			for loc_node in self.graph.nodes:
+			for i, loc_node in enumerate(self.graph.nodes):
+				print("Set node color {}/{}".format(i,len(self.graph.nodes)), end='\r', flush=True)
 				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
 				_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
 				loc_node.info["pos"] = (_x, _y)
 
 				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
+			print("")
 
 	def update_node_info(self):
 		if self.graph != None:
@@ -97,6 +101,8 @@ class UserInterface(gd.GraphDisplay):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
 
 	def save_map_image(self):
+		print("Save map_image")
+
 		temp_surface = pygame.Surface(self.graph_surface_size)
 
 		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
@@ -108,6 +114,7 @@ class UserInterface(gd.GraphDisplay):
 		tile_size = (ceiled_tw, ceiled_th)
 
 		for x in range(self.model.map.width):
+			print("Draw to map image, column {}".format(x), end='\r', flush=True)
 			for y in range(self.model.map.height):
 				t = self.model.map.tiles[x][y]
 				c = UserInterface.TILE_TYPE_COLORS[t.type]
@@ -117,10 +124,12 @@ class UserInterface(gd.GraphDisplay):
 				_pos = (_x, _y)
 
 				pygame.draw.rect(temp_surface, c, pygame.Rect(_pos, tile_size))
+		print("")
 
 		pygame.image.save(temp_surface, self.map_image_file)
 		self.map_image = pygame.image.load(self.map_image_file)
 		self.map_image_rect = self.map_image.get_rect()
+		print("Map image saved to {}".format(self.map_image_file))
 
 	def main_loop_end(self):
 		self.update_node_info()
