@@ -37,16 +37,18 @@ class UserInterface(gd.GraphDisplay):
 
 		self.selected = None
 
-		if self.graph != None:
-			for loc_node in self.graph.nodes:
-				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
-				_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
-				loc_node.info["pos"] = (_x, _y)
+		self.map_image_file = "../data/fx/map.png"
+		self.map_image = None
+		self.map_image_rect = None
 
-				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
-				# loc_node.info["color"] = loc_node.info["color"]
+		self.set_node_colors()
+		self.save_map_image()
 
 	def reset(self):
+		self.set_node_colors()
+		self.save_map_image()
+
+	def set_node_colors(self):
 		if self.graph != None:
 			for loc_node in self.graph.nodes:
 				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
@@ -54,7 +56,6 @@ class UserInterface(gd.GraphDisplay):
 				loc_node.info["pos"] = (_x, _y)
 
 				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
-				# loc_node.info["color"] = loc_node.info["color"]
 
 	def update_node_info(self):
 		if self.graph != None:
@@ -93,6 +94,10 @@ class UserInterface(gd.GraphDisplay):
 		self.info_console.insert(s, pos)
 
 	def draw_map(self):
+		self.graph_surface.blit(self.map_image, self.map_image_rect)
+
+	def save_map_image(self):
+		temp_surface = pygame.Surface(self.graph_surface_size)
 
 		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
 		ceiled_th = math.ceil(self.graph_surface_size[1] / self.model.map.height)
@@ -111,8 +116,11 @@ class UserInterface(gd.GraphDisplay):
 				_y = y * th
 				_pos = (_x, _y)
 
-				pygame.draw.rect(self.graph_surface, c, pygame.Rect(_pos, tile_size))
+				pygame.draw.rect(temp_surface, c, pygame.Rect(_pos, tile_size))
 
+		pygame.image.save(temp_surface, self.map_image_file)
+		self.map_image = pygame.image.load(self.map_image_file)
+		self.map_image_rect = self.map_image.get_rect()
 
 	def main_loop_end(self):
 		self.update_node_info()
