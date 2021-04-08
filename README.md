@@ -6,7 +6,13 @@ Basic GUI in place, using the GraphEngine.
 
 Nodes are selectable to display more info on them.
 
-Next step is implementing a map and auto generation of locations and communities, according to the map, itself procedurally generated.
+Map is implemented as a grid, and is displayed. It is generated using a Perlin noise generator. Very simple, generate good region-size maps, but is limited for continent/country generation. Will need to change it eventually, but the grid structure will stay.
+
+Next step is implementing auto generation of locations and communities, according to the map.
+
+Optimisation is needed to the display of the map, for a grid size of 200x200, the FPS drops from stable 60 to around 20-25. Got some ideas to reduce the call to draw.rect :
+- Reduce the number of rect to draw by grouping them in larger squares. Could be computationnal heavy or complex to put in place.
+- Save the map grid as a image and draw this image. Best idea I think, if map changes during simulation, can simple regenerate the image with the new map and voila.
 
 For now, everything will go through the `main` branch. Will see according to the development of the project if several branches are needed.
 
