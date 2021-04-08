@@ -22,9 +22,13 @@ LOCATION_COLORS = {
 class UserInterface(gd.GraphDisplay):
 
 	TILE_TYPE_COLORS = {
-		model.Tile.WATER     : (0, 0, 255),
+		model.Tile.DEEPWATER : (15,94,156),
+		model.Tile.WATER     : (28,163,236),
+		model.Tile.DESERT    : (194,178,128),
 		model.Tile.PLAINS    : (0, 168, 0),
-		model.Tile.MOUNTAINS : (128, 0, 0)
+		model.Tile.HILLS     : (205,133,63),
+		model.Tile.MOUNTAINS : (160,82,45),
+		model.Tile.PEAKS     : (128,0,0)
 	}
 
 	def __init__(self, model, graph, fps=60):
@@ -33,25 +37,38 @@ class UserInterface(gd.GraphDisplay):
 
 		self.selected = None
 
-		for loc_node in self.graph.nodes:
-			_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
-			_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
-			loc_node.info["pos"] = (_x, _y)
+		if self.graph != None:
+			for loc_node in self.graph.nodes:
+				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
+				_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
+				loc_node.info["pos"] = (_x, _y)
 
-			loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
+				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
+				# loc_node.info["color"] = loc_node.info["color"]
+
+	def reset(self):
+		if self.graph != None:
+			for loc_node in self.graph.nodes:
+				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
+				_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
+				loc_node.info["pos"] = (_x, _y)
+
+				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
+				# loc_node.info["color"] = loc_node.info["color"]
 
 	def update_node_info(self):
-		for loc_node in self.graph.nodes:
-			if self.selected == loc_node:
-				loc_node.info["outline_color"] = (0, 255, 0)
-			else:
-				loc_node.info["outline_color"] = (0, 0, 0)
+		if self.graph != None:
+			for loc_node in self.graph.nodes:
+				if self.selected == loc_node:
+					loc_node.info["outline_color"] = (0, 255, 0)
+				else:
+					loc_node.info["outline_color"] = (0, 0, 0)
 
-			if loc_node.info["community"] != None:
-				_rad_factor = utils.normalise(loc_node.info["community"].get_total_pop(), maxi=10000)
-				_rad_min = 10
-				_rad_max = 50
-				loc_node.info["radius"] = _rad_min + (_rad_factor*(_rad_max-_rad_min))
+				if loc_node.info["community"] != None:
+					_rad_factor = utils.normalise(loc_node.info["community"].get_total_pop(), maxi=8000)
+					_rad_min = 6
+					_rad_max = 14
+					loc_node.info["radius"] = _rad_min + (_rad_factor*(_rad_max-_rad_min))
 
 	def update_info_tab(self):
 		self.info_console.log("{}".format(LogConsole.get_date_to_string(self.model.day)))
@@ -77,35 +94,24 @@ class UserInterface(gd.GraphDisplay):
 
 	def draw_map(self):
 
-		tw = self.graph_surface_size[0] // self.model.map.width
-		th = self.graph_surface_size[1] // self.model.map.height
+		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
+		ceiled_th = math.ceil(self.graph_surface_size[1] / self.model.map.height)
 
-		tw = int(tw)
-		th = int(th)
+		tw = self.graph_surface_size[0] / self.model.map.width
+		th = self.graph_surface_size[1] / self.model.map.height
 
-		# print("{}/{}={}".format(self.graph_surface_size[0], self.model.map.width, self.graph_surface_size[0] / self.model.map.width))
-		# print("{}/{}={}".format(self.graph_surface_size[1], self.model.map.height, self.graph_surface_size[1] / self.model.map.height))
-		# print(self.graph_surface_size)
+		tile_size = (ceiled_tw, ceiled_th)
 
-		tile_size = (tw, th)
-
-		width_r  = list(range(0, int(self.graph_surface_size[0]), tw))
-		height_r = list(range(0, int(self.graph_surface_size[1]), th))
-
-		pygame.draw.rect(self.graph_surface, (0,0,0), pygame.Rect((0,0), self.graph_surface_size))
-
-		for x, posx in enumerate(width_r[:-1]):
-			for y, posy in enumerate(height_r[:-1]):
-
+		for x in range(self.model.map.width):
+			for y in range(self.model.map.height):
 				t = self.model.map.tiles[x][y]
 				c = UserInterface.TILE_TYPE_COLORS[t.type]
 
-				# _x = x * tile_size[0]
-				# _y = y * tile_size[1]
-				_pos = (posx, posy)
+				_x = x * tw
+				_y = y * th
+				_pos = (_x, _y)
 
-				pygame.draw.rect(self.graph_surface, c, pygame.Rect(_pos, tile_size), 1)
-
+				pygame.draw.rect(self.graph_surface, c, pygame.Rect(_pos, tile_size))
 
 
 	def main_loop_end(self):
@@ -135,40 +141,11 @@ class CityNode(ggraph.gNode):
 
 class CityGraph(ggraph.gGraph):
 
-	def __init__(self, model):
+	def __init__(self):
 		super(CityGraph, self).__init__(node_type=CityNode, oriented=False)
 
 		self._draw_delaunay = False
 
-		self.model = model
-
-	def generate_graph_from_model(self):
-		if self.model == None:
-			return
-
-		nodes = []
-		_id = 0
-		for l in self.model.locations:
-			# n = CityNode(_id)
-			n = CityNode(l.name)
-			n.info["location"] = l
-
-			nodes.append(n)
-
-			_id += 1
-
-		for c in self.model.communities:
-			for n in nodes:
-				if n.info["location"] == c.location:
-					n.info["community"] = c
-
-		for n in nodes:
-			self.addNode(n)
-
-		for n in self.nodes:
-			for n2 in self.nodes:
-				if n != n2:
-					self.addEdge(n, n2)
 
 class myDatetime(object):
 

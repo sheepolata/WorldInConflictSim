@@ -26,6 +26,9 @@ def normalise_list(l):
 
         return [normalise(x, _min, _max) for x in l]
 
+def normalise_list2(l, mini, maxi):
+    return [normalise(x, mini=mini, maxi=maxi) for x in l]
+
 def close_enough(a, b, _thresh=10):
     return abs(a-b) <= _thresh
 

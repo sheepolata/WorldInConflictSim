@@ -17,14 +17,12 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mymodel = model.Model()
+	mymodel = model.Model(map_size=200)
 	mymodel.test_model_init()
 
 	thread = model.SimThread(mymodel)
 
-	graph = view.CityGraph(mymodel)
-
-	graph.generate_graph_from_model()
+	graph = mymodel.generate_graph()
 
 	display = view.UserInterface(mymodel, graph)
 
@@ -51,7 +49,6 @@ def main():
 					pass
 				elif event.button == 1:
 					mpos = pygame.mouse.get_pos()
-					# print(mpos)
 					smth = False
 					for city_node in display.graph.nodes:
 						if city_node.collide_point(mpos):
@@ -71,7 +68,15 @@ def main():
 					pass
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_r:
-					pass
+					thread.pause()
+
+					mymodel.reset()
+					mymodel.test_model_init()
+					graph = mymodel.generate_graph()
+					display.graph = graph
+					display.reset()
+
+					thread.pause()
 				if event.key == K_RIGHT:
 					thread.increase_speed()
 				if event.key == K_LEFT:
@@ -86,7 +91,7 @@ def main():
 					pass
 
 		display.update_info_tab()
-		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause)".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
+		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause; R to reset)".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
 
 		display.main_loop_end()
 

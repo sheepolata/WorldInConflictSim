@@ -7,9 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import csv
+import threading
 
 import utils
-import threading
+import view
+import perlinNoise
 
 # 0.01 consumed per week per pop
 FOOD      = 0
@@ -66,8 +68,10 @@ class SimThread(threading.Thread):
 
 class Model(object):
 
-	def __init__(self):
+	def __init__(self, map_size=20):
 		self.is_init = False
+
+		self.map_size = map_size
 
 		self.nb_location  = 0
 		self.nb_community = 0
@@ -77,7 +81,18 @@ class Model(object):
 
 		self.day = 0
 
-		self.map = Map(20, 20)
+		self.map = Map(self.map_size, self.map_size)
+
+	def reset(self):
+		self.nb_location  = 0
+		self.nb_community = 0
+
+		self.locations   = []
+		self.communities = []
+
+		self.day = 0
+
+		self.map = Map(self.map_size, self.map_size)		
 
 	def loop(self):
 		if not self.is_init:
@@ -134,6 +149,35 @@ class Model(object):
 			lines.append(s)
 		return lines
 
+	def generate_graph(self):
+		g = view.CityGraph()
+
+		nodes = []
+		_id = 0
+		for l in self.locations:
+			# n = CityNode(_id)
+			n = view.CityNode(l.name)
+			n.info["location"] = l
+
+			nodes.append(n)
+
+			_id += 1
+
+		for c in self.communities:
+			for n in nodes:
+				if n.info["location"] == c.location:
+					n.info["community"] = c
+
+		for n in nodes:
+			g.addNode(n)
+
+		for n in g.nodes:
+			for n2 in g.nodes:
+				if n != n2:
+					g.addEdge(n, n2)
+
+		return g
+
 class Map(object):
 
 	def __init__(self, width, height):
@@ -142,23 +186,90 @@ class Map(object):
 		self.height = height
 		self.tiles  = []
 
-		for x in range(width):
+		for x in range(self.width):
 			_rowx = []
-			for y in range(height):
+			for y in range(self.height):
 				_rowx.append(Tile(x, y))
 			self.tiles.append(_rowx)
 
+		self.generate_from_perlin_noise()
+		self.smooth_map()
+
+	def generate_from_perlin_noise(self):
+		PNFactory = perlinNoise.PerlinNoiseFactory(2, octaves=4, tile=(), unbias=True)
+
+		noise = []
+		for x in range(self.width):
+			noise.append([])
+			for y in range(self.height):
+				noise_value = PNFactory(float(x)/self.width,float(y)/self.height)
+				noise[x].append(noise_value)
+				# print(noise_value)
+
+
+		def flatten(seq):
+			for el in seq:
+				if isinstance(el, list):
+					yield from flatten(el)
+				else:
+					yield el
+
+		new_noise = []
+		for x in range(len(noise)):
+			new_noise.append(utils.normalise_list2(noise[x], min(flatten(noise)), max(flatten(noise))))
+		noise = new_noise
+
+		for x in range(self.width):
+			for y in range(self.height):
+				# print(noise[x][y])
+				self.tiles[x][y].info["noise"] = noise[x][y]
+				self.tiles[x][y].set_type_from_noise()
+
+	def get_neighbours_coord(self, pos):
+		res = []
+		if pos[0] + 1 < self.width:
+			res.append((pos[0] + 1, pos[1]))
+		if pos[0] - 1 >= 0:
+			res.append((pos[0] - 1, pos[1]))
+		if pos[1] + 1 < self.height:
+			res.append((pos[0], pos[1] + 1))
+		if pos[1] - 1 >= 0:
+			res.append((pos[0], pos[1] - 1))
+		return res
+
+	def smooth_map(self):
+		for x in range(self.width):
+			for y in range(self.height):
+				t = self.tiles[x][y]
+				nposlis = self.get_neighbours_coord((x, y))
+				neigh_types = []
+				for npos in nposlis:
+					neigh_types.append(self.tiles[npos[0]][npos[1]].type)
+
+				if len(neigh_types) > 0: 
+					if len(set(neigh_types)) <= 1 and t.type != neigh_types[0]:
+						t.type = neigh_types[0]
 
 class Tile(object):
 
 	WATER     = 0
 	PLAINS    = 1
 	MOUNTAINS = 2
-	TYPES = [WATER, PLAINS, MOUNTAINS]
+	HILLS     = 3
+	DEEPWATER = 4
+	PEAKS     = 5
+	DESERT    = 6
+
+	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT]
+
 	TYPES_STR = {
-		WATER:"WATER",
-		PLAINS:"PLAINS",
-		MOUNTAINS:"MOUNTAINS"
+		WATER     : "WATER",
+		PLAINS    : "PLAINS",
+		MOUNTAINS : "MOUNTAINS",
+		HILLS     : "HILLS",
+		DEEPWATER : "DEEPWATER",
+		PEAKS     : "PEAKS",
+		DESERT    : "DESERT"
 	}
 
 	def __init__(self, x, y):
@@ -166,6 +277,28 @@ class Tile(object):
 		self.y = y
 
 		self.type = np.random.choice(Tile.TYPES)
+
+		self.info = {}
+		self.info["color"] = (0,0,0)
+
+	def set_type_from_noise(self):
+		if not self.info["noise"]:
+			return
+
+		if self.info["noise"] < 0.1:
+			self.type = Tile.DEEPWATER
+		elif self.info["noise"] < 0.25:
+			self.type = Tile.WATER
+		elif self.info["noise"] < 0.27:
+			self.type = Tile.DESERT
+		elif self.info["noise"] < 0.45:
+			self.type = Tile.PLAINS
+		elif self.info["noise"] < 0.65:
+			self.type = Tile.HILLS
+		elif self.info["noise"] < 0.85:
+			self.type = Tile.MOUNTAINS
+		else:
+			self.type = Tile.PEAKS
 
 class Location(object):
 
@@ -458,9 +591,6 @@ class Community(object):
 		for r in RESSOURCES:
 			self.ressources_prev_net_worth[r] = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
 
-
-		# print(self.food_consumption_per_pop)
-
 	def a_week_passed(self):
 		
 		# Update pops
@@ -471,10 +601,6 @@ class Community(object):
 		brf_space = 0
 		if self.space_used < (self.location.space*0.75):
 			brf_space = (1 - (self.space_used / self.location.space)) * 0.5
-		# try:
-		# 	brf_space = ((self.location.space*0.5) / self.space_used)
-		# except ZeroDivisionError:
-		# 	brf_space = 0
 		brf_wealth = (self.ressource_stockpile[WEALTH]/1000.0)
 		brf_happ = 0
 		if self.happiness > 50:
@@ -484,10 +610,6 @@ class Community(object):
 		# brf_food = self.food_shortage
 
 		self.actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food + self.randomness_of_life["birth_rate_factor"]))
-
-		# if self.food_shortage > 0:
-		# 	actual_birth_rate = actual_birth_rate * (1.0/self.food_shortage)
-
 
 		# dr increases as accumulated wealth decreases
 		# base_death_rate = 1.91
@@ -516,12 +638,6 @@ class Community(object):
 			self.population[race] = (float(self.population[race]) * (1 + (self.net_growth_rate/100.0)))
 		
 		self.space_used = self.get_total_pop() / 100.0
-
-		# if self.ressources_prev_net_worth[FOOD] > 0:
-		# 	self.food_consumption_per_pop = min(self.food_consumption_per_pop + self.food_consumption_per_pop_step, self.food_consumption_per_pop_max)
-		# elif self.ressources_prev_net_worth[FOOD] <= 0:		
-		# 	self.food_consumption_per_pop = max(self.food_consumption_per_pop - self.food_consumption_per_pop_step, self.food_consumption_per_pop_min)
-
 
 	def a_month_passed(self):
 		pass
