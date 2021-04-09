@@ -19,8 +19,10 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mymodel = model.Model(map_size=500)
-	mymodel.test_model_init()
+	mp = 500
+
+	mymodel = model.Model(map_size=mp)
+	mymodel.random_model_map_basic(mp)
 	thread = model.SimThread(mymodel)
 	graph = mymodel.generate_graph()
 	display = view.UserInterface(mymodel, graph)
@@ -72,7 +74,7 @@ def main():
 					thread.pause()
 
 					mymodel.reset()
-					mymodel.test_model_init()
+					mymodel.random_model_map_basic(mp)
 					graph = mymodel.generate_graph()
 					display.graph = graph
 					display.reset()

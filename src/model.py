@@ -146,6 +146,19 @@ class Model(object):
 
 		self.is_init = True
 
+	def random_model_map_basic(self, scale):
+		# Scale indicate the highest coordinate value, so distance comparison are coherent
+
+		# Spot valid position on the map
+		# Valid positions must on land, not too close to each other.
+
+		# Generated one location per position
+		# update Location.map_position accordingly
+
+		# Generate communities
+
+		pass
+
 	def to_string_summary(self):
 		lines = []
 		for comm in self.communities:
@@ -327,6 +340,8 @@ class Location(object):
 		self.attractiveness = 0
 		# Base space to welcome pops, 1 space <=> 100 pops
 		self.space = 0
+		# Coordinates on a map
+		self.map_position = (0, 0)
 
 		self.base_production   = {}
 		self.base_storage      = {}
