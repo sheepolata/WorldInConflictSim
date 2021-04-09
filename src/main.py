@@ -19,7 +19,7 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mp = 300
+	mp = 500
 
 	mymodel = model.Model(map_size=mp)
 	mymodel.random_model_map_basic(mp)

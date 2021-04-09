@@ -150,7 +150,7 @@ class UserInterface(gd.GraphDisplay):
 		for x in range(self.model.map.width):
 			print("Draw to map image, column {}".format(x), end='\r', flush=True)
 			for y in range(self.model.map.height):
-				t = self.model.map.tiles[x][y]
+				t = self.model.map.get_tile(x, y)
 				c = UserInterface.TILE_TYPE_COLORS[t.type]
 
 				_x = x * tw

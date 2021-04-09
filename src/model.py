@@ -83,8 +83,13 @@ class Map(object):
 			self.tiles.append(_rowx)
 		print("")
 
+		# self.tiles = [[Tile()] * self.height] * self.width
+
 		self.generate_from_perlin_noise()
 		self.smooth_map()
+
+	def get_tile(self, x, y):
+		return self.tiles[x][y]
 
 	def generate_from_perlin_noise(self):
 		PNFactory = perlinNoise.PerlinNoiseFactory(2, octaves=8, tile=(), unbias=True)
@@ -136,15 +141,15 @@ class Map(object):
 		for x in range(self.width):
 			print("Setting noise for tile, column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
-				self.tiles[x][y].info["noise"] = noise[x][y]
-				self.tiles[x][y].info["forest_noise"] = forest_noise[x][y]
-				self.tiles[x][y].info["desert_noise"] = desert_noise[x][y]
+				self.get_tile(x, y).info["noise"] = noise[x][y]
+				self.get_tile(x, y).info["forest_noise"] = forest_noise[x][y]
+				self.get_tile(x, y).info["desert_noise"] = desert_noise[x][y]
 		print("")
 			
 		for x in range(self.width):
 			print("Setting type for tile, column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
-				self.tiles[x][y].set_type_from_noise()
+				self.get_tile(x, y).set_type_from_noise()
 		print("")
 
 	def get_neighbours_coord(self, pos):
@@ -171,11 +176,11 @@ class Map(object):
 		for x in range(self.width):
 			print("Smoothing map column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
-				t = self.tiles[x][y]
+				t = self.get_tile(x, y)
 				nposlis = self.get_neighbours_coord((x, y))
 				neigh_types = []
 				for npos in nposlis:
-					neigh_types.append(self.tiles[npos[0]][npos[1]].type)
+					neigh_types.append(self.get_tile(npos[0], npos[1]).type)
 
 				if len(neigh_types) > 0: 
 					if len(set(neigh_types)) <= 1 and t.type != neigh_types[0]:
@@ -208,7 +213,7 @@ class Tile(object):
 		FOREST    : "FOREST"
 	}
 
-	def __init__(self, x, y):
+	def __init__(self, x=-1, y=-1):
 		self.x = x
 		self.y = y
 
@@ -854,16 +859,16 @@ class Model(object):
 			data = {}
 			for pa in pos_around:
 				try:
-					data[self.map.tiles[pa[0]][pa[1]].type] += 1
+					data[self.map.get_tile(pa[0], pa[1]).type] += 1
 				except KeyError:
-					data[self.map.tiles[pa[0]][pa[1]].type] = 1
+					data[self.map.get_tile(pa[0], pa[1]).type] = 1
 
 			if Tile.WATER in data.keys() or Tile.DEEPWATER in data.keys():
 				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[Tile.WATER]
 			else:
 				_t = max(data, key=data.get)
 				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[_t]
-			# _t = self.map.tiles[p[0]][p[1]].type
+			# _t = self.map.get_tile(p[0], p[1]).type
 
 			location = Location(archetype, location_names[i][:-1])
 			location.map_position = p
@@ -937,7 +942,7 @@ class Model(object):
 
 	def generate_graph_delaunay_basic(self):
 
-		print("Generating Graph - Nodes only")
+		print("Generating Graph")
 
 		g = graph.CityGraph()
 
