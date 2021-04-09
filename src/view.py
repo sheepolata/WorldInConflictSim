@@ -10,13 +10,14 @@ import pygame
 import console
 import ggraph
 import graphdisplay as gd
+import delaunaytriangulation as dt
 import utils
 import model
 
 LOCATION_COLORS = {
-	"PLAINS"    : (86, 125, 70),
-	"MOUNTAINS" : (139,69,19),
-	"SEASIDE"   : (15,94,156)
+	model.Location.PLAINS    : (86, 125, 70),
+	model.Location.MOUNTAINS : (139,69,19),
+	model.Location.SEASIDE   : (15,94,156)
 }
 
 class UserInterface(gd.GraphDisplay):
@@ -25,10 +26,12 @@ class UserInterface(gd.GraphDisplay):
 		model.Tile.DEEPWATER : (15,94,156),
 		model.Tile.WATER     : (28,163,236),
 		model.Tile.DESERT    : (194,178,128),
+		model.Tile.BEACH     : (194,178,128),
 		model.Tile.PLAINS    : (0, 168, 0),
 		model.Tile.HILLS     : (205,133,63),
 		model.Tile.MOUNTAINS : (160,82,45),
-		model.Tile.PEAKS     : (128,0,0)
+		model.Tile.PEAKS     : (128,0,0),
+		model.Tile.FOREST    : (85,107,47)
 	}
 
 	def __init__(self, model, graph, fps=60):
@@ -43,19 +46,31 @@ class UserInterface(gd.GraphDisplay):
 
 		print("Creating UserInterface")
 
-		self.set_node_colors()
 		self.save_map_image()
+		self.init_rect_for_nodes()
+		self.set_node_graphic_info()
 
 	def reset(self):
-		self.set_node_colors()
 		self.save_map_image()
+		self.init_rect_for_nodes()
+		self.set_node_graphic_info()
 
-	def set_node_colors(self):
+	def reset_nodes_only(self):
+		self.init_rect_for_nodes()
+		self.set_node_graphic_info()
+
+	def set_node_graphic_info(self):
 		if self.graph != None:
 			for i, loc_node in enumerate(self.graph.nodes):
-				print("Set node color {}/{}".format(i,len(self.graph.nodes)), end='\r', flush=True)
-				_x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
-				_y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
+				print("Set node graphic info {}/{}".format(i,len(self.graph.nodes)), end='\r', flush=True)
+				
+				# _x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
+				# _y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
+				if loc_node.info["rect"] != None:
+					_x = loc_node.info["rect"].center[0]
+					_y = loc_node.info["rect"].center[1]
+				else:
+					_x = 0; _y = 0;
 				loc_node.info["pos"] = (_x, _y)
 
 				loc_node.info["color"] = LOCATION_COLORS[loc_node.info["location"].archetype]
@@ -65,7 +80,7 @@ class UserInterface(gd.GraphDisplay):
 		if self.graph != None:
 			for loc_node in self.graph.nodes:
 				if self.selected == loc_node:
-					loc_node.info["outline_color"] = (0, 255, 0)
+					loc_node.info["outline_color"] = (255, 255, 255)
 				else:
 					loc_node.info["outline_color"] = (0, 0, 0)
 
@@ -100,6 +115,23 @@ class UserInterface(gd.GraphDisplay):
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
 
+	def init_rect_for_nodes(self):
+		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
+		ceiled_th = math.ceil(self.graph_surface_size[1] / self.model.map.height)
+
+		tw = self.graph_surface_size[0] / self.model.map.width
+		th = self.graph_surface_size[1] / self.model.map.height
+
+		tile_size = (ceiled_tw, ceiled_th)
+
+		for n in self.graph.nodes:
+			loc = n.info["location"]
+			mp = loc.map_position
+			_x = mp[0] * tw
+			_y = mp[1] * th
+			_pos = (_x, _y)
+			n.info["rect"] = pygame.Rect(_pos, tile_size)
+
 	def save_map_image(self):
 		print("Save map_image")
 
@@ -113,6 +145,8 @@ class UserInterface(gd.GraphDisplay):
 
 		tile_size = (ceiled_tw, ceiled_th)
 
+		# self.init_rect_for_nodes()
+
 		for x in range(self.model.map.width):
 			print("Draw to map image, column {}".format(x), end='\r', flush=True)
 			for y in range(self.model.map.height):
@@ -123,7 +157,9 @@ class UserInterface(gd.GraphDisplay):
 				_y = y * th
 				_pos = (_x, _y)
 
-				pygame.draw.rect(temp_surface, c, pygame.Rect(_pos, tile_size))
+				_rect = pygame.Rect(_pos, tile_size)
+
+				pygame.draw.rect(temp_surface, c, _rect)
 		print("")
 
 		pygame.image.save(temp_surface, self.map_image_file)
@@ -143,26 +179,6 @@ class UserInterface(gd.GraphDisplay):
 		super(UserInterface, self).blit_surfaces()
 
 		super(UserInterface, self).pygame_update_and_tick()
-
-class CityNode(ggraph.gNode):
-
-	def __init__(self, _id):
-		super(CityNode, self).__init__(_id)
-
-		self.info["pos"]    = (0, 0)
-		self.info["radius"] = 8
-		self.info["color"] = (255, 255, 255)
-
-		self.info["location"] = None
-		self.info["community"] = None
-
-class CityGraph(ggraph.gGraph):
-
-	def __init__(self):
-		super(CityGraph, self).__init__(node_type=CityNode, oriented=False)
-
-		self._draw_delaunay = False
-
 
 class myDatetime(object):
 

@@ -126,3 +126,11 @@ class LoopingThread(threading.Thread):
 
     def stop(self):
         self._stop = True
+
+
+def flatten(seq):
+    for el in seq:
+        if isinstance(el, list):
+            yield from flatten(el)
+        else:
+            yield el

@@ -19,13 +19,20 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mp = 500
+	mp = 300
 
 	mymodel = model.Model(map_size=mp)
 	mymodel.random_model_map_basic(mp)
 	thread = model.SimThread(mymodel)
-	graph = mymodel.generate_graph()
+
+	graph = mymodel.generate_graph_delaunay_basic()
+
 	display = view.UserInterface(mymodel, graph)
+	
+
+	# graph.setDelaunay()
+	# graph._draw_delaunay = True
+	# graph.computeDelaunay()
 
 	display.set_log(myglobals.LogConsole)
 	display.set_info(myglobals.InfoConsole)
@@ -70,14 +77,25 @@ def main():
 				if event.button == 3:
 					pass
 			elif event.type == pygame.KEYDOWN:
-				if event.key == K_r:
+				if event.key == K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
+					thread.pause()
+
+					mymodel.reset()
+					mymodel.set_map()
+					mymodel.random_model_map_basic(mp)
+					graph = mymodel.generate_graph_delaunay_basic()
+					display.graph = graph
+					display.reset()
+
+					thread.pause()
+				elif event.key == K_r:
 					thread.pause()
 
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)
-					graph = mymodel.generate_graph()
+					graph = mymodel.generate_graph_delaunay_basic()
 					display.graph = graph
-					display.reset()
+					display.reset_nodes_only()
 
 					thread.pause()
 				if event.key == K_RIGHT:
@@ -94,7 +112,7 @@ def main():
 					pass
 
 		display.update_info_tab()
-		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause; R to reset)".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
+		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause; (Ctrl+)R to reset (all))".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
 
 		display.main_loop_end()
 

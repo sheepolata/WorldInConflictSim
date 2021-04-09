@@ -1,8 +1,17 @@
 # WorldInConflictSim
 
-## Upcoming updates
+## News and DevLogs
 
-Basic GUI in place, using the GraphEngine.
+### 09/04/2021
+
+Map has now 3 Perlin noise layers, one for the basic terrain, one for the forests and one for the deserts. Much slower generation because of the 3 Perlin noise layers.
+This way, the terrain looks much better, but still not exactly what I want.
+
+Communities and locations are now places according to the map, and the graph is generated with a Delaunay triangulation to set the neighbours, with long distance links cut. It can occur that some cities are cut from the rest. No solution for now.
+
+### Older news
+
+GUI in place, using the GraphEngine.
 
 Nodes are selectable to display more info on them.
 
@@ -11,9 +20,7 @@ Render optimisation is done, now stable 60fps even with a grid sized 1000x1000 (
 The map is drawn to an image file (data/fx/map.png) and this image is redrawn each loop. MUCH MORE efficient than drawing each tile as a rectangle.
 To update the map mid-simulation, need to call `UserInterface.save_map_image()` after any modification to the grid model.
 
-Map is implemented as a grid, and is displayed. It is generated using a Perlin noise generator. Very simple, generate good region-size maps, but is limited for continent/country generation. Will need to change it eventually, but the grid structure will stay.
-
-Next step is implementing auto generation of locations and communities, according to the map.
+Map is implemented as a grid, and is displayed. It is generated using Perlin noise generator. Very simple, generate good region-size maps, but is limited for continent/country generation. Will need to change it eventually, but the grid structure will stay.
 
 For now, everything will go through the `main` branch. Will see according to the development of the project if several branches are needed.
 

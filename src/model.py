@@ -10,7 +10,7 @@ import csv
 import threading
 
 import utils
-import view
+import graph
 import perlinNoise
 
 # 0.01 consumed per week per pop
@@ -26,7 +26,6 @@ RESSOURCES_STR = {
 	MATERIALS:"MATERIALS",
 	WEALTH:"WEALTH"
 }
-LOCATION_ARCHETYPES = ["PLAINS", "MOUNTAINS", "SEASIDE"]
 
 np.random.seed(1995)
 
@@ -68,135 +67,6 @@ class SimThread(threading.Thread):
 	def pause(self):
 		self._paused = not self._paused
 
-class Model(object):
-
-	def __init__(self, map_size=20):
-		self.is_init = False
-
-		self.map_size = map_size
-
-		self.nb_location  = 0
-		self.nb_community = 0
-
-		self.locations   = []
-		self.communities = []
-
-		self.day = 0
-
-		print("Creating model")
-
-		self.map = Map(self.map_size, self.map_size)
-
-	def reset(self):
-		self.nb_location  = 0
-		self.nb_community = 0
-
-		self.locations   = []
-		self.communities = []
-
-		self.day = 0
-
-		self.map = Map(self.map_size, self.map_size)		
-
-	def loop(self):
-		if not self.is_init:
-			return
-
-		for community in self.communities:
-			community.a_day_passed()
-			if self.day%7 == 0:
-				community.a_week_passed()
-			if self.day%30 == 0:
-				community.a_month_passed()
-			if self.day%90 == 0:
-				community.a_quarter_passed()
-			if self.day%182 == 0:
-				community.a_semester_passed()
-			if self.day%365 == 0:
-				community.a_year_passed()
-
-		self.day += 1
-
-
-	def test_model_init(self):
-		self.nb_location  = 3
-		self.nb_community = 3
-
-		city_namelist = open("../data/namelists/cities.txt")
-		city_names_from_file = city_namelist.readlines()
-		city_namelist.close()
-
-		location_namelist = open("../data/namelists/locations.txt")
-		location_names_from_file = location_namelist.readlines()
-		location_namelist.close()
-
-		city_names = np.random.choice(city_names_from_file, len(LOCATION_ARCHETYPES), replace=False)
-		location_names = np.random.choice(location_names_from_file, len(LOCATION_ARCHETYPES), replace=False)
-
-		city_names = [s.title() for s in city_names]
-		location_names = [s.title() for s in location_names]
-
-		for i, archetype in enumerate(LOCATION_ARCHETYPES):
-			location = Location(archetype, location_names[i][:-1])
-			city_name = city_names[i][:-1]
-			community = Community(city_name, location, "HUMAN_CITY")
-
-			self.locations.append(location)
-			self.communities.append(community)
-
-		self.is_init = True
-
-	def random_model_map_basic(self, scale):
-		# Scale indicate the highest coordinate value, so distance comparison are coherent
-
-		# Spot valid position on the map
-		# Valid positions must on land, not too close to each other.
-
-		# Generated one location per position
-		# update Location.map_position accordingly
-
-		# Generate communities
-
-		pass
-
-	def to_string_summary(self):
-		lines = []
-		for comm in self.communities:
-			s = "{} at {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.get_total_pop(), comm.happiness)
-			lines.append(s)
-		return lines
-
-	def generate_graph(self):
-		print("Generating Graph")
-
-		g = view.CityGraph()
-
-		nodes = []
-		_id = 0
-		for l in self.locations:
-			# n = CityNode(_id)
-			n = view.CityNode(l.name)
-			n.info["location"] = l
-
-			nodes.append(n)
-
-			_id += 1
-
-		for c in self.communities:
-			for n in nodes:
-				if n.info["location"] == c.location:
-					n.info["community"] = c
-
-		for n in nodes:
-			g.addNode(n)
-
-		for n in g.nodes:
-			for n2 in g.nodes:
-				if n != n2:
-					g.addEdge(n, n2)
-
-		return g
-
 class Map(object):
 
 	def __init__(self, width, height):
@@ -217,40 +87,63 @@ class Map(object):
 		self.smooth_map()
 
 	def generate_from_perlin_noise(self):
-		PNFactory = perlinNoise.PerlinNoiseFactory(2, octaves=4, tile=(), unbias=True)
+		PNFactory = perlinNoise.PerlinNoiseFactory(2, octaves=8, tile=(), unbias=True)
+		PNFactoryForest = perlinNoise.PerlinNoiseFactory(2, octaves=8, tile=(), unbias=True)
+		PNFactoryDesert = perlinNoise.PerlinNoiseFactory(2, octaves=8, tile=(), unbias=True)
 
 		noise = []
+		forest_noise = []
+		desert_noise = []
 		for x in range(self.width):
 			print("Generating noise map column {}".format(x), end='\r', flush=True)
+
 			noise.append([])
+			forest_noise.append([])
+			desert_noise.append([])
+			
 			for y in range(self.height):
 				noise_value = PNFactory(float(x)/self.width,float(y)/self.height)
 				noise[x].append(noise_value)
-				# print(noise_value)
+
+				noise_value = PNFactoryForest(float(x)/self.width,float(y)/self.height)
+				forest_noise[x].append(noise_value)
+
+				noise_value = PNFactoryDesert(float(x)/self.width,float(y)/self.height)
+				desert_noise[x].append(noise_value)
 		print("")
 
-
-		def flatten(seq):
-			for el in seq:
-				if isinstance(el, list):
-					yield from flatten(el)
-				else:
-					yield el
-
 		new_noise = []
-		noise_min = min(flatten(noise))
-		noise_max = max(flatten(noise))
+		noise_min = min(utils.flatten(noise))
+		noise_max = max(utils.flatten(noise))
+
+		new_forest_noise = []
+		forest_noise_min = min(utils.flatten(forest_noise))
+		forest_noise_max = max(utils.flatten(forest_noise))
+
+		new_desert_noise = []
+		desert_noise_min = min(utils.flatten(desert_noise))
+		desert_noise_max = max(utils.flatten(desert_noise))
 		for x in range(len(noise)):
 			print("Normalising noise column {}".format(x), end='\r', flush=True)
 			new_noise.append(utils.normalise_list2(noise[x], noise_min, noise_max))
+			new_forest_noise.append(utils.normalise_list2(forest_noise[x], forest_noise_min, forest_noise_max))
+			new_desert_noise.append(utils.normalise_list2(desert_noise[x], desert_noise_min, desert_noise_max))
 		noise = new_noise
+		forest_noise = new_forest_noise
+		desert_noise = new_desert_noise
 		print("")
 
 		for x in range(self.width):
-			print("Setting type and noise for tile, column {}".format(x), end='\r', flush=True)
+			print("Setting noise for tile, column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
-				# print(noise[x][y])
 				self.tiles[x][y].info["noise"] = noise[x][y]
+				self.tiles[x][y].info["forest_noise"] = forest_noise[x][y]
+				self.tiles[x][y].info["desert_noise"] = desert_noise[x][y]
+		print("")
+			
+		for x in range(self.width):
+			print("Setting type for tile, column {}".format(x), end='\r', flush=True)
+			for y in range(self.height):
 				self.tiles[x][y].set_type_from_noise()
 		print("")
 
@@ -265,6 +158,14 @@ class Map(object):
 		if pos[1] - 1 >= 0:
 			res.append((pos[0], pos[1] - 1))
 		return res
+
+	def get_circle_around(self, pos, rad):
+		r = []
+		for x in range(self.width):
+			for y in range(self.height):
+				if utils.distance2p(pos, (x,y)) <= rad:
+					r.append((x,y))
+		return r
 
 	def smooth_map(self):
 		for x in range(self.width):
@@ -290,8 +191,10 @@ class Tile(object):
 	DEEPWATER = 4
 	PEAKS     = 5
 	DESERT    = 6
+	BEACH     = 7
+	FOREST    = 8
 
-	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT]
+	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT, BEACH, FOREST]
 
 	TYPES_STR = {
 		WATER     : "WATER",
@@ -300,7 +203,9 @@ class Tile(object):
 		HILLS     : "HILLS",
 		DEEPWATER : "DEEPWATER",
 		PEAKS     : "PEAKS",
-		DESERT    : "DESERT"
+		DESERT    : "DESERT",
+		BEACH     : "BEACH",
+		FOREST    : "FOREST"
 	}
 
 	def __init__(self, x, y):
@@ -316,22 +221,40 @@ class Tile(object):
 		if not self.info["noise"]:
 			return
 
-		if self.info["noise"] < 0.1:
+		if self.info["noise"] < 0.05:
 			self.type = Tile.DEEPWATER
-		elif self.info["noise"] < 0.25:
+		elif self.info["noise"] < 0.17:
 			self.type = Tile.WATER
-		elif self.info["noise"] < 0.27:
-			self.type = Tile.DESERT
-		elif self.info["noise"] < 0.45:
+		elif self.info["noise"] < 0.19:
+			self.type = Tile.BEACH
+		elif self.info["noise"] < 0.70:
 			self.type = Tile.PLAINS
-		elif self.info["noise"] < 0.65:
-			self.type = Tile.HILLS
 		elif self.info["noise"] < 0.85:
+			self.type = Tile.HILLS
+		elif self.info["noise"] < 0.95:
 			self.type = Tile.MOUNTAINS
 		else:
 			self.type = Tile.PEAKS
 
+		if self.type in [Tile.PLAINS, Tile.HILLS]:
+			if self.info["forest_noise"] < 0.20:
+				self.type = Tile.FOREST
+		if self.type in [Tile.PLAINS, Tile.HILLS]:
+			if self.info["desert_noise"] < 0.20:
+				self.type = Tile.DESERT
+
 class Location(object):
+
+	PLAINS    = 0
+	MOUNTAINS = 1
+	SEASIDE   = 2
+	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE]
+
+	ARCHETYPES_STR = {
+		PLAINS : "PLAINS",
+		MOUNTAINS : "MOUNTAINS",
+		SEASIDE : "SEASIDE"
+	}
 
 	def __init__(self, archetype, name):
 
@@ -348,7 +271,7 @@ class Location(object):
 		self.bonus_per_100_pop = {}
 
 		self.archetype = archetype
-		if self.archetype == "PLAINS":
+		if self.archetype == Location.PLAINS:
 			self.base_production[FOOD] = 1.0
 			self.base_production[MATERIALS] = 0.1
 			self.base_production[WEALTH] = 0.1
@@ -366,7 +289,7 @@ class Location(object):
 			self.attractiveness = 8 + np.random.random()*4
 			self.space = 20 + np.random.random()*5
 
-		elif self.archetype == "MOUNTAINS":
+		elif self.archetype == Location.MOUNTAINS:
 
 			self.base_production[FOOD] = 0.5
 			self.base_production[MATERIALS] = 0.3
@@ -385,7 +308,7 @@ class Location(object):
 			self.attractiveness = -10 - np.random.random()*5
 			self.space = 12 + np.random.random()*5
 
-		elif self.archetype == "SEASIDE":
+		elif self.archetype == Location.SEASIDE:
 
 			self.base_production[FOOD] = 1.2
 			self.base_production[MATERIALS] = 0.1
@@ -692,7 +615,7 @@ class Community(object):
 
 	def to_string(self):
 		s = "{}\n".format(self.name)
-		s += "{}\n".format(self.location.archetype)
+		s += "{}\n".format(Location.ARCHETYPES_STR[self.location.archetype])
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
@@ -710,7 +633,7 @@ class Community(object):
 		lines = []
 
 		lines.append("{}".format(self.name))
-		lines.append("at {} ({})".format(self.location.name, self.location.archetype))
+		lines.append("at {} ({})".format(self.location.name, Location.ARCHETYPES_STR[self.location.archetype].title()))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
@@ -768,6 +691,299 @@ HUMAN = Race("Humans")
 
 RACES = [HUMAN]
 
+class Model(object):
+
+	TILE_TYPE_TO_LOCATION_ARCHETYPE = {
+		Tile.PLAINS    : Location.PLAINS,
+		Tile.FOREST    : Location.PLAINS,
+		Tile.MOUNTAINS : Location.MOUNTAINS,
+		Tile.HILLS     : Location.MOUNTAINS,
+		Tile.PEAKS     : Location.MOUNTAINS,
+		Tile.DESERT    : Location.PLAINS,
+		Tile.BEACH     : Location.SEASIDE,
+		Tile.WATER     : Location.SEASIDE,
+		Tile.DEEPWATER : Location.SEASIDE
+	}
+
+	def __init__(self, map_size=20):
+		self.is_init = False
+
+		self.map_size = map_size
+
+		self.nb_location  = 0
+		self.nb_community = 0
+
+		self.locations   = []
+		self.communities = []
+
+		self.day = 0
+
+		print("Creating model")
+
+		self.map = Map(self.map_size, self.map_size)
+
+	def reset(self):
+		self.nb_location  = 0
+		self.nb_community = 0
+
+		self.locations   = []
+		self.communities = []
+
+		self.day = 0
+
+	def set_map(self):
+		self.map = Map(self.map_size, self.map_size)		
+
+	def loop(self):
+		if not self.is_init:
+			return
+
+		for community in self.communities:
+			community.a_day_passed()
+			if self.day%7 == 0:
+				community.a_week_passed()
+			if self.day%30 == 0:
+				community.a_month_passed()
+			if self.day%90 == 0:
+				community.a_quarter_passed()
+			if self.day%182 == 0:
+				community.a_semester_passed()
+			if self.day%365 == 0:
+				community.a_year_passed()
+
+		self.day += 1
+
+
+	def test_model_init(self):
+		self.nb_location  = 3
+		self.nb_community = 3
+
+		city_namelist = open("../data/namelists/cities.txt")
+		city_names_from_file = city_namelist.readlines()
+		city_namelist.close()
+
+		location_namelist = open("../data/namelists/locations.txt")
+		location_names_from_file = location_namelist.readlines()
+		location_namelist.close()
+
+		city_names = np.random.choice(city_names_from_file, len(Location.ARCHETYPES), replace=False)
+		location_names = np.random.choice(location_names_from_file, len(Location.ARCHETYPES), replace=False)
+
+		city_names = [s.title() for s in city_names]
+		location_names = [s.title() for s in location_names]
+
+		for i, archetype in enumerate(Location.ARCHETYPES):
+			location = Location(archetype, location_names[i][:-1])
+			city_name = city_names[i][:-1]
+			community = Community(city_name, location, "HUMAN_CITY")
+
+			self.locations.append(location)
+			self.communities.append(community)
+
+		self.is_init = True
+
+	def random_model_map_basic(self, scale):
+		# Scale indicate the highest coordinate value, so distance comparison are coherent
+
+		#Function to check if new_pos is valid according to existing chosen positions
+		def check_new_position(new_pos, pos_list, min_dist):
+			for p in pos_list:
+				d = utils.distance2p(new_pos, p)
+				if d < min_dist:
+					return False
+			return True
+
+		# Spot valid position on the map
+		# Valid positions must on land, not too close to each other.
+
+		chosen_positions = []
+		max_location = 15
+
+		# i = x + width*y
+		# x = i % width
+		# y = i // width
+		flatten_tiles = list(utils.flatten(self.map.tiles))
+
+		_continue = True
+
+		while _continue and len(chosen_positions) < max_location:
+			print("{} chosen positions".format(len(chosen_positions)), end='\r', flush=True)
+			# Choose a random tile
+			random_i = np.random.randint(0, len(flatten_tiles))
+			new_pos = (flatten_tiles[random_i].x, flatten_tiles[random_i].y)
+			# Get a new one until conditions are OK:
+			# 		- Tile type is *not* WATER, DEEPWATER or PEAKS
+			#		- New tile position is well positionned compared to chosen positions
+			#		- Try x time until abandonning
+			_try = 0; _max_try = 100
+			while (	(
+						flatten_tiles[random_i].type in [Tile.WATER, Tile.DEEPWATER, Tile.PEAKS] 
+						or not check_new_position(new_pos, chosen_positions, scale/5)
+					)
+					and _try < _max_try):
+				# print("Trying for new pos... Attempt {}".format(_try), end='\r', flush=True)
+				random_i = np.random.randint(0, len(flatten_tiles))
+				new_pos = (flatten_tiles[random_i].x, flatten_tiles[random_i].y)
+				_try += 1
+			# print("")
+
+			if _try < _max_try:
+				# When tile chosen is OK, store it as 2D coordinates
+				chosen_positions.append(new_pos)
+			else:
+				# Else break the loop
+				_continue = False
+		print("")
+
+		# Generated one location per position
+		# update Location.map_position accordingly
+
+
+		location_namelist = open("../data/namelists/locations.txt")
+		location_names_from_file = location_namelist.readlines()
+		location_namelist.close()
+
+		location_names = np.random.choice(location_names_from_file, len(chosen_positions), replace=False)
+		location_names = [s.title() for s in location_names]
+
+		for i, p in enumerate(chosen_positions):
+			print("Set city archetype for position {}".format(i), end='\r', flush=True)
+
+			pos_around = self.map.get_circle_around(p, self.map_size*0.02)
+
+			data = {}
+			for pa in pos_around:
+				try:
+					data[self.map.tiles[pa[0]][pa[1]].type] += 1
+				except KeyError:
+					data[self.map.tiles[pa[0]][pa[1]].type] = 1
+
+			if Tile.WATER in data.keys() or Tile.DEEPWATER in data.keys():
+				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[Tile.WATER]
+			else:
+				_t = max(data, key=data.get)
+				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[_t]
+			# _t = self.map.tiles[p[0]][p[1]].type
+
+			location = Location(archetype, location_names[i][:-1])
+			location.map_position = p
+
+			self.locations.append(location)
+			self.nb_location += 1
+		print("")
+
+
+		# Generate communities
+		city_namelist = open("../data/namelists/cities.txt")
+		city_names_from_file = city_namelist.readlines()
+		city_namelist.close()
+
+		city_names = np.random.choice(city_names_from_file, len(self.locations), replace=False)
+		city_names = [s.title() for s in city_names]
+
+		for i, loc in enumerate(self.locations):
+			community = Community(city_names[i][:-1], loc, "HUMAN_CITY")
+
+			self.communities.append(community)
+			self.nb_community += 1
+
+
+		self.is_init = True
+
+	def to_string_summary(self):
+		lines = []
+		for comm in self.communities:
+			s = "{} at {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.get_total_pop(), comm.happiness)
+			lines.append(s)
+		return lines
+
+	def get_location_by_position(self, pos):
+		for l in self.locations:
+			if l.map_position == pos:
+				return l
+		return None
+
+	def generate_simple_connected_graph(self):
+		print("Generating Graph")
+
+		g = graph.CityGraph()
+
+		nodes = []
+		_id = 0
+		for l in self.locations:
+			# n = CityNode(_id)
+			# n = graph.CityNode(l.name)
+			n = graph.CityNode(_id)
+			n.info["location"] = l
+
+			nodes.append(n)
+
+			_id += 1
+
+		for c in self.communities:
+			for n in nodes:
+				if n.info["location"] == c.location:
+					n.info["community"] = c
+
+		for n in nodes:
+			g.addNode(n)
+
+		for n in g.nodes:
+			if len(set(g.nodes)-set([n])) != 0:
+				g.addEdge(n, np.random.choice(list(set(g.nodes)-set([n]))), add_missing_nodes=False)
+			g.addNode(n)
+
+		return g
+
+	def generate_graph_delaunay_basic(self):
+
+		print("Generating Graph - Nodes only")
+
+		g = graph.CityGraph()
+
+		nodes = []
+		_id = 0
+		for l in self.locations:
+			# n = CityNode(_id)
+			# n = graph.CityNode(l.name)
+			n = graph.CityNode(_id)
+			n.info["location"] = l
+
+			nodes.append(n)
+
+			_id += 1
+
+		for c in self.communities:
+			for n in nodes:
+				if n.info["location"] == c.location:
+					n.info["community"] = c
+
+		for n in nodes:
+			g.addNode(n)
+
+		g.setDelaunay(dcl=self.map_size*0.66)
+		# g._draw_delaunay = True
+		g.computeDelaunay()
+
+		for ni in g.nodes:
+			for j in g.triangulation.get_neighbours_of(ni.id):
+				nj = g.getNodeByID(j)
+				if ni.id != nj.id:
+					g.addEdge(ni, nj, add_missing_nodes=False)
+
+		for n in g.nodes:
+			if len(n.getNeighbours()) == 0:
+				data = {}
+				for n2 in g.nodes:
+					if n.id != n2.id:
+						data[n2] = utils.distance2p(n.info["location"].map_position, n2.info["location"].map_position)
+				m = min(data, key=data.get)
+				g.addEdge(n, m, add_missing_nodes=False)
+
+		return g
+
+
+
 if __name__=='__main__':
 
 	# random.seed(1995)
@@ -776,7 +992,7 @@ if __name__=='__main__':
 
 	nb_run = 1
 
-	for i, archetype in enumerate(LOCATION_ARCHETYPES):
+	for i, archetype in enumerate(Location.ARCHETYPES):
 
 		run_id = i
 
@@ -829,7 +1045,7 @@ if __name__=='__main__':
 
 		data_file.close()
 
-	for i, archetype in enumerate(LOCATION_ARCHETYPES):
+	for i, archetype in enumerate(Location.ARCHETYPES):
 
 		filename = "../data/results/data{}{}".format(i, archetype)
 
