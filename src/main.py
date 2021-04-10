@@ -19,7 +19,7 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mp = 150
+	mp = 50
 	gen_roads = mp <= 150
 
 

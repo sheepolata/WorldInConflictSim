@@ -965,6 +965,7 @@ class Model(object):
 		if gen_roads:
 			_drawn = []
 			for n in g.nodes:
+				n.info["roads"] = {}
 				print("Generating roads for node {}".format(n.id), end='\n', flush=False)
 				for e in n.edges:
 					print("To node {}".format(e.end.id), end='\n', flush=False)
@@ -976,8 +977,10 @@ class Model(object):
 
 					path = pathfinding.astar(_start, _end, self.map, dn=True)
 
-					for t in path:
-						t.has_road = True
+					n.info["roads"][e.end.id] = path
+					
+					# for t in path:
+					# 	t.has_road = True
 
 					_drawn.append((n, e.end))
 			print("")

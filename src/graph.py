@@ -22,6 +22,13 @@ class CityNode(ggraph.gNode):
 
 		self.info["rect"] = None
 
+	def draw_roads(self, surface, color):
+		pass
+
+	def drawNode(self, surface, color, outline_color=(255, 255, 255)):
+		super(CityNode, self).drawNode(surface, color, outline_color=outline_color)
+		self.draw_roads(surface, color)
+
 class CityGraph(ggraph.gGraph):
 
 	def __init__(self):
