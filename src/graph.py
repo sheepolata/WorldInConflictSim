@@ -28,6 +28,9 @@ class CityGraph(ggraph.gGraph):
 		super(CityGraph, self).__init__(node_type=CityNode, oriented=False)
 
 		self._draw_delaunay = False
+		self._draw_nodes = True
+		self._draw_edges = True
+
 
 	def get_node_by_location(self, loc):
 		for n in self.nodes:
@@ -52,3 +55,24 @@ class CityGraph(ggraph.gGraph):
 			dict_pos[n.id] = n.info["location"].map_position
 
 		self.triangulation.update(new_positions=dict_pos)
+
+	def draw(self, surface):
+		if self._draw_edges:
+			for n in self.nodes:
+				color = (204, 204, 204)
+				n.drawEdges(surface, color)
+
+		if self._draw_nodes:
+			for n in self.nodes:
+				try:
+					color = n.info["color"]
+				except KeyError:
+					color = (255, 255, 255)
+				try:
+					out_color = n.info["outline_color"]
+					n.drawNode(surface, color, outline_color=out_color)
+				except KeyError:
+					n.drawNode(surface, color)
+		
+		if self._draw_delaunay:
+			self.drawDelaunay(surface, (0, 0, 255))

@@ -19,13 +19,16 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mp = 500
+	mp = 150
+	gen_roads = mp <= 150
+
 
 	mymodel = model.Model(map_size=mp)
 	mymodel.random_model_map_basic(mp)
 	thread = model.SimThread(mymodel)
 
-	graph = mymodel.generate_graph_delaunay_basic()
+	graph = mymodel.generate_graph_delaunay_basic(gen_roads)
+	# graph._draw_edges = not gen_roads
 
 	display = view.UserInterface(mymodel, graph)
 	
@@ -83,7 +86,7 @@ def main():
 					mymodel.reset()
 					mymodel.set_map()
 					mymodel.random_model_map_basic(mp)
-					graph = mymodel.generate_graph_delaunay_basic()
+					graph = mymodel.generate_graph_delaunay_basic(gen_roads)
 					display.graph = graph
 					display.reset()
 
@@ -93,9 +96,10 @@ def main():
 
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)
-					graph = mymodel.generate_graph_delaunay_basic()
+					graph = mymodel.generate_graph_delaunay_basic(gen_roads)
 					display.graph = graph
-					display.reset_nodes_only()
+					# display.reset_nodes_only()
+					display.reset()
 
 					thread.pause()
 				if event.key == K_RIGHT:
@@ -104,6 +108,8 @@ def main():
 					thread.decrease_speed()
 				if event.key == K_SPACE:
 					thread.pause()
+				if event.key == K_F1:
+					graph._draw_edges = not graph._draw_edges
 				if event.key == K_s:
 					pass
 				if event.key == K_p:

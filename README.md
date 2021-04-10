@@ -2,6 +2,13 @@
 
 ## News and DevLogs
 
+### 11/04/2021
+
+Add road generation on the map, using A\* implemenation on the Map. Quite inefficient with large sized maps, recommended with map size 150 max. Higher values will yield in very long computation time for A\*.
+Will think of an improvement at some point.
+
+Created a parameters.py to hold all enumerations and diverse parameters.
+
 ### 09/04/2021
 
 Map has now 3 Perlin noise layers, one for the basic terrain, one for the forests and one for the deserts. Much slower generation because of the 3 Perlin noise layers.

@@ -12,6 +12,8 @@ import threading
 import utils
 import graph
 import perlinNoise
+import pathfinding
+import parameters as params
 
 # 0.01 consumed per week per pop
 FOOD      = 0
@@ -152,7 +154,7 @@ class Map(object):
 				self.get_tile(x, y).set_type_from_noise()
 		print("")
 
-	def get_neighbours_coord(self, pos):
+	def get_neighbours_of(self, pos, diag_neigh=False):
 		res = []
 		if pos[0] + 1 < self.width:
 			res.append((pos[0] + 1, pos[1]))
@@ -162,6 +164,17 @@ class Map(object):
 			res.append((pos[0], pos[1] + 1))
 		if pos[1] - 1 >= 0:
 			res.append((pos[0], pos[1] - 1))
+
+		if diag_neigh:
+			if pos[0] + 1 < self.width and pos[1] + 1 < self.height:
+				res.append((pos[0] + 1, pos[1] + 1))
+			if pos[0] - 1 >= 0 and pos[1] - 1 >= 0:
+				res.append((pos[0] - 1, pos[1] - 1))
+			if pos[0] - 1 >= 0 and pos[1] + 1 < self.height:
+				res.append((pos[0] - 1, pos[1] + 1))
+			if pos[0] + 1 < self.width and pos[1] - 1 >= 0:
+				res.append((pos[0] + 1, pos[1] - 1))
+
 		return res
 
 	def get_circle_around(self, pos, rad):
@@ -177,7 +190,7 @@ class Map(object):
 			print("Smoothing map column {}".format(x), end='\r', flush=True)
 			for y in range(self.height):
 				t = self.get_tile(x, y)
-				nposlis = self.get_neighbours_coord((x, y))
+				nposlis = self.get_neighbours_of((x, y))
 				neigh_types = []
 				for npos in nposlis:
 					neigh_types.append(self.get_tile(npos[0], npos[1]).type)
@@ -189,77 +202,47 @@ class Map(object):
 
 class Tile(object):
 
-	WATER     = 0
-	PLAINS    = 1
-	MOUNTAINS = 2
-	HILLS     = 3
-	DEEPWATER = 4
-	PEAKS     = 5
-	DESERT    = 6
-	BEACH     = 7
-	FOREST    = 8
-
-	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT, BEACH, FOREST]
-
-	TYPES_STR = {
-		WATER     : "WATER",
-		PLAINS    : "PLAINS",
-		MOUNTAINS : "MOUNTAINS",
-		HILLS     : "HILLS",
-		DEEPWATER : "DEEPWATER",
-		PEAKS     : "PEAKS",
-		DESERT    : "DESERT",
-		BEACH     : "BEACH",
-		FOREST    : "FOREST"
-	}
-
 	def __init__(self, x=-1, y=-1):
 		self.x = x
 		self.y = y
 
-		self.type = np.random.choice(Tile.TYPES)
+		self.type = np.random.choice(params.TileParams.TYPES)
 
 		self.info = {}
 		self.info["color"] = (0,0,0)
+
+		self.has_road = False
+
+	def get_type(self):
+		return self.type
 
 	def set_type_from_noise(self):
 		if not self.info["noise"]:
 			return
 
 		if self.info["noise"] < 0.05:
-			self.type = Tile.DEEPWATER
+			self.type = params.TileParams.DEEPWATER
 		elif self.info["noise"] < 0.17:
-			self.type = Tile.WATER
+			self.type = params.TileParams.WATER
 		elif self.info["noise"] < 0.19:
-			self.type = Tile.BEACH
+			self.type = params.TileParams.BEACH
 		elif self.info["noise"] < 0.70:
-			self.type = Tile.PLAINS
+			self.type = params.TileParams.PLAINS
 		elif self.info["noise"] < 0.85:
-			self.type = Tile.HILLS
+			self.type = params.TileParams.HILLS
 		elif self.info["noise"] < 0.95:
-			self.type = Tile.MOUNTAINS
+			self.type = params.TileParams.MOUNTAINS
 		else:
-			self.type = Tile.PEAKS
+			self.type = params.TileParams.PEAKS
 
-		if self.type in [Tile.PLAINS, Tile.HILLS]:
+		if self.type in [params.TileParams.PLAINS, params.TileParams.HILLS]:
 			if self.info["forest_noise"] < 0.20:
-				self.type = Tile.FOREST
-		if self.type in [Tile.PLAINS, Tile.HILLS]:
+				self.type = params.TileParams.FOREST
+		if self.type in [params.TileParams.PLAINS, params.TileParams.HILLS]:
 			if self.info["desert_noise"] < 0.20:
-				self.type = Tile.DESERT
+				self.type = params.TileParams.DESERT
 
 class Location(object):
-
-	PLAINS    = 0
-	MOUNTAINS = 1
-	SEASIDE   = 2
-	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE]
-
-	ARCHETYPES_STR = {
-		PLAINS : "PLAINS",
-		MOUNTAINS : "MOUNTAINS",
-		SEASIDE : "SEASIDE"
-	}
 
 	def __init__(self, archetype, name):
 
@@ -276,7 +259,7 @@ class Location(object):
 		self.bonus_per_100_pop = {}
 
 		self.archetype = archetype
-		if self.archetype == Location.PLAINS:
+		if self.archetype == params.LocationParams.PLAINS:
 			self.base_production[FOOD] = 1.0
 			self.base_production[MATERIALS] = 0.1
 			self.base_production[WEALTH] = 0.1
@@ -294,7 +277,7 @@ class Location(object):
 			self.attractiveness = 8 + np.random.random()*4
 			self.space = 20 + np.random.random()*5
 
-		elif self.archetype == Location.MOUNTAINS:
+		elif self.archetype == params.LocationParams.MOUNTAINS:
 
 			self.base_production[FOOD] = 0.5
 			self.base_production[MATERIALS] = 0.3
@@ -313,7 +296,7 @@ class Location(object):
 			self.attractiveness = -10 - np.random.random()*5
 			self.space = 12 + np.random.random()*5
 
-		elif self.archetype == Location.SEASIDE:
+		elif self.archetype == params.LocationParams.SEASIDE:
 
 			self.base_production[FOOD] = 1.2
 			self.base_production[MATERIALS] = 0.1
@@ -620,7 +603,7 @@ class Community(object):
 
 	def to_string(self):
 		s = "{}\n".format(self.name)
-		s += "{}\n".format(Location.ARCHETYPES_STR[self.location.archetype])
+		s += "{}\n".format(params.LocationParams.ARCHETYPES_STR[self.location.archetype])
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
@@ -638,7 +621,7 @@ class Community(object):
 		lines = []
 
 		lines.append("{}".format(self.name))
-		lines.append("at {} ({})".format(self.location.name, Location.ARCHETYPES_STR[self.location.archetype].title()))
+		lines.append("at {} ({})".format(self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title()))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
@@ -698,18 +681,6 @@ RACES = [HUMAN]
 
 class Model(object):
 
-	TILE_TYPE_TO_LOCATION_ARCHETYPE = {
-		Tile.PLAINS    : Location.PLAINS,
-		Tile.FOREST    : Location.PLAINS,
-		Tile.MOUNTAINS : Location.MOUNTAINS,
-		Tile.HILLS     : Location.MOUNTAINS,
-		Tile.PEAKS     : Location.MOUNTAINS,
-		Tile.DESERT    : Location.PLAINS,
-		Tile.BEACH     : Location.SEASIDE,
-		Tile.WATER     : Location.SEASIDE,
-		Tile.DEEPWATER : Location.SEASIDE
-	}
-
 	def __init__(self, map_size=20):
 		self.is_init = False
 
@@ -735,6 +706,10 @@ class Model(object):
 		self.communities = []
 
 		self.day = 0
+
+		for i in range(self.map.width):
+			for j in range(self.map.height):
+				self.map.get_tile(i, j).has_road = False
 
 	def set_map(self):
 		self.map = Map(self.map_size, self.map_size)		
@@ -771,13 +746,13 @@ class Model(object):
 		location_names_from_file = location_namelist.readlines()
 		location_namelist.close()
 
-		city_names = np.random.choice(city_names_from_file, len(Location.ARCHETYPES), replace=False)
-		location_names = np.random.choice(location_names_from_file, len(Location.ARCHETYPES), replace=False)
+		city_names = np.random.choice(city_names_from_file, len(params.LocationParams.ARCHETYPES), replace=False)
+		location_names = np.random.choice(location_names_from_file, len(params.LocationParams.ARCHETYPES), replace=False)
 
 		city_names = [s.title() for s in city_names]
 		location_names = [s.title() for s in location_names]
 
-		for i, archetype in enumerate(Location.ARCHETYPES):
+		for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
 			location = Location(archetype, location_names[i][:-1])
 			city_name = city_names[i][:-1]
 			community = Community(city_name, location, "HUMAN_CITY")
@@ -822,7 +797,7 @@ class Model(object):
 			#		- Try x time until abandonning
 			_try = 0; _max_try = 100
 			while (	(
-						flatten_tiles[random_i].type in [Tile.WATER, Tile.DEEPWATER, Tile.PEAKS] 
+						flatten_tiles[random_i].type in [params.TileParams.WATER, params.TileParams.DEEPWATER, params.TileParams.PEAKS] 
 						or not check_new_position(new_pos, chosen_positions, scale/5)
 					)
 					and _try < _max_try):
@@ -841,7 +816,7 @@ class Model(object):
 		print("")
 
 		# Generated one location per position
-		# update Location.map_position accordingly
+		# update params.LocationParams.map_position accordingly
 
 
 		location_namelist = open("../data/namelists/locations.txt")
@@ -863,11 +838,11 @@ class Model(object):
 				except KeyError:
 					data[self.map.get_tile(pa[0], pa[1]).type] = 1
 
-			if Tile.WATER in data.keys() or Tile.DEEPWATER in data.keys():
-				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[Tile.WATER]
+			if params.TileParams.WATER in data.keys() or params.TileParams.DEEPWATER in data.keys():
+				archetype = params.ModelParams.TILE_TYPE_TO_LOCATION_ARCHETYPE[params.TileParams.WATER]
 			else:
 				_t = max(data, key=data.get)
-				archetype = Model.TILE_TYPE_TO_LOCATION_ARCHETYPE[_t]
+				archetype = params.ModelParams.TILE_TYPE_TO_LOCATION_ARCHETYPE[_t]
 			# _t = self.map.get_tile(p[0], p[1]).type
 
 			location = Location(archetype, location_names[i][:-1])
@@ -940,7 +915,7 @@ class Model(object):
 
 		return g
 
-	def generate_graph_delaunay_basic(self):
+	def generate_graph_delaunay_basic(self, gen_roads):
 
 		print("Generating Graph")
 
@@ -985,6 +960,29 @@ class Model(object):
 				m = min(data, key=data.get)
 				g.addEdge(n, m, add_missing_nodes=False)
 
+
+		# Generate roads between cities
+		if gen_roads:
+			_drawn = []
+			for n in g.nodes:
+				print("Generating roads for node {}".format(n.id), end='\n', flush=False)
+				for e in n.edges:
+					print("To node {}".format(e.end.id), end='\n', flush=False)
+					if (n, e.end) in _drawn or (e.end, n) in _drawn:
+						continue
+
+					_start = self.map.get_tile(n.info["location"].map_position[0], n.info["location"].map_position[1])
+					_end = self.map.get_tile(e.end.info["location"].map_position[0], e.end.info["location"].map_position[1])
+
+					path = pathfinding.astar(_start, _end, self.map, dn=True)
+
+					for t in path:
+						t.has_road = True
+
+					_drawn.append((n, e.end))
+			print("")
+
+
 		return g
 
 
@@ -997,7 +995,7 @@ if __name__=='__main__':
 
 	nb_run = 1
 
-	for i, archetype in enumerate(Location.ARCHETYPES):
+	for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
 
 		run_id = i
 
@@ -1050,7 +1048,7 @@ if __name__=='__main__':
 
 		data_file.close()
 
-	for i, archetype in enumerate(Location.ARCHETYPES):
+	for i, archetype in enumerate(p.LocationParams.ARCHETYPES):
 
 		filename = "../data/results/data{}{}".format(i, archetype)
 
