@@ -29,14 +29,14 @@ class TileParams(object):
 	}
 
 	TYPE_TO_COST = {
-	    DEEPWATER : 20,
-	    WATER     : 9,
+	    DEEPWATER : 10,
+	    WATER     : 6,
 	    DESERT    : 3,
 	    BEACH     : 1,
 	    PLAINS    : 1,
 	    HILLS     : 2,
 	    MOUNTAINS : 6,
-	    PEAKS     : 20,
+	    PEAKS     : 10,
 	    FOREST    : 3
 	}
 
@@ -98,6 +98,15 @@ class UserInterfaceParams(object):
 	LBGC                           = (168, 168, 168)
 
 def map_coord_to_screen_coord(map_coord):
+	tw = UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE
+	th = UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE
+
+	_x = (map_coord[0] * tw)
+	_y = (map_coord[1] * th)
+
+	return (_x, _y)
+
+def map_coord_to_screen_coord_centered(map_coord):
 	ceiled_tw = math.ceil(UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE)
 	ceiled_th = math.ceil(UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE)
 

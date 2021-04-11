@@ -15,6 +15,8 @@ import perlinNoise
 import pathfinding
 import parameters as params
 
+from pygame import Rect
+
 # 0.01 consumed per week per pop
 FOOD      = 0
 # Used to build stuff
@@ -71,6 +73,30 @@ class SimThread(threading.Thread):
 
 class Map(object):
 
+	class QuadTile(object):
+		currID = 0
+		def __init__(self):
+			self.id = Map.QuadTile.currID
+			Map.QuadTile.currID += 1
+			self.type = None
+			self.neighbours = []
+			self.rect = None
+
+		def set_type(self, t):
+			self.type = t
+
+		def addNeighbour(self, nid):
+			self.neighbours.append(nid)
+
+	class QuadMap(object):
+		def __init__(self):
+			self.qtiles = []
+
+		def get_qtile_by_id(self, _id):
+			for qt in self.qtiles:
+				if qt.id == _id:
+					return qt
+
 	def __init__(self, width, height):
 			
 		self.width  = width
@@ -89,6 +115,9 @@ class Map(object):
 
 		self.generate_from_perlin_noise()
 		self.smooth_map()
+
+		self.quadmap = None
+		# self.quadmap = self.generate_quadmap()
 
 	def get_tile(self, x, y):
 		return self.tiles[x][y]
@@ -199,6 +228,43 @@ class Map(object):
 					if len(set(neigh_types)) <= 1 and t.type != neigh_types[0]:
 						t.type = neigh_types[0]
 		print("")
+
+	def generate_quadmap(self):
+		quadmap = Map.QuadMap()
+
+		# r1 = Rect((0, 0), (self.width//2, self.height//2))
+		# r2 = Rect((self.width/2.0, 0), (self.width//2, self.height//2))
+		# r3 = Rect((0, self.height/2.0), (self.width//2, self.height//2))
+		# r4 = Rect((self.width/2.0, self.height/2.0), (self.width//2, self.height//2))
+
+		base_rectangle = Rect((0,0), (self.width-1, self.height-1))
+
+		def split(r):
+			print("size="+str(r.size))
+			r1 = Rect(r.topleft, (math.floor(r.size[0]/2), math.ceil(r.size[1]/2)))
+			r2 = Rect((math.floor(r.size[0]/2), r.topleft[1]), (math.ceil(r.size[0]/2), math.ceil(r.size[1]/2)))
+			r3 = Rect((r.topleft[0], math.floor(r.size[1]/2)), (math.ceil(r.size[0]/2), math.ceil(r.size[1]/2)))
+			r4 = Rect((math.floor(r.size[0]/2), math.floor(r.size[1]/2)), (math.ceil(r.size[0]/2), math.ceil(r.size[1]/2)))			
+
+			return [r1, r2, r3, r4]
+
+		_start_set = split(base_rectangle)
+		first = _start_set[0]
+		for _r in split(first):
+			_start_set.append(_r)
+		_start_set.remove(first)
+
+		quadmap.qtiles = []
+		for r in _start_set:
+			_t = Map.QuadTile()
+			_t.rect = r
+			quadmap.qtiles.append(_t)
+
+		for r in _start_set:
+			# print(self.get_tile(r.topleft[0], r.topleft[1]), self.get_tile(r.bottomright[0], r.bottomright[1]))
+			print(r, r.topleft, r.topright, r.bottomleft, r.bottomright)
+
+		return quadmap
 
 class Tile(object):
 
@@ -978,7 +1044,7 @@ class Model(object):
 					path = pathfinding.astar(_start, _end, self.map, dn=True)
 
 					n.info["roads"][e.end.id] = path
-					
+
 					# for t in path:
 					# 	t.has_road = True
 

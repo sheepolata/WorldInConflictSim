@@ -4,6 +4,8 @@
 
 ### 11/04/2021
 
+Test some quadmap generation. Inconclusive for now. Will be used for some sort of split and merge algorithm, if I manages to finish it.
+
 Changed roads display from one tile to a line between 2 locations, using pygame.draw.lines() and the A* calculated path.
 
 Moved some more parameters to parameters.py (like the map size and the colors for each type).

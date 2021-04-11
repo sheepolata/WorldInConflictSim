@@ -29,7 +29,7 @@ class CityNode(ggraph.gNode):
 			for r in self.info["roads"].keys():
 				p = self.info["roads"][r]
 				try:
-					pos_only = [params.map_coord_to_screen_coord((t.x, t.y)) for t in p]
+					pos_only = [params.map_coord_to_screen_coord_centered((t.x, t.y)) for t in p]
 
 					pygame.draw.lines(surface, color, False, pos_only, width=3)
 				except KeyError:
@@ -81,7 +81,7 @@ class CityGraph(ggraph.gGraph):
 		if self._draw_roads:
 			for n in self.nodes:
 				n.draw_roads(surface, params.UserInterfaceParams.TILE_TYPE_COLORS[params.TileParams.ROADS])
-				
+
 		if self._draw_nodes:
 			for n in self.nodes:
 				try:

@@ -6,6 +6,7 @@ import math
 import datetime
 import random
 import pygame
+import numpy as np
 
 import console
 import ggraph
@@ -97,6 +98,11 @@ class UserInterface(gd.GraphDisplay):
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
+		
+		if self.model.map.quadmap != None:
+			for qt in self.model.map.quadmap.qtiles:
+				_r = pygame.Rect(params.map_coord_to_screen_coord_centered(qt.rect.topleft), params.map_coord_to_screen_coord_centered(qt.rect.bottomright))
+				pygame.draw.rect(self.graph_surface, (255,0,0), _r, width=1)
 
 	def init_rect_for_nodes(self):
 		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
