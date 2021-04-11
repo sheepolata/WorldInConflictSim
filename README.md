@@ -4,6 +4,8 @@
 
 ### 11/04/2021
 
+Changed heuristic in A* to take into account the average travelling cost for tile types. SIGNIFICANTLY improved performances. Note to self: heuristics ARE IMPORTANT!
+
 Test some quadmap generation. Inconclusive for now. Will be used for some sort of split and merge algorithm, if I manages to finish it.
 
 Changed roads display from one tile to a line between 2 locations, using pygame.draw.lines() and the A* calculated path.

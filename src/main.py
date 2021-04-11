@@ -21,7 +21,7 @@ def main():
 	running = True
 
 	mp = params.ModelParams.MAP_SIZE
-	gen_roads = mp <= 150
+	gen_roads = mp <= params.ModelParams.GEN_ROADS_LIMIT
 
 
 	mymodel = model.Model(map_size=mp)

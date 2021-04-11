@@ -73,7 +73,8 @@ class ModelParams(object):
 		TileParams.DEEPWATER : LocationParams.SEASIDE
 	}
 
-	MAP_SIZE = 100
+	MAP_SIZE = 250
+	GEN_ROADS_LIMIT = 250
 
 class UserInterfaceParams(object):
 	

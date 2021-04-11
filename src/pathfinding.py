@@ -1,11 +1,13 @@
 import utils
 
-import parameters as p
-
+import parameters as params
+import numpy as np
 
 #_start and _goal here are Coordinates
 def heuristic_cost_estimate(_current, _goal):
     res = utils.distance2p((_current.x, _current.y), (_goal.x, _goal.y))
+    mean_cost = np.mean([params.TileParams.TYPE_TO_COST[k] for k in params.TileParams.TYPE_TO_COST])
+    res *= mean_cost
     # res = _goal.getCost()
     return res
 
@@ -19,7 +21,7 @@ def reconstructPath(came_from, current):
 
 #start and goal are tiles, heur is the heuristic method
 #map is the grid's environment
-def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_dict=p.TileParams.TYPE_TO_COST, dn=False):
+def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_dict=params.TileParams.TYPE_TO_COST, dn=False):
     if _goal.get_type() in forbidden:
         print("Error: goal tile has a forbidden type")
         return None
@@ -97,7 +99,7 @@ def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_
     print("Error: All map explored but no solution")
     return None
 
-def computePathLength(path, cost_dict=p.TileParams.TYPE_TO_COST):
+def computePathLength(path, cost_dict=params.TileParams.TYPE_TO_COST):
     if not path:
         return -1
     if len(path) == 1:
@@ -109,7 +111,7 @@ def computePathLength(path, cost_dict=p.TileParams.TYPE_TO_COST):
         res = res + cost_dict[path[i].get_type()]
     return res
 
-def getPathLength(tile1, tile2, _map, forbidden=[], heur=heuristic_cost_estimate, approx=False, cost_dict=p.TileParams.TYPE_TO_COST, dn=False):
+def getPathLength(tile1, tile2, _map, forbidden=[], heur=heuristic_cost_estimate, approx=False, cost_dict=params.TileParams.TYPE_TO_COST, dn=False):
     if approx:
         res = utils.distance2p((tile1.x, tile1.y), (tile2.x, tile2.y))
     else:
