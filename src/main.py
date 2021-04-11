@@ -11,6 +11,7 @@ import graphdisplay as gd
 import view
 import myglobals
 import model
+import parameters as params
 
 # define a main function
 def main():
@@ -19,7 +20,7 @@ def main():
 	# define a variable to control the main loop
 	running = True
 
-	mp = 50
+	mp = params.ModelParams.MAP_SIZE
 	gen_roads = mp <= 150
 
 
@@ -28,7 +29,8 @@ def main():
 	thread = model.SimThread(mymodel)
 
 	graph = mymodel.generate_graph_delaunay_basic(gen_roads)
-	# graph._draw_edges = not gen_roads
+	graph._draw_edges = not gen_roads
+	graph._draw_roads = gen_roads
 
 	display = view.UserInterface(mymodel, graph)
 	
@@ -87,6 +89,8 @@ def main():
 					mymodel.set_map()
 					mymodel.random_model_map_basic(mp)
 					graph = mymodel.generate_graph_delaunay_basic(gen_roads)
+					graph._draw_edges = not gen_roads
+					graph._draw_roads = gen_roads
 					display.graph = graph
 					display.reset()
 
@@ -97,6 +101,8 @@ def main():
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)
 					graph = mymodel.generate_graph_delaunay_basic(gen_roads)
+					graph._draw_edges = not gen_roads
+					graph._draw_roads = gen_roads
 					display.graph = graph
 					# display.reset_nodes_only()
 					display.reset()

@@ -1,9 +1,11 @@
 import sys
 sys.path.append('./GraphEngine')
 
+import pygame
 
 import ggraph
 import delaunaytriangulation as dt
+import parameters as params
 
 
 class CityNode(ggraph.gNode):
@@ -23,11 +25,18 @@ class CityNode(ggraph.gNode):
 		self.info["rect"] = None
 
 	def draw_roads(self, surface, color):
-		pass
+		if "roads" in self.info:
+			for r in self.info["roads"].keys():
+				p = self.info["roads"][r]
+				try:
+					pos_only = [params.map_coord_to_screen_coord((t.x, t.y)) for t in p]
 
-	def drawNode(self, surface, color, outline_color=(255, 255, 255)):
+					pygame.draw.lines(surface, color, False, pos_only, width=3)
+				except KeyError:
+					pass
+
+	def drawNode(self, surface, color, outline_color=(255, 255, 255), road_color=params.UserInterfaceParams.TILE_TYPE_COLORS[params.TileParams.ROADS]):
 		super(CityNode, self).drawNode(surface, color, outline_color=outline_color)
-		self.draw_roads(surface, color)
 
 class CityGraph(ggraph.gGraph):
 
@@ -37,7 +46,7 @@ class CityGraph(ggraph.gGraph):
 		self._draw_delaunay = False
 		self._draw_nodes = True
 		self._draw_edges = True
-
+		self._draw_roads = True
 
 	def get_node_by_location(self, loc):
 		for n in self.nodes:
@@ -69,6 +78,10 @@ class CityGraph(ggraph.gGraph):
 				color = (204, 204, 204)
 				n.drawEdges(surface, color)
 
+		if self._draw_roads:
+			for n in self.nodes:
+				n.draw_roads(surface, params.UserInterfaceParams.TILE_TYPE_COLORS[params.TileParams.ROADS])
+				
 		if self._draw_nodes:
 			for n in self.nodes:
 				try:
@@ -80,6 +93,7 @@ class CityGraph(ggraph.gGraph):
 					n.drawNode(surface, color, outline_color=out_color)
 				except KeyError:
 					n.drawNode(surface, color)
-		
+
+
 		if self._draw_delaunay:
 			self.drawDelaunay(surface, (0, 0, 255))

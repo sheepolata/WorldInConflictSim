@@ -4,6 +4,12 @@
 
 ### 11/04/2021
 
+Changed roads display from one tile to a line between 2 locations, using pygame.draw.lines() and the A* calculated path.
+
+Moved some more parameters to parameters.py (like the map size and the colors for each type).
+
+### 10/04/2021
+
 Add road generation on the map, using A\* implemenation on the Map. Quite inefficient with large sized maps, recommended with map size 150 max. Higher values will yield in very long computation time for A\*.
 Will think of an improvement at some point.
 

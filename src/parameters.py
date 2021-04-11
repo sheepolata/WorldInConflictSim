@@ -1,4 +1,4 @@
-
+import math
 
 class TileParams(object):
 
@@ -11,6 +11,7 @@ class TileParams(object):
 	DESERT    = 6
 	BEACH     = 7
 	FOREST    = 8
+	ROADS     = 9
 
 	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT, BEACH, FOREST]
 
@@ -23,18 +24,19 @@ class TileParams(object):
 		PEAKS     : "PEAKS",
 		DESERT    : "DESERT",
 		BEACH     : "BEACH",
-		FOREST    : "FOREST"
+		FOREST    : "FOREST",
+		ROADS     : "ROADS"
 	}
 
 	TYPE_TO_COST = {
-	    DEEPWATER : 10,
+	    DEEPWATER : 20,
 	    WATER     : 9,
 	    DESERT    : 3,
 	    BEACH     : 1,
 	    PLAINS    : 1,
 	    HILLS     : 2,
 	    MOUNTAINS : 6,
-	    PEAKS     : 10,
+	    PEAKS     : 20,
 	    FOREST    : 3
 	}
 
@@ -70,3 +72,41 @@ class ModelParams(object):
 		TileParams.WATER     : LocationParams.SEASIDE,
 		TileParams.DEEPWATER : LocationParams.SEASIDE
 	}
+
+	MAP_SIZE = 100
+
+class UserInterfaceParams(object):
+	
+	TILE_TYPE_COLORS = {
+		TileParams.DEEPWATER : (15,94,156),
+		TileParams.WATER     : (28,163,236),
+		TileParams.DESERT    : (194,178,128),
+		TileParams.BEACH     : (194,178,128),
+		TileParams.PLAINS    : (0, 168, 0),
+		TileParams.HILLS     : (205,133,63),
+		TileParams.MOUNTAINS : (160,82,45),
+		TileParams.PEAKS     : (128,0,0),
+		TileParams.FOREST    : (85,107,47),
+		TileParams.ROADS     : (119,136,153)
+	}
+
+	SCREENSIZE                     = (1280, 720)
+	GRAPH_SURFACE_WIDTH_PROPORTION = 0.6
+	INFO_SURFACE_HEIGHT_PROPORTION = 0.6
+	MBGC                           = (128, 128, 128)
+	IBGC                           = (64, 64, 64)
+	LBGC                           = (168, 168, 168)
+
+def map_coord_to_screen_coord(map_coord):
+	ceiled_tw = math.ceil(UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE)
+	ceiled_th = math.ceil(UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE)
+
+	tw = UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE
+	th = UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE
+
+	tile_size = (ceiled_tw, ceiled_th)
+
+	_x = (map_coord[0] * tw) + tile_size[0]/2
+	_y = (map_coord[1] * th) + tile_size[1]/2
+
+	return (_x, _y)

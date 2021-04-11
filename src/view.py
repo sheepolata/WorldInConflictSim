@@ -13,24 +13,12 @@ import graphdisplay as gd
 import delaunaytriangulation as dt
 import utils
 import model
-import parameters as p
+import parameters as params
 
 class UserInterface(gd.GraphDisplay):
 
-	TILE_TYPE_COLORS = {
-		p.TileParams.DEEPWATER : (15,94,156),
-		p.TileParams.WATER     : (28,163,236),
-		p.TileParams.DESERT    : (194,178,128),
-		p.TileParams.BEACH     : (194,178,128),
-		p.TileParams.PLAINS    : (0, 168, 0),
-		p.TileParams.HILLS     : (205,133,63),
-		p.TileParams.MOUNTAINS : (160,82,45),
-		p.TileParams.PEAKS     : (128,0,0),
-		p.TileParams.FOREST    : (85,107,47)
-	}
-
 	def __init__(self, model, graph, fps=60):
-		super(UserInterface, self).__init__(graph, caption="A World in Conflict", fps=fps)
+		super(UserInterface, self).__init__(graph, caption="A World in Conflict", logofile=None, fps=fps, screensize=params.UserInterfaceParams.SCREENSIZE, graph_surface_width_proportion=params.UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION, info_surface_height_proportion=params.UserInterfaceParams.INFO_SURFACE_HEIGHT_PROPORTION, mbgc=params.UserInterfaceParams.MBGC, ibgc=params.UserInterfaceParams.IBGC, lbgc=params.UserInterfaceParams.LBGC)
 		self.model = model
 
 		self.selected = None
@@ -68,7 +56,7 @@ class UserInterface(gd.GraphDisplay):
 					_x = 0; _y = 0;
 				loc_node.info["pos"] = (_x, _y)
 
-				loc_node.info["color"] = p.LocationParams.LOCATION_COLORS[loc_node.info["location"].archetype]
+				loc_node.info["color"] = params.LocationParams.LOCATION_COLORS[loc_node.info["location"].archetype]
 			print("")
 
 	def update_node_info(self):
@@ -147,9 +135,9 @@ class UserInterface(gd.GraphDisplay):
 			for y in range(self.model.map.height):
 				t = self.model.map.get_tile(x, y)
 				if t.has_road:
-					c = (112,128,144)
+					c = params.UserInterfaceParams.TILE_TYPE_COLORS[params.TileParams.ROADS]
 				else:
-					c = UserInterface.TILE_TYPE_COLORS[t.type]
+					c = params.UserInterfaceParams.TILE_TYPE_COLORS[t.type]
 
 				_x = x * tw
 				_y = y * th
