@@ -391,13 +391,15 @@ class Community(object):
 
 	global_id = 0
 
-	def __init__(self, name, location, poparch):
+	def __init__(self, name, location, kingdom, poparch):
 
 		self.name = name
 		self.id = Community.global_id
 		Community.global_id += 1
 
 		self.location = location
+
+		self.kingdom = kingdom
 
 		self.pop_archetype = poparch
 		self.population = {}
@@ -464,7 +466,6 @@ class Community(object):
 
 		self.space_used = self.get_total_pop() / 100.0
 
-
 	def get_total_pop(self):
 		total = 0
 		for race in self.population.keys():
@@ -485,7 +486,6 @@ class Community(object):
 
 		return pop_prop
 
-
 	def update_actual_prod_and_store(self):
 		for r in RESSOURCES:
 			self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
@@ -496,7 +496,6 @@ class Community(object):
 		for r in self.ressource_production_bonus.keys():
 			self.ressource_production_bonus[r] = self.get_total_pop()/100.0 * self.location.bonus_per_100_pop[r]
 			
-
 	def a_day_passed(self):
 		if self.location == None:
 			return
@@ -666,7 +665,6 @@ class Community(object):
 	def a_year_passed(self):
 		pass
 
-
 	def to_string(self):
 		s = "{}\n".format(self.name)
 		s += "{}\n".format(params.LocationParams.ARCHETYPES_STR[self.location.archetype])
@@ -688,6 +686,7 @@ class Community(object):
 
 		lines.append("{}".format(self.name))
 		lines.append("at {} ({})".format(self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title()))
+		lines.append("in {}".format(self.kingdom.name))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
@@ -729,6 +728,15 @@ class Community(object):
 		s += str(self.space_used / self.location.space)
 
 		return s
+
+class Kingdom(object):
+	def __init__(self, name):
+		self.name = name
+		self.communities = []
+
+	def add_community(self, comm):
+		if comm not in self.communities:
+			self.communities.append(comm)
 
 class Race(object):
 
@@ -798,7 +806,6 @@ class Model(object):
 				community.a_year_passed()
 
 		self.day += 1
-
 
 	def test_model_init(self):
 		self.nb_location  = 3
@@ -911,7 +918,7 @@ class Model(object):
 				archetype = params.ModelParams.TILE_TYPE_TO_LOCATION_ARCHETYPE[_t]
 			# _t = self.map.get_tile(p[0], p[1]).type
 
-			location = Location(archetype, location_names[i][:-1])
+			location = Location(archetype, location_names[i][:-1] if location_names[i][-1] == '\n' else location_names[i])
 			location.map_position = p
 
 			self.locations.append(location)
@@ -927,19 +934,31 @@ class Model(object):
 		city_names = np.random.choice(city_names_from_file, len(self.locations), replace=False)
 		city_names = [s.title() for s in city_names]
 
+		kingdom_namelist = open("../data/namelists/kingdoms.txt")
+		kingdom_names_from_file = kingdom_namelist.readlines()
+		kingdom_namelist.close()
+
+		kingdom_names = np.random.choice(kingdom_names_from_file, len(self.locations), replace=False)
+		kingdom_names = [s.title() for s in kingdom_names]
+
+		kingdom_colors = np.random.choice(list(params.UserInterfaceParams.COLOR_LIST.keys()), len(self.locations), replace=False)
+
 		for i, loc in enumerate(self.locations):
-			community = Community(city_names[i][:-1], loc, "HUMAN_CITY")
+			kingdom = Kingdom(kingdom_names[i][:-1] if kingdom_names[i][-1] == '\n' else kingdom_names[i])
+			params.UserInterfaceParams.KINGDOM_TO_COLOR[kingdom.name] = kingdom_colors[i]
+			community = Community(city_names[i][:-1] if city_names[i][-1] == '\n' else city_names[i], loc, kingdom, "HUMAN_CITY")
 
 			self.communities.append(community)
 			self.nb_community += 1
 
+		print(params.UserInterfaceParams.KINGDOM_TO_COLOR)
 
 		self.is_init = True
 
 	def to_string_summary(self):
 		lines = []
 		for comm in self.communities:
-			s = "{} at {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.get_total_pop(), comm.happiness)
+			s = "{} at {} in {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
 			lines.append(s)
 		return lines
 
@@ -1079,11 +1098,21 @@ if __name__=='__main__':
 
 		city_namelist = open("../data/namelists/cities.txt")
 
+		kingdom_namelist = open("../data/namelists/kingdoms.txt")
+		kingdom_names_from_file = kingdom_namelist.readlines()
+		kingdom_namelist.close()
+
+		kingdom_names = np.random.choice(kingdom_names_from_file, 1, replace=False)
+		kingdom_names = [s.title() for s in kingdom_names]
+
+		kingdom = Kingdom(kingdom_names)
+
 		city_name = random.choice(city_namelist.readlines())[:-1]
 		print(city_name)
-		community1 = Community(city_name, location1, "HUMAN_CITY")
+		community1 = Community(city_name, location1, kingdom, "HUMAN_CITY")
 
 		city_namelist.close()
+
 
 		filename = "../data/results/data{}{}".format(run_id, community1.location.archetype)
 

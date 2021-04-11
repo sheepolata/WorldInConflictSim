@@ -73,8 +73,9 @@ class ModelParams(object):
 		TileParams.DEEPWATER : LocationParams.SEASIDE
 	}
 
-	MAP_SIZE = 250
+	MAP_SIZE = 200
 	GEN_ROADS_LIMIT = 250
+
 
 class UserInterfaceParams(object):
 	
@@ -97,6 +98,27 @@ class UserInterfaceParams(object):
 	MBGC                           = (128, 128, 128)
 	IBGC                           = (64, 64, 64)
 	LBGC                           = (168, 168, 168)
+
+	COLOR_LIST = {
+		"Black" 	: 	(0,0,0),
+	  	"White" 	: 	(255,255,255),
+	  	"Red" 		: 	(255,0,0),
+	  	"Lime" 		: 	(0,255,0),
+	  	"Blue" 		: 	(0,0,255),
+	  	"Yellow" 	: 	(255,255,0),
+	  	"Cyan" 		: 	(0,255,255),
+	  	"Magenta" 	: 	(255,0,255),
+	  	"Silver" 	: 	(192,192,192),
+	  	"Gray" 		: 	(128,128,128),
+	  	"Maroon" 	: 	(128,0,0),
+	  	"Olive" 	: 	(128,128,0),
+	  	"Green" 	: 	(0,128,0),
+	  	"Purple" 	: 	(128,0,128),
+	  	"Teal" 		: 	(0,128,128),
+	  	"Navy" 		: 	(0,0,128)
+  	}
+
+	KINGDOM_TO_COLOR = {}
 
 def map_coord_to_screen_coord(map_coord):
 	tw = UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE

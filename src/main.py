@@ -116,15 +116,17 @@ def main():
 					thread.pause()
 				if event.key == K_F1:
 					graph._draw_edges = not graph._draw_edges
-				if event.key == K_s:
-					pass
+				if event.key == K_k:
+					display._draw_voronoi = not display._draw_voronoi
 				if event.key == K_p:
 					pass
 				if event.key == K_d:
 					pass
 
 		display.update_info_tab()
-		display.insert_info_console("{} days/second (inc./dec. with ->/<-; SPACE to pause; (Ctrl+)R to reset (all))".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
+		display.insert_info_console("inc./dec. with ->/<-; SPACE to pause; (Ctrl+)R to reset (all), K to display kingdoms", 1)
+		display.insert_info_console("{} days/second".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
+		display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
 
 		display.main_loop_end()
 

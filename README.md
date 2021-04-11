@@ -4,6 +4,11 @@
 
 ### 11/04/2021
 
+Added Kingdom data. Each community is part of a Kingdom (for now, one kingdom per community).
+
+Kingdoms can be displayed and hidden by pressing K. Used a Voronoi tiling to display the frontiers.
+Displaying the Voronoi tiling is hitting the render performance as map size increase. Recommended map size is downed to 200 (from 250). With 200, it still drops 10/15 FPS while rendering the frontiers but the drop is reasonnable.
+
 Changed heuristic in A* to take into account the average travelling cost for tile types. SIGNIFICANTLY improved performances. Note to self: heuristics ARE IMPORTANT!
 
 Test some quadmap generation. Inconclusive for now. Will be used for some sort of split and merge algorithm, if I manages to finish it.
