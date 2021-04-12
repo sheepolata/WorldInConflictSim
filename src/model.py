@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import csv
 import threading
+from scipy.spatial import Voronoi
 
 import utils
 import graph
@@ -306,6 +307,8 @@ class Location(object):
 		self.base_production   = {}
 		self.base_storage      = {}
 		self.bonus_per_100_pop = {}
+
+		self.aura_of_influence = []
 
 		self.archetype = archetype
 		if self.archetype == params.LocationParams.PLAINS:
@@ -728,7 +731,6 @@ class Race(object):
 
 		self.affinities = {}
 
-
 	def set_affinity(self, other_race, aff):
 		self.affinities[other_race] = aff
 
@@ -852,7 +854,7 @@ class Model(object):
 		location_names = [s.title() for s in location_names]
 
 		for i, p in enumerate(chosen_positions):
-			print("Set city archetype for position {}".format(i), end='\r', flush=True)
+			print("Set location archetype for position {}".format(i), end='\r', flush=True)
 
 			pos_around = self.map.get_circle_around(p, self.map_size*0.02)
 
@@ -877,6 +879,108 @@ class Model(object):
 			self.nb_location += 1
 		print("")
 
+		print("Compute Voronoi to set aura of influence of each location")
+		voronoi_points = []
+		for loc in self.locations:
+			voronoi_points.append((loc.map_position[0], loc.map_position[1]))
+		voronoi_points = np.array(voronoi_points)
+		voronoi = Voronoi(voronoi_points)
+
+		def voronoi_finite_polygons_2d(vor, radius=None):
+			"""
+			Reconstruct infinite voronoi regions in a 2D diagram to finite
+			regions.
+			Parameters
+			----------
+			vor : Voronoi
+				Input diagram
+			radius : float, optional
+				Distance to 'points at infinity'.
+			Returns
+			-------
+			regions : list of tuples
+
+
+				Indices of vertices in each revised Voronoi regions.
+			vertices : list of tuples
+				Coordinates for revised Voronoi vertices. Same as coordinates
+				of input vertices, with 'points at infinity' appended to the
+				end.
+			"""
+
+			if vor.points.shape[1] != 2:
+				raise ValueError("Requires 2D input")
+
+			new_regions = []
+			new_vertices = vor.vertices.tolist()
+
+			center = vor.points.mean(axis=0)
+			if radius is None:
+				radius = vor.points.ptp().max()*2
+
+			# Construct a map containing all ridges for a given point
+			all_ridges = {}
+			for (p1, p2), (v1, v2) in zip(vor.ridge_points, vor.ridge_vertices):
+				all_ridges.setdefault(p1, []).append((p2, v1, v2))
+				all_ridges.setdefault(p2, []).append((p1, v1, v2))
+
+			# Reconstruct infinite regions
+			for p1, region in enumerate(vor.point_region):
+				vertices = vor.regions[region]
+
+				if all(v >= 0 for v in vertices):
+					# finite region
+					new_regions.append(vertices)
+					continue
+
+				# reconstruct a non-finite region
+				ridges = all_ridges[p1]
+				new_region = [v for v in vertices if v >= 0]
+
+				for p2, v1, v2 in ridges:
+					if v2 < 0:
+						v1, v2 = v2, v1
+					if v1 >= 0:
+						# finite ridge: already in the region
+						continue
+
+					# Compute the missing endpoint of an infinite ridge
+
+					t = vor.points[p2] - vor.points[p1] # tangent
+					t /= np.linalg.norm(t)
+					n = np.array([-t[1], t[0]])  # normal
+
+					midpoint = vor.points[[p1, p2]].mean(axis=0)
+					direction = np.sign(np.dot(midpoint - center, n)) * n
+					far_point = vor.vertices[v2] + direction * radius
+
+					new_region.append(len(new_vertices))
+					new_vertices.append(far_point.tolist())
+
+				# sort region counterclockwise
+				vs = np.asarray([new_vertices[v] for v in new_region])
+				c = vs.mean(axis=0)
+				angles = np.arctan2(vs[:,1] - c[1], vs[:,0] - c[0])
+				new_region = np.array(new_region)[np.argsort(angles)]
+
+				# finish
+				new_regions.append(new_region.tolist())
+
+			return new_regions, np.asarray(new_vertices)
+
+		voronoi_regions, voronoi_vertices = voronoi_finite_polygons_2d(voronoi)
+
+		voronoi_actual_regions = []
+
+		for reg in voronoi_regions:
+			_actual_points = []
+			for pi in reg:
+				_actual_points.append(voronoi_vertices[pi])
+			voronoi_actual_regions.append(_actual_points)
+
+		for i, r in enumerate(voronoi_actual_regions):
+			self.locations[i].aura_of_influence = r
+
 
 		# Generate communities
 		city_namelist = open("../data/namelists/cities.txt")
@@ -896,14 +1000,14 @@ class Model(object):
 		kingdom_colors = params.rng.choice(list(params.UserInterfaceParams.COLOR_LIST.keys()), len(self.locations), replace=False)
 
 		for i, loc in enumerate(self.locations):
+			print("Set Kingdom and create community for position {}".format(i), end='\r', flush=True)
 			kingdom = Kingdom(kingdom_names[i][:-1] if kingdom_names[i][-1] == '\n' else kingdom_names[i])
 			params.UserInterfaceParams.KINGDOM_TO_COLOR[kingdom.name] = kingdom_colors[i]
 			community = Community(city_names[i][:-1] if city_names[i][-1] == '\n' else city_names[i], loc, kingdom, "HUMAN_CITY")
 
 			self.communities.append(community)
 			self.nb_community += 1
-
-		print(params.UserInterfaceParams.KINGDOM_TO_COLOR)
+		print("")
 
 		self.is_init = True
 
