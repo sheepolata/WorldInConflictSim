@@ -4,6 +4,8 @@
 
 ### 12/04/2021
 
+Added aura_of_influence to location, as a polygon calculated via Voronoi.
+
 The random object is set in parameters.py. It is now possible to set the seed for random generation. Usefull for parameter tests and balancing.
 
 ### 11/04/2021
