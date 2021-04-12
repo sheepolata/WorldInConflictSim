@@ -4,6 +4,9 @@
 
 ### 12/04/2021
 
+Added a migration system. Fro each city, a certain number of population come from neighbouring cities, depending on happiness levels. Not conclusive yet.
+Note: though about a random caravan system, randomly a small population (around 100 or so) of one race (chosen randomly) could come and settle in a city. When such a caravan settle, the randomness_of_like value for this race could be bumped to increase the chance of this race to prosper.
+
 Added 4 races (Humans, Elves, Dwarves and Halflings). Each race have preferred and hated location archetype. The birth rate of a race in their preferred location is increased, and the death rate in their hated locations is increased.
 
 Changed the frequency of pop update and randomness_of_life update without changing their values.

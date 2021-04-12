@@ -382,6 +382,9 @@ class Location(object):
 		# Coordinates on a map
 		self.map_position = (0, 0)
 
+		self.community = None
+		self.neighbouring_locations = []
+
 		self.base_production   = {}
 		self.base_storage      = {}
 		self.bonus_per_100_pop = {}
@@ -558,6 +561,7 @@ class Community(object):
 		Community.global_id += 1
 
 		self.location = location
+		self.location.community = self
 
 		self.kingdom = kingdom
 
@@ -749,6 +753,36 @@ class Community(object):
 		
 		self.space_used = self.get_total_pop() / 100.0
 
+	def migration(self):
+		pops = []
+		happ = []
+		for nl in self.location.neighbouring_locations:
+			ncomm = nl.community
+			if ncomm != None:
+				_data = {}
+				for r in params.RaceParams.RACES:
+					_data[r] = (ncomm.get_total_pop() * ncomm.get_pop_proportion()[r]) * (1.0-utils.normalise(ncomm.happiness, mini=-100, maxi=100)) * 0.01
+				pops.append(_data)
+				happ.append(ncomm.happiness)
+
+
+		total_pop = {}
+		for i, _d in enumerate(pops):
+			for k in _d:
+				try:
+					total_pop[k] += _d[k]
+				except KeyError:
+					total_pop[k] = _d[k]
+
+		# pp = pprint.PrettyPrinter(indent=4)
+		# pp.pprint(total_pop)
+
+		for r in params.RaceParams.RACES:
+			try:
+				self.population[r] += total_pop[r]
+			except KeyError:
+				self.population[r] = total_pop[r]
+
 	def a_day_passed(self):
 		if self.location == None:
 			return
@@ -873,7 +907,6 @@ class Community(object):
 
 	def a_week_passed(self):
 		self.update_pops()
-		pass		
 
 	def a_month_passed(self):
 		for race in params.RaceParams.RACES:
@@ -882,15 +915,11 @@ class Community(object):
 
 			self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 1.0)
 			self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 1.0)
+		
+		# self.migration()
 
 	def a_quarter_passed(self):
 		pass
-		# for race in params.RaceParams.RACES:
-		# 	self.randomness_of_life["birth_rate_factor"][race] += -0.03 + params.rng.random() * 0.06
-		# 	self.randomness_of_life["death_rate_factor"][race] += -0.03 + params.rng.random() * 0.06
-
-		# 	self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 1.0)
-		# 	self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 1.0)
 
 	def a_semester_passed(self):
 		pass
@@ -1357,6 +1386,10 @@ class Model(object):
 				m = min(data, key=data.get)
 				g.addEdge(n, m, add_missing_nodes=False)
 
+		for n in g.nodes:
+			for e in n.edges:
+				n.info["location"].neighbouring_locations.append(e.end.info["location"])
+
 
 		# Generate roads between cities
 		if gen_roads:
@@ -1439,7 +1472,7 @@ if __name__=='__main__':
 		data_file = open(filename+".csv", 'w')
 		data_file.write("runID,day,"+community1.serialise(header=True)+"\n")
 
-
+		pp = pprint.PrettyPrinter(indent=4)
 		day = 1
 		while day < 10000:
 			community1.a_day_passed()
