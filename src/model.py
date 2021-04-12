@@ -565,8 +565,9 @@ class Community(object):
 			self.pop_archetype = pop_archetype
 
 		if self.pop_archetype == "HUMAN_CITY":
-			base_pop_factor = 0.2 + params.rng.random()*0.2
-			total_pop = int(self.location.space * base_pop_factor * 100)
+			# base_pop_factor = 0.1 + params.rng.random()*0.2
+			# total_pop = int(self.location.space * base_pop_factor * 100)
+			total_pop = 100
 
 			self.population[HUMAN] = total_pop
 
@@ -763,6 +764,12 @@ class Community(object):
 		happ_food_factor = round(happ_food_factor)
 		self.happiness += happ_food_factor
 		self.hapiness_details["FOOD_SITUATION"] = happ_food_factor
+
+		# Unrest due to lack of stored food
+		stored_food_unrest = (self.ressource_stockpile[params.ModelParams.FOOD] - self.actual_storage[params.ModelParams.FOOD])
+		stored_food_unrest = stored_food_unrest*0.1
+		self.happiness += stored_food_unrest
+		self.hapiness_details["STORED_FOOD_UNREST"] = stored_food_unrest
 
 		# Clamp happiness
 		self.happiness = utils.clamp(self.happiness, -100, 100)
@@ -1346,7 +1353,6 @@ if __name__=='__main__':
 
 
 		day = 1
-		pp = pprint.PrettyPrinter(indent=4)
 		while day < 10000:
 			community1.a_day_passed()
 			if day%7 == 0:
@@ -1361,12 +1367,12 @@ if __name__=='__main__':
 			if day%365 == 0:
 				community1.a_year_passed()
 
-			if day%300 == 0:
+			if day%500 == 0:
 				clear()
 				print("Day {}".format(day))
 				print(community1.to_string())
 				pp.pprint(community1.hapiness_details)
-				time.sleep(0.1)
+				time.sleep(0.2)
 
 
 			day += 1

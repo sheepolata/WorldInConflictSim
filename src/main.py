@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 import numpy as np
+import pprint
 
 import sys
 sys.path.append('./GraphEngine')
@@ -126,6 +127,10 @@ def main():
 					pass
 				if event.key == K_d:
 					pass
+
+		# if display.selected != None:
+		# 	pp = pprint.PrettyPrinter(indent=4)
+		# 	pp.pprint(display.selected.info["community"].hapiness_details)
 
 		display.update_info_tab()
 		display.insert_info_console("inc./dec. with ->/<-; SPACE to pause; (Ctrl+)R to reset (all), K to display kingdoms", 1)
