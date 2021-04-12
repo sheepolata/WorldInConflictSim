@@ -4,6 +4,10 @@
 
 ### 12/04/2021
 
+Added Desert city archetype. Also added a population control part to growth rate in case of low food production. Moved pop update from weekly to monthly.
+
+Landmarks are now generated with the map, and not with the city graph.
+
 Added landmarks. Landmarks have an influence on the attractiveness of a location, either a positive influence or a negative one. They are displayed on the map as little icons.
 If a landmark is in the area of influence of a location, its influence will be added to the base happiness of that location.
 For now, it generates 1.5 times the number of locations landmarks.

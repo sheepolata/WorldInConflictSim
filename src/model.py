@@ -11,6 +11,8 @@ from scipy.spatial import Voronoi
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
+import pprint
+
 import utils
 import graph
 import perlinNoise
@@ -83,11 +85,14 @@ class Map(object):
 				if qt.id == _id:
 					return qt
 
-	def __init__(self, width, height):
+	def __init__(self, width, height, nb_landmarks):
 			
 		self.width  = width
 		self.height = height
 		self.tiles  = []
+
+		self.nb_landmarks = nb_landmarks
+		self.landmarks = []
 
 		for x in range(self.width):
 			_rowx = []
@@ -168,6 +173,12 @@ class Map(object):
 			for y in range(self.height):
 				self.get_tile(x, y).set_type_from_noise()
 		print("")
+
+		print("Generate Landmarks and set their effect")
+
+		self.landmarks = Landmark.generate(self.nb_landmarks, self.width, self.height)
+		# for lm in _landmarks:
+		# 	print(lm.to_string())
 
 	def get_neighbours_of(self, pos, diag_neigh=False):
 		res = []
@@ -408,7 +419,7 @@ class Location(object):
 			
 			self.base_storage[params.ModelParams.FOOD] = 350.0
 			self.base_storage[params.ModelParams.MATERIALS] = 800.0
-			self.base_storage[params.ModelParams.WEALTH] = 300.0
+			self.base_storage[params.ModelParams.WEALTH] = 400.0
 
 			self.trade_factor = 0.02 + params.rng.random()*0.08
 
@@ -428,13 +439,33 @@ class Location(object):
 			
 			self.base_storage[params.ModelParams.FOOD] = 400.0
 			self.base_storage[params.ModelParams.MATERIALS] = 350.0
-			self.base_storage[params.ModelParams.WEALTH] = 600.0
+			self.base_storage[params.ModelParams.WEALTH] = 500.0
 
 			self.trade_factor = 0.05 + params.rng.random()*0.07
 
 			self.base_attractiveness = 10 + params.rng.random()*5
 			self.attractiveness += self.base_attractiveness
 			self.space = 10 + params.rng.random()*5
+
+		elif self.archetype == params.LocationParams.DESERT:
+
+			self.base_production[params.ModelParams.FOOD] = 0.25
+			self.base_production[params.ModelParams.MATERIALS] = 0.25
+			self.base_production[params.ModelParams.WEALTH] = 0.0
+
+			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.03
+			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.04
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.02
+			
+			self.base_storage[params.ModelParams.FOOD] = 600.0
+			self.base_storage[params.ModelParams.MATERIALS] = 650.0
+			self.base_storage[params.ModelParams.WEALTH] = 750.0
+
+			self.trade_factor = 0.01 + params.rng.random()*0.02
+
+			self.base_attractiveness = 0 - params.rng.random()*10
+			self.attractiveness += self.base_attractiveness
+			self.space = 40 + params.rng.random()*5
 
 	def add_landmark(self, lm):
 		if lm in self.landmarks:
@@ -505,11 +536,15 @@ class Community(object):
 		for r in params.ModelParams.RESSOURCES:
 			self.ressources_prev_net_worth[r] = 0
 
+		self.hapiness_details = {}
 		self.happiness = 0
 		self.happiness_from_surplus = {}
 		for r in params.ModelParams.RESSOURCES:
 			self.happiness_from_surplus[r] = 0
-		self.net_growth_rate = 0
+		self.net_growth_rate   = 0
+		self.population_control = 0
+		self.actual_birth_rate = 0
+		self.actual_death_rate = 0
 
 		self.food_shortage = 0
 		self.food_consumption_per_pop_min = 0.005
@@ -566,7 +601,63 @@ class Community(object):
 	def update_production_bonus(self):
 		for r in self.ressource_production_bonus.keys():
 			self.ressource_production_bonus[r] = self.get_total_pop()/100.0 * self.location.bonus_per_100_pop[r]
-			
+	
+	def update_pops(self):
+		# Update pops
+		
+		# br increases as accumulated wealth decreases
+		# base_birth_rate = 3.69
+		base_birth_rate = 1.0
+		brf_space = 0
+		if self.space_used < (self.location.space*0.75):
+			brf_space = (1 - (self.space_used / self.location.space)) * 0.5
+		brf_wealth = (self.ressource_stockpile[params.ModelParams.WEALTH]/1000.0)
+		brf_happ = 0
+		if self.happiness > 50:
+			brf_happ = self.happiness / 100.0
+		
+		brf_food = self.ressource_stockpile[params.ModelParams.FOOD]/1000.0
+		# brf_food = self.food_shortage
+
+		self.actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food))
+
+		# dr increases as accumulated wealth decreases
+		# base_death_rate = 1.91
+		base_death_rate = 0.52
+		# drf_space = max(0, self.space_used - self.location.space) / 100.0
+		drf_space = 0
+		if self.space_used >= (self.location.space*0.5):
+			drf_space = (self.space_used / self.location.space)
+		drf_wealth = 1 - (self.ressource_stockpile[params.ModelParams.WEALTH]/self.actual_storage[params.ModelParams.WEALTH])
+		drf_food = (self.food_shortage*7) * 0.1
+		# drf_food = 0
+
+		drf_happ = 0
+		if self.happiness < 0:
+			drf_happ = abs(self.happiness * 0.1)
+
+		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
+
+		self.actual_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"])
+		self.actual_death_rate *= (1 + self.randomness_of_life["death_rate_factor"])
+
+		self.population_control = 0
+		if self.actual_death_rate * 0.9 > self.actual_birth_rate:
+			net_food = sum(self.effective_gain[params.ModelParams.FOOD].values()) - sum(self.effective_consumption[params.ModelParams.FOOD].values())
+			# if(self.location.archetype==params.LocationParams.DESERT):
+			# 	print(net_food)
+			if net_food <= 0:
+				self.population_control = (self.actual_birth_rate-self.actual_death_rate)
+
+		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate) + self.population_control
+		if self.get_total_pop() <= 0:
+			self.net_growth_rate = 0
+
+		for race in self.population.keys():
+			self.population[race] = (float(self.population[race]) * (1 + (self.net_growth_rate/100.0)))
+		
+		self.space_used = self.get_total_pop() / 100.0
+
 	def a_day_passed(self):
 		if self.location == None:
 			return
@@ -640,26 +731,38 @@ class Community(object):
 		# CALCULATE HAPPINESS
 		# Happ from location
 		self.happiness = self.location.attractiveness
+		self.hapiness_details["LOCATION_ATTRACTIVENESS"] = self.location.attractiveness
 
 		# Unrest from food shortage
-		self.happiness -= self.food_shortage
+		self.happiness -= self.food_shortage*2
+		self.hapiness_details["FOOD_SHORTAGE"] = -self.food_shortage*2
 
 		# Happ from stockpiled wealth
-		self.happiness += self.ressource_stockpile[params.ModelParams.WEALTH] * 0.2
+		# _v = self.ressource_stockpile[params.ModelParams.WEALTH] * 0.2
+		if self.ressource_stockpile[params.ModelParams.WEALTH] > 0:
+			_v = math.log(self.ressource_stockpile[params.ModelParams.WEALTH]) * 5
+		else:
+			_v = 0
+		self.happiness += _v
+		self.hapiness_details["STOCKPILES_WEALTH"] = _v
 
 		# Unrest from overpopulation
 		# overpop_unrest = self.location.space - self.space_used
 		overpop_unrest = -(self.space_used / self.location.space)
 		self.happiness += overpop_unrest * 50
+		self.hapiness_details["OVERPOPULATION"] = overpop_unrest * 50
 
 		# Happ from wealth consumption
 		if self.ressource_stockpile[params.ModelParams.WEALTH] > 0:
-			self.happiness += sum(self.effective_consumption[params.ModelParams.WEALTH].values()) * 10
+			_v = sum(self.effective_consumption[params.ModelParams.WEALTH].values()) * 10
+			self.happiness += _v
+			self.hapiness_details["WEALTH_CONSUMPTION"] = _v
 
 		# Happiness from food situation
 		happ_food_factor = (self.food_consumption_per_pop - self.food_consumption_per_pop_min) * 1000 * 2
 		happ_food_factor = round(happ_food_factor)
 		self.happiness += happ_food_factor
+		self.hapiness_details["FOOD_SITUATION"] = happ_food_factor
 
 		# Clamp happiness
 		self.happiness = utils.clamp(self.happiness, -100, 100)
@@ -672,55 +775,10 @@ class Community(object):
 			self.ressources_prev_net_worth[r] = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
 
 	def a_week_passed(self):
-		
-		# Update pops
-		
-		# br increases as accumulated wealth decreases
-		# base_birth_rate = 3.69
-		base_birth_rate = 1.0
-		brf_space = 0
-		if self.space_used < (self.location.space*0.75):
-			brf_space = (1 - (self.space_used / self.location.space)) * 0.5
-		brf_wealth = (self.ressource_stockpile[params.ModelParams.WEALTH]/1000.0)
-		brf_happ = 0
-		if self.happiness > 50:
-			brf_happ = self.happiness / 100.0
-		
-		brf_food = self.ressource_stockpile[params.ModelParams.FOOD]/1000.0
-		# brf_food = self.food_shortage
-
-		self.actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food + self.randomness_of_life["birth_rate_factor"]))
-
-		# dr increases as accumulated wealth decreases
-		# base_death_rate = 1.91
-		base_death_rate = 0.52
-		# drf_space = max(0, self.space_used - self.location.space) / 100.0
-		drf_space = 0
-		if self.space_used >= (self.location.space*0.5):
-			drf_space = (self.space_used / self.location.space)
-		drf_wealth = 1 - (self.ressource_stockpile[params.ModelParams.WEALTH]/self.actual_storage[params.ModelParams.WEALTH])
-		drf_food = (self.food_shortage*7) * 0.1
-		# drf_food = 0
-		
-		drf_happ = 0
-		if self.happiness < 0:
-			drf_happ = abs(self.happiness * 0.1)
-
-		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ + self.randomness_of_life["death_rate_factor"])
-
-		# print(actual_birth_rate, actual_death_rate)
-
-		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate)
-		if self.get_total_pop() <= 0:
-			self.net_growth_rate = 0
-
-		for race in self.population.keys():
-			self.population[race] = (float(self.population[race]) * (1 + (self.net_growth_rate/100.0)))
-		
-		self.space_used = self.get_total_pop() / 100.0
+		pass		
 
 	def a_month_passed(self):
-		pass
+		self.update_pops()
 
 	def a_quarter_passed(self):
 		self.randomness_of_life["birth_rate_factor"] += -0.1 + params.rng.random() * 0.2
@@ -728,7 +786,6 @@ class Community(object):
 
 		self.randomness_of_life["birth_rate_factor"] = utils.clamp(self.randomness_of_life["birth_rate_factor"], 0, 1)
 		self.randomness_of_life["death_rate_factor"] = utils.clamp(self.randomness_of_life["death_rate_factor"], 0, 1)
-		pass
 
 	def a_semester_passed(self):
 		pass
@@ -764,14 +821,14 @@ class Community(object):
 			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
 		lines.append("{} inhabitants : {}".format(self.get_total_pop(), str_popprop))
 		lines.append("Happiness : {:+.2f}; Growth rate : {:+.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
-		lines.append("Randomness of Life: {:+.2f}".format(self.randomness_of_life["birth_rate_factor"] - self.randomness_of_life["death_rate_factor"]))
+		lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(self.randomness_of_life["birth_rate_factor"] - self.randomness_of_life["death_rate_factor"], self.population_control))
 		for r in self.ressource_stockpile:
 			lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.0f}%-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
 
 		# lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
 		if len(self.location.landmarks) > 0:
-			lines.append("Landmarks:")
+			lines.append("Landmarks: (Total is happiness {:+.02f})".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 			for lm in self.location.landmarks:
 				lines.append("- " + lm.to_string())
 
@@ -829,13 +886,15 @@ RACES = [HUMAN]
 
 class Model(object):
 
-	def __init__(self, map_size=20):
+	def __init__(self, map_size=20, map_location=20):
 		self.is_init = False
 
 		self.map_size = map_size
 
 		self.nb_location  = 0
 		self.nb_community = 0
+
+		self.max_location = map_location
 
 		self.locations   = []
 		self.communities = []
@@ -844,7 +903,7 @@ class Model(object):
 
 		print("Creating model")
 
-		self.map = Map(self.map_size, self.map_size)
+		self.map = Map(self.map_size, self.map_size, int(self.max_location*1.5))
 
 	def reset(self):
 		self.nb_location  = 0
@@ -860,7 +919,7 @@ class Model(object):
 				self.map.get_tile(i, j).has_road = False
 
 	def set_map(self):
-		self.map = Map(self.map_size, self.map_size)		
+		self.map = Map(self.map_size, self.map_size, int(self.max_location*1.5))		
 
 	def loop(self):
 		if not self.is_init:
@@ -896,13 +955,12 @@ class Model(object):
 		# Valid positions must on land, not too close to each other.
 
 		chosen_positions = []
-		max_location = 20
 
 		flatten_tiles = list(utils.flatten(self.map.tiles))
 
 		_continue = True
 
-		while _continue and len(chosen_positions) < max_location:
+		while _continue and len(chosen_positions) < self.max_location:
 			print("{} chosen positions".format(len(chosen_positions)), end='\r', flush=True)
 			# Choose a random tile
 			random_i = math.floor(params.rng.random() * len(flatten_tiles))
@@ -1072,11 +1130,11 @@ class Model(object):
 		# Set Landmarks
 		print("Generate Landmarks and set their effect")
 
-		_landmarks = Landmark.generate(int(self.nb_location*1.5), self.map_size, self.map_size)
-		# for lm in _landmarks:
-		# 	print(lm.to_string())
+		# _landmarks = Landmark.generate(int(self.nb_location*1.5), self.map_size, self.map_size)
+		# # for lm in _landmarks:
+		# # 	print(lm.to_string())
 
-		for _lm in _landmarks:
+		for _lm in self.map.landmarks:
 			for loc in self.locations:
 				if loc.in_area_of_influence((_lm.x, _lm.y)):
 					loc.add_landmark(_lm)
@@ -1239,6 +1297,7 @@ if __name__=='__main__':
 
 	nb_run = 1
 
+	# for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
 	for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
 
 		run_id = i
@@ -1271,13 +1330,13 @@ if __name__=='__main__':
 
 
 		filename = "../data/results/data{}{}".format(run_id, community1.location.archetype)
-
 		data_file = open(filename+".csv", 'w')
 		data_file.write("runID,day,"+community1.serialise(header=True)+"\n")
 
 
 		day = 1
-		while day < 50000:
+		pp = pprint.PrettyPrinter(indent=4)
+		while day < 10000:
 			community1.a_day_passed()
 			if day%7 == 0:
 				community1.a_week_passed()
@@ -1291,10 +1350,11 @@ if __name__=='__main__':
 			if day%365 == 0:
 				community1.a_year_passed()
 
-			if day%500 == 0:
+			if day%300 == 0:
 				clear()
 				print("Day {}".format(day))
 				print(community1.to_string())
+				pp.pprint(community1.hapiness_details)
 				time.sleep(0.1)
 
 
@@ -1302,7 +1362,7 @@ if __name__=='__main__':
 
 		data_file.close()
 
-	for i, archetype in enumerate(p.LocationParams.ARCHETYPES):
+	for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
 
 		filename = "../data/results/data{}{}".format(i, archetype)
 

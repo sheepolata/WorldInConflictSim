@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-# random_seed = 1995
+# random_seed = 4011995
 random_seed = -1
 if random_seed < 0:
 	rng = np.random.default_rng()
@@ -53,18 +53,21 @@ class LocationParams(object):
 	PLAINS    = 0
 	MOUNTAINS = 1
 	SEASIDE   = 2
-	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE]
+	DESERT    = 3
+	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE, DESERT]
 
 	ARCHETYPES_STR = {
 		PLAINS : "PLAINS",
 		MOUNTAINS : "MOUNTAINS",
-		SEASIDE : "SEASIDE"
+		SEASIDE : "SEASIDE",
+		DESERT : "DESERT"
 	}
 
 	LOCATION_COLORS = {
 		PLAINS    : (86, 125, 70),
 		MOUNTAINS : (139,69,19),
-		SEASIDE   : (15,94,156)
+		SEASIDE   : (15,94,156),
+		DESERT    : (194,178,128)
 	}
 
 class ModelParams(object):
@@ -75,7 +78,7 @@ class ModelParams(object):
 		TileParams.MOUNTAINS : LocationParams.MOUNTAINS,
 		TileParams.HILLS     : LocationParams.MOUNTAINS,
 		TileParams.PEAKS     : LocationParams.MOUNTAINS,
-		TileParams.DESERT    : LocationParams.PLAINS,
+		TileParams.DESERT    : LocationParams.DESERT,
 		TileParams.BEACH     : LocationParams.SEASIDE,
 		TileParams.WATER     : LocationParams.SEASIDE,
 		TileParams.DEEPWATER : LocationParams.SEASIDE
@@ -105,7 +108,7 @@ class UserInterfaceParams(object):
 		TileParams.DEEPWATER : (15,94,156),
 		TileParams.WATER     : (28,163,236),
 		TileParams.DESERT    : (194,178,128),
-		TileParams.BEACH     : (194,178,128),
+		TileParams.BEACH     : (237,201,175),
 		TileParams.PLAINS    : (0, 168, 0),
 		TileParams.HILLS     : (205,133,63),
 		TileParams.MOUNTAINS : (160,82,45),
