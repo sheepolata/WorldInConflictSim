@@ -8,6 +8,8 @@ import matplotlib.gridspec as gridspec
 import csv
 import threading
 from scipy.spatial import Voronoi
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 import utils
 import graph
@@ -292,12 +294,74 @@ class Tile(object):
 			if self.info["desert_noise"] < 0.20:
 				self.type = params.TileParams.DESERT
 
+class Landmark(object):
+
+	globalID = 0
+
+	def __init__(self, x, y, name, happiness_value):
+		self.id = Landmark.globalID
+		Landmark.globalID += 1
+		self.x = x
+		self.y = y
+
+		self.name = name
+
+		self.happiness_value = happiness_value
+
+	def generate(number, map_w, map_h, min_happ=-10, max_happ=10):
+
+		if min_happ >= max_happ:
+			raise ValueError("min_happ ({}) greater or equal than max_happ ({})".format(min_happ, max_happ))
+
+		res = []
+
+		landmark_neutral_namelist = open("../data/namelists/landmarks_neutral.txt")
+		landmark_neutral_names_from_file = landmark_neutral_namelist.readlines()
+		landmark_neutral_namelist.close()
+		landmark_neutral_names = params.rng.choice(landmark_neutral_names_from_file, number, replace=False)
+		landmark_neutral_names = [s.title() for s in landmark_neutral_names]
+
+		landmark_evil_namelist = open("../data/namelists/landmarks_evil.txt")
+		landmark_evil_names_from_file = landmark_evil_namelist.readlines()
+		landmark_evil_namelist.close()
+		landmark_evil_names = params.rng.choice(landmark_evil_names_from_file, number, replace=False)
+		landmark_evil_names = [s.title() for s in landmark_evil_names]
+
+		_x_values = params.rng.choice(range(map_w), number, replace=False)
+		_y_values = params.rng.choice(range(map_h), number, replace=False)
+
+		for i in range(number):
+			_x = _x_values[i]
+			_y = _y_values[i]
+
+			if min_happ >= 0:
+				_hv = min_happ + (params.rng.random() * (max_happ - min_happ))
+			else:
+				_neg = params.rng.random() * abs(min_happ)
+				_pos = params.rng.random() * abs(max_happ)
+				_hv = _pos - _neg
+
+			if _hv >= 0:
+				_name = landmark_neutral_names[i][:-1] if landmark_neutral_names[i][-1] == '\n' else landmark_neutral_names[i]
+			else:
+				_name = landmark_evil_names[i][:-1] if landmark_evil_names[i][-1] == '\n' else landmark_evil_names[i]
+
+			_lm = Landmark(_x, _y, _name, _hv)
+
+			res.append(_lm)
+
+		return res
+
+	def to_string(self):
+		return "{} ({:.02f} happ.)".format(self.name, self.happiness_value)
+
 class Location(object):
 
 	def __init__(self, archetype, name):
 
 		self.name = name
 		# Base happiness for pops living here
+		self.base_attractiveness = 0
 		self.attractiveness = 0
 		# Base space to welcome pops, 1 space <=> 100 pops
 		self.space = 0
@@ -308,7 +372,9 @@ class Location(object):
 		self.base_storage      = {}
 		self.bonus_per_100_pop = {}
 
-		self.aura_of_influence = []
+		self.area_of_influence = []
+
+		self.landmarks = []
 
 		self.archetype = archetype
 		if self.archetype == params.LocationParams.PLAINS:
@@ -326,7 +392,8 @@ class Location(object):
 
 			self.trade_factor = params.rng.random()*0.05
 
-			self.attractiveness = 8 + params.rng.random()*4
+			self.base_attractiveness = 8 + params.rng.random()*4
+			self.attractiveness += self.base_attractiveness
 			self.space = 20 + params.rng.random()*5
 
 		elif self.archetype == params.LocationParams.MOUNTAINS:
@@ -345,7 +412,8 @@ class Location(object):
 
 			self.trade_factor = 0.02 + params.rng.random()*0.08
 
-			self.attractiveness = -10 - params.rng.random()*5
+			self.base_attractiveness = -10 - params.rng.random()*5
+			self.attractiveness += self.base_attractiveness
 			self.space = 12 + params.rng.random()*5
 
 		elif self.archetype == params.LocationParams.SEASIDE:
@@ -364,13 +432,30 @@ class Location(object):
 
 			self.trade_factor = 0.05 + params.rng.random()*0.07
 
-			self.attractiveness = 10 + params.rng.random()*5
+			self.base_attractiveness = 10 + params.rng.random()*5
+			self.attractiveness += self.base_attractiveness
 			self.space = 10 + params.rng.random()*5
+
+	def add_landmark(self, lm):
+		if lm in self.landmarks:
+			return 
+		
+		self.landmarks.append(lm)
+		self.attractiveness += lm.happiness_value
+
+	def in_area_of_influence(self, map_pos):
+		p = Point(map_pos[0], map_pos[1])
+		poly = Polygon(self.area_of_influence)
+		if poly.contains(p):
+			return True
+		return False
 
 	def to_string_list(self):
 		lines = []
 		lines.append(self.name)
 		lines.append("Attractiveness: {}; Space available: {}".format(self.attractiveness, self.space))
+		for lm in self.landmarks:
+			lines.append(lm.to_string())
 		return lines
 
 class Community(object):
@@ -670,21 +755,25 @@ class Community(object):
 	def to_string_list(self):
 		lines = []
 
-		lines.append("{}".format(self.name))
-		lines.append("at {} ({})".format(self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title()))
+		# lines.append("{}".format(self.name))
+		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
 		lines.append("in {}".format(self.kingdom.name))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
 			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
 		lines.append("{} inhabitants : {}".format(self.get_total_pop(), str_popprop))
-		lines.append("Happiness : {:.2f}; Growth rate : {:.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
+		lines.append("Happiness : {:+.2f}; Growth rate : {:+.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
+		lines.append("Randomness of Life: {:+.2f}".format(self.randomness_of_life["birth_rate_factor"] - self.randomness_of_life["death_rate_factor"]))
 		for r in self.ressource_stockpile:
-			lines.append("{} : {:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
+			lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.0f}%-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
 
-		lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
+		# lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
-		lines.append("{}".format(self.randomness_of_life))
+		if len(self.location.landmarks) > 0:
+			lines.append("Landmarks:")
+			for lm in self.location.landmarks:
+				lines.append("- " + lm.to_string())
 
 		return lines
 
@@ -845,7 +934,6 @@ class Model(object):
 		# Generated one location per position
 		# update params.LocationParams.map_position accordingly
 
-
 		location_namelist = open("../data/namelists/locations.txt")
 		location_names_from_file = location_namelist.readlines()
 		location_namelist.close()
@@ -979,7 +1067,20 @@ class Model(object):
 			voronoi_actual_regions.append(_actual_points)
 
 		for i, r in enumerate(voronoi_actual_regions):
-			self.locations[i].aura_of_influence = r
+			self.locations[i].area_of_influence = r
+
+		# Set Landmarks
+		print("Generate Landmarks and set their effect")
+
+		_landmarks = Landmark.generate(int(self.nb_location*1.5), self.map_size, self.map_size)
+		# for lm in _landmarks:
+		# 	print(lm.to_string())
+
+		for _lm in _landmarks:
+			for loc in self.locations:
+				if loc.in_area_of_influence((_lm.x, _lm.y)):
+					loc.add_landmark(_lm)
+					break
 
 
 		# Generate communities
@@ -1014,7 +1115,8 @@ class Model(object):
 	def to_string_summary(self):
 		lines = []
 		for comm in self.communities:
-			s = "{} at {} in {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
+			# s = "{} at {} in {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
+			s = "{} ({}), {} inh.; Happ. {:0.0f}".format(comm.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
 			lines.append(s)
 		return lines
 

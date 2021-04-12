@@ -4,7 +4,12 @@
 
 ### 12/04/2021
 
-Added aura_of_influence to location, as a polygon calculated via Voronoi.
+Added landmarks. Landmarks have an influence on the attractiveness of a location, either a positive influence or a negative one. They are displayed on the map as little icons.
+If a landmark is in the area of influence of a location, its influence will be added to the base happiness of that location.
+For now, it generates 1.5 times the number of locations landmarks.
+May need to revise naming of the landmarks. The names are randonly taken from a list (2 lists for positive and negative landmarks), but a crossway can be placed in the middle of the water. Doesn't matter much though.
+
+Added area_of_influence to location, as a polygon calculated via Voronoi.
 
 The random object is set in parameters.py. It is now possible to set the seed for random generation. Usefull for parameter tests and balancing.
 

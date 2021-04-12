@@ -34,6 +34,16 @@ class UserInterface(gd.GraphDisplay):
 		self.map_image = None
 		self.map_image_rect = None
 
+		self.positive_landmark_file = "../data/fx/positive_landmark.png"
+		self.positive_landmark_image = pygame.image.load(self.positive_landmark_file)
+		# self.positive_landmark_image = pygame.transform.scale(self.positive_landmark_image, (15, 15))
+		self.positive_landmark_rect = self.positive_landmark_image.get_rect()
+
+		self.negative_landmark_file = "../data/fx/negative_landmark.png"
+		self.negative_landmark_image = pygame.image.load(self.negative_landmark_file)
+		# self.negative_landmark_image = pygame.transform.scale(self.negative_landmark_image, (15, 15))
+		self.negative_landmark_rect = self.negative_landmark_image.get_rect()
+
 		self.voronoi_surface = pygame.Surface(self.graph_surface.get_size(), pygame.SRCALPHA)
 		# self.voronoi_surface.set_alpha(200)
 
@@ -280,6 +290,20 @@ class UserInterface(gd.GraphDisplay):
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
+
+		if self.graph != None:
+			for loc_node in self.graph.nodes:
+				loc = loc_node.info["location"]
+
+				for _lm in loc.landmarks:
+					if _lm.happiness_value >= 0:
+						# pygame.draw.circle(self.graph_surface, (0,255,0), params.map_coord_to_screen_coord_centered((_lm.x, _lm.y)), 15)
+						self.positive_landmark_rect.center = params.map_coord_to_screen_coord_centered((_lm.x, _lm.y))
+						self.graph_surface.blit(self.positive_landmark_image, self.positive_landmark_rect)
+					else:
+						# pygame.draw.circle(self.graph_surface, (255,0,0), params.map_coord_to_screen_coord_centered((_lm.x, _lm.y)), 15)
+						self.negative_landmark_rect.center = params.map_coord_to_screen_coord_centered((_lm.x, _lm.y))
+						self.graph_surface.blit(self.negative_landmark_image, self.negative_landmark_rect)
 		
 		if self.model.map.quadmap != None:
 			for qt in self.model.map.quadmap.qtiles:
