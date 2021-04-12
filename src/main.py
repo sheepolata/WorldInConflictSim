@@ -64,14 +64,19 @@ def main():
 					pass
 				elif event.button == 1:
 					mpos = pygame.mouse.get_pos()
-					smth = False
-					for city_node in display.graph.nodes:
-						if city_node.collide_point(mpos):
-							display.selected = city_node
-							smth = True
-							break
-					if not smth:
-						display.selected = None
+					
+					# Check if collide with city node
+					if display.collide_graph_surface(mpos):
+						smth = False
+						for city_node in display.graph.nodes:
+							if city_node.collide_point(mpos):
+								display.selected = city_node
+								smth = True
+								break
+						if not smth:
+							display.selected = None
+
+					# print(mpos)
 							
 				#MMB
 				if event.button == 2:

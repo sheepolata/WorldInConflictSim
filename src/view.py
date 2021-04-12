@@ -222,6 +222,9 @@ class UserInterface(gd.GraphDisplay):
 	def insert_info_console(self, s, pos):
 		self.info_console.insert(s, pos)
 
+	def collide_graph_surface(self, pos):
+		return self.graph_surface.get_rect().collidepoint(pos)
+
 	def draw_voronoi(self):
 		if self.voronoi == None:
 			return
@@ -276,7 +279,6 @@ class UserInterface(gd.GraphDisplay):
 			complex_polygon = dreg + [dreg[0]] + [added_point[-1]] + added_point
 
 			pygame.draw.polygon(self.voronoi_surface, c, complex_polygon)
-
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)

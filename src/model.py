@@ -807,34 +807,6 @@ class Model(object):
 
 		self.day += 1
 
-	def test_model_init(self):
-		self.nb_location  = 3
-		self.nb_community = 3
-
-		city_namelist = open("../data/namelists/cities.txt")
-		city_names_from_file = city_namelist.readlines()
-		city_namelist.close()
-
-		location_namelist = open("../data/namelists/locations.txt")
-		location_names_from_file = location_namelist.readlines()
-		location_namelist.close()
-
-		city_names = np.random.choice(city_names_from_file, len(params.LocationParams.ARCHETYPES), replace=False)
-		location_names = np.random.choice(location_names_from_file, len(params.LocationParams.ARCHETYPES), replace=False)
-
-		city_names = [s.title() for s in city_names]
-		location_names = [s.title() for s in location_names]
-
-		for i, archetype in enumerate(params.LocationParams.ARCHETYPES):
-			location = Location(archetype, location_names[i][:-1])
-			city_name = city_names[i][:-1]
-			community = Community(city_name, location, "HUMAN_CITY")
-
-			self.locations.append(location)
-			self.communities.append(community)
-
-		self.is_init = True
-
 	def random_model_map_basic(self, scale):
 		# Scale indicate the highest coordinate value, so distance comparison are coherent
 
@@ -850,11 +822,8 @@ class Model(object):
 		# Valid positions must on land, not too close to each other.
 
 		chosen_positions = []
-		max_location = 15
+		max_location = 20
 
-		# i = x + width*y
-		# x = i % width
-		# y = i // width
 		flatten_tiles = list(utils.flatten(self.map.tiles))
 
 		_continue = True
@@ -871,7 +840,7 @@ class Model(object):
 			_try = 0; _max_try = 100
 			while (	(
 						flatten_tiles[random_i].type in [params.TileParams.WATER, params.TileParams.DEEPWATER, params.TileParams.PEAKS] 
-						or not check_new_position(new_pos, chosen_positions, scale/5)
+						or not check_new_position(new_pos, chosen_positions, scale*0.05)
 					)
 					and _try < _max_try):
 				# print("Trying for new pos... Attempt {}".format(_try), end='\r', flush=True)

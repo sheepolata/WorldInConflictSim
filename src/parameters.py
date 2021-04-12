@@ -73,7 +73,7 @@ class ModelParams(object):
 		TileParams.DEEPWATER : LocationParams.SEASIDE
 	}
 
-	MAP_SIZE = 200
+	MAP_SIZE = 100
 	GEN_ROADS_LIMIT = 250
 
 
@@ -100,22 +100,29 @@ class UserInterfaceParams(object):
 	LBGC                           = (168, 168, 168)
 
 	COLOR_LIST = {
-		"Black" 	: 	(0,0,0),
-	  	"White" 	: 	(255,255,255),
-	  	"Red" 		: 	(255,0,0),
-	  	"Lime" 		: 	(0,255,0),
-	  	"Blue" 		: 	(0,0,255),
-	  	"Yellow" 	: 	(255,255,0),
-	  	"Cyan" 		: 	(0,255,255),
-	  	"Magenta" 	: 	(255,0,255),
-	  	"Silver" 	: 	(192,192,192),
-	  	"Gray" 		: 	(128,128,128),
-	  	"Maroon" 	: 	(128,0,0),
-	  	"Olive" 	: 	(128,128,0),
-	  	"Green" 	: 	(0,128,0),
-	  	"Purple" 	: 	(128,0,128),
-	  	"Teal" 		: 	(0,128,128),
-	  	"Navy" 		: 	(0,0,128)
+		"Black" 		: 	(0,0,0),
+	  	"White" 		: 	(255,255,255),
+	  	"Red" 			: 	(255,0,0),
+	  	"Lime" 			: 	(0,255,0),
+	  	"Blue" 			: 	(0,0,255),
+	  	"Yellow" 		: 	(255,255,0),
+	  	"Cyan" 			: 	(0,255,255),
+	  	"Magenta" 		: 	(255,0,255),
+	  	"Silver" 		: 	(192,192,192),
+	  	"Gray" 			: 	(128,128,128),
+	  	"Maroon" 		: 	(128,0,0),
+	  	"Olive" 		: 	(128,128,0),
+	  	"Green" 		: 	(0,128,0),
+	  	"Purple" 		: 	(128,0,128),
+	  	"Teal" 			: 	(0,128,128),
+	  	"Navy" 			: 	(0,0,128),
+  	 	"Orange" 		: 	(255,165,0),
+  	 	"Olivedrab" 	: 	(107,142,35),
+  	 	"Aqua" 			: 	(0,255,255),
+  	 	"Aquamarine" 	: 	(127,255,212),
+  	 	"Midnightblue" 	: 	(25,25,112),
+  	 	"Darkmagenta" 	: 	(139,0,139),
+  	 	"Chocolate" 	: 	(210,105,30)
   	}
 
 	KINGDOM_TO_COLOR = {}
