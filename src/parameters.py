@@ -19,7 +19,8 @@ class TileParams(object):
 	DESERT    = 6
 	BEACH     = 7
 	FOREST    = 8
-	ROADS     = 9
+	ROAD      = 9
+	DIRT_ROAD = 10
 
 	TYPES = [WATER, PLAINS, MOUNTAINS, HILLS, DEEPWATER, PEAKS, DESERT, BEACH, FOREST]
 
@@ -33,7 +34,8 @@ class TileParams(object):
 		DESERT    : "DESERT",
 		BEACH     : "BEACH",
 		FOREST    : "FOREST",
-		ROADS     : "ROADS"
+		ROAD      : "ROAD",
+		DIRT_ROAD : "DIRT_ROAD"
 	}
 
 	TYPE_TO_COST = {
@@ -114,7 +116,8 @@ class UserInterfaceParams(object):
 		TileParams.MOUNTAINS : (160,82,45),
 		TileParams.PEAKS     : (128,0,0),
 		TileParams.FOREST    : (85,107,47),
-		TileParams.ROADS     : (119,136,153)
+		TileParams.ROAD      : (119,136,153),
+		TileParams.DIRT_ROAD : (155,118,83)
 	}
 
 	SCREENSIZE                     = (1280, 720)

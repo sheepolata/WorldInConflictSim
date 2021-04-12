@@ -1267,6 +1267,7 @@ class Model(object):
 			_drawn = []
 			for n in g.nodes:
 				n.info["roads"] = {}
+				n.info["dirt_roads"] = {}
 				print("Generating roads for node {}".format(n.id), end='\n', flush=False)
 				for e in n.edges:
 					print("To node {}".format(e.end.id), end='\n', flush=False)
@@ -1284,6 +1285,16 @@ class Model(object):
 					# 	t.has_road = True
 
 					_drawn.append((n, e.end))
+
+				for lm in n.info["location"].landmarks:
+					print("To landmark {}".format(lm.name), end='\n', flush=False)
+					_start = self.map.get_tile(n.info["location"].map_position[0], n.info["location"].map_position[1])
+					_end   = self.map.get_tile(lm.x, lm.y)
+
+					path = pathfinding.astar(_start, _end, self.map, dn=True)
+					n.info["dirt_roads"][lm.name] = path
+
+
 			print("")
 
 

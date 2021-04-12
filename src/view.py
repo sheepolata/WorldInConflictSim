@@ -291,6 +291,8 @@ class UserInterface(gd.GraphDisplay):
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
 
+
+	def draw_landmarks(self):
 		if self.graph != None:
 			for loc_node in self.graph.nodes:
 				loc = loc_node.info["location"]
@@ -379,6 +381,8 @@ class UserInterface(gd.GraphDisplay):
 		self.fill_surfaces()
 
 		self.draw_map()
+
+		self.draw_landmarks()
 
 		if self._draw_voronoi:
 			self.draw_voronoi()

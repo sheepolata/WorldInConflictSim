@@ -4,6 +4,8 @@
 
 ### 12/04/2021
 
+Add small dirt roads from location to each of its landmark.
+
 Added Desert city archetype. Also added a population control part to growth rate in case of low food production. Moved pop update from weekly to monthly.
 
 Landmarks are now generated with the map, and not with the city graph.
