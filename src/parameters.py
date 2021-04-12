@@ -56,27 +56,30 @@ class LocationParams(object):
 	MOUNTAINS = 1
 	SEASIDE   = 2
 	DESERT    = 3
-	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE, DESERT]
+	FOREST    = 4
+	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE, DESERT, FOREST]
 
 	ARCHETYPES_STR = {
-		PLAINS : "PLAINS",
+		PLAINS    : "PLAINS",
 		MOUNTAINS : "MOUNTAINS",
-		SEASIDE : "SEASIDE",
-		DESERT : "DESERT"
+		SEASIDE   : "SEASIDE",
+		DESERT    : "DESERT",
+		FOREST    : "FOREST"
 	}
 
 	LOCATION_COLORS = {
-		PLAINS    : (86, 125, 70),
+		PLAINS    : (113,204,0),
 		MOUNTAINS : (139,69,19),
 		SEASIDE   : (15,94,156),
-		DESERT    : (194,178,128)
+		DESERT    : (194,178,128),
+		FOREST    : (56,102,0)
 	}
 
 class ModelParams(object):
 
 	TILE_TYPE_TO_LOCATION_ARCHETYPE = {
 		TileParams.PLAINS    : LocationParams.PLAINS,
-		TileParams.FOREST    : LocationParams.PLAINS,
+		TileParams.FOREST    : LocationParams.FOREST,
 		TileParams.MOUNTAINS : LocationParams.MOUNTAINS,
 		TileParams.HILLS     : LocationParams.MOUNTAINS,
 		TileParams.PEAKS     : LocationParams.MOUNTAINS,

@@ -390,16 +390,16 @@ class Location(object):
 		self.archetype = archetype
 		if self.archetype == params.LocationParams.PLAINS:
 			self.base_production[params.ModelParams.FOOD] = 1.0
-			self.base_production[params.ModelParams.MATERIALS] = 0.1
-			self.base_production[params.ModelParams.WEALTH] = 0.1
+			self.base_production[params.ModelParams.MATERIALS] = 0.05
+			self.base_production[params.ModelParams.WEALTH] = 0.08
 
 			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.08
-			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.05
-			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.02
+			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.04
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.01
 			
-			self.base_storage[params.ModelParams.FOOD] = 250.0
+			self.base_storage[params.ModelParams.FOOD] = 300.0
 			self.base_storage[params.ModelParams.MATERIALS] = 500.0
-			self.base_storage[params.ModelParams.WEALTH] = 120.0
+			self.base_storage[params.ModelParams.WEALTH] = 160.0
 
 			self.trade_factor = params.rng.random()*0.05
 
@@ -409,13 +409,13 @@ class Location(object):
 
 		elif self.archetype == params.LocationParams.MOUNTAINS:
 
-			self.base_production[params.ModelParams.FOOD] = 0.5
-			self.base_production[params.ModelParams.MATERIALS] = 0.3
-			self.base_production[params.ModelParams.WEALTH] = 0.2
+			self.base_production[params.ModelParams.FOOD] = 0.25
+			self.base_production[params.ModelParams.MATERIALS] = 0.35
+			self.base_production[params.ModelParams.WEALTH] = 0.25
 
-			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.05
-			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.08
-			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.12
+			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.075
+			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.07
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.1
 			
 			self.base_storage[params.ModelParams.FOOD] = 350.0
 			self.base_storage[params.ModelParams.MATERIALS] = 800.0
@@ -430,7 +430,7 @@ class Location(object):
 		elif self.archetype == params.LocationParams.SEASIDE:
 
 			self.base_production[params.ModelParams.FOOD] = 1.2
-			self.base_production[params.ModelParams.MATERIALS] = 0.1
+			self.base_production[params.ModelParams.MATERIALS] = 0.05
 			self.base_production[params.ModelParams.WEALTH] = 0.3
 
 			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.1
@@ -443,7 +443,7 @@ class Location(object):
 
 			self.trade_factor = 0.05 + params.rng.random()*0.07
 
-			self.base_attractiveness = 10 + params.rng.random()*5
+			self.base_attractiveness = 15 + params.rng.random()*5
 			self.attractiveness += self.base_attractiveness
 			self.space = 10 + params.rng.random()*5
 
@@ -455,17 +455,35 @@ class Location(object):
 
 			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.03
 			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.04
-			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.02
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.015
 			
 			self.base_storage[params.ModelParams.FOOD] = 600.0
 			self.base_storage[params.ModelParams.MATERIALS] = 650.0
 			self.base_storage[params.ModelParams.WEALTH] = 750.0
 
-			self.trade_factor = 0.01 + params.rng.random()*0.02
+			self.trade_factor = 0.04 + params.rng.random()*0.04
 
 			self.base_attractiveness = 0 - params.rng.random()*10
 			self.attractiveness += self.base_attractiveness
 			self.space = 40 + params.rng.random()*5
+		elif self.archetype == params.LocationParams.FOREST:
+			self.base_production[params.ModelParams.FOOD] = 0.75
+			self.base_production[params.ModelParams.MATERIALS] = 0.15
+			self.base_production[params.ModelParams.WEALTH] = 0.0
+
+			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.05
+			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.08
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.025
+			
+			self.base_storage[params.ModelParams.FOOD] = 400.0
+			self.base_storage[params.ModelParams.MATERIALS] = 650.0
+			self.base_storage[params.ModelParams.WEALTH] = 400.0
+
+			self.trade_factor = 0.01 + params.rng.random()*0.02
+
+			self.base_attractiveness = 12 + params.rng.random()*4
+			self.attractiveness += self.base_attractiveness
+			self.space = 12 + params.rng.random()*6
 
 	def add_landmark(self, lm):
 		if lm in self.landmarks:
@@ -624,7 +642,7 @@ class Community(object):
 
 		# dr increases as accumulated wealth decreases
 		# base_death_rate = 1.91
-		base_death_rate = 0.52
+		base_death_rate = base_birth_rate * 0.52
 		# drf_space = max(0, self.space_used - self.location.space) / 100.0
 		drf_space = 0
 		if self.space_used >= (self.location.space*0.5):
@@ -810,7 +828,7 @@ class Community(object):
 		s += "{} inhabitants : {}\n".format(self.get_total_pop(), str_popprop)
 		s += "Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}\n".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space)
 		for r in self.ressource_stockpile:
-			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.0f}%-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values()))
+			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.3f}-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values()))
 
 		s += "\nFood Shortage value:{}; Fcpp:{:.3f}\n".format(self.food_shortage, self.food_consumption_per_pop)
 
@@ -830,7 +848,7 @@ class Community(object):
 		lines.append("Happiness : {:+.2f}; Growth rate : {:+.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
 		lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(self.randomness_of_life["birth_rate_factor"] - self.randomness_of_life["death_rate_factor"], self.population_control))
 		for r in self.ressource_stockpile:
-			lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.0f}%-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r]*100, sum(self.effective_consumption[r].values())))
+			lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
 
 		# lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 

@@ -4,6 +4,8 @@
 
 ### 12/04/2021
 
+Added Forest location archetype and did some balancing
+
 All communities now start with 100 pop (instead of a random percentage of max pop).
 
 Add small dirt roads from location to each of its landmark.
