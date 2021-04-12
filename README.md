@@ -4,6 +4,8 @@
 
 ### 12/04/2021
 
+All communities now start with 100 pop (instead of a random percentage of max pop).
+
 Add small dirt roads from location to each of its landmark.
 
 Added Desert city archetype. Also added a population control part to growth rate in case of low food production. Moved pop update from weekly to monthly.
