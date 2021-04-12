@@ -27,7 +27,7 @@ class SimThread(threading.Thread):
 		super(SimThread, self).__init__()
 		self.model = model
 		self._stop = False
-		self._paused = False
+		self._paused = True
 
 
 		self.freq_list = [1, 7, 30, 90, 182, 365, -1]
@@ -56,8 +56,11 @@ class SimThread(threading.Thread):
 	def stop(self):
 		self._stop = True
 
-	def pause(self):
-		self._paused = not self._paused
+	def pause(self, forced=None):
+		if forced == None:
+			self._paused = not self._paused
+		else:
+			self._paused = forced
 
 class Map(object):
 
@@ -388,6 +391,7 @@ class Location(object):
 		self.landmarks = []
 
 		self.archetype = archetype
+
 		if self.archetype == params.LocationParams.PLAINS:
 			self.base_production[params.ModelParams.FOOD] = 1.0
 			self.base_production[params.ModelParams.MATERIALS] = 0.05
@@ -406,6 +410,13 @@ class Location(object):
 			self.base_attractiveness = 8 + params.rng.random()*4
 			self.attractiveness += self.base_attractiveness
 			self.space = 20 + params.rng.random()*5
+
+			self.population_distribution = {
+				params.RaceParams.HUMAN   : 0.25,
+				params.RaceParams.ELF     : 0.25,
+				params.RaceParams.DWARF   : 0.25,
+				params.RaceParams.HALFING : 0.25
+			}
 
 		elif self.archetype == params.LocationParams.MOUNTAINS:
 
@@ -427,6 +438,13 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 12 + params.rng.random()*5
 
+			self.population_distribution = {
+				params.RaceParams.HUMAN   : 0.2,
+				params.RaceParams.ELF     : 0.1,
+				params.RaceParams.DWARF   : 0.5,
+				params.RaceParams.HALFING : 0.2
+			}
+
 		elif self.archetype == params.LocationParams.SEASIDE:
 
 			self.base_production[params.ModelParams.FOOD] = 1.2
@@ -447,6 +465,13 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 10 + params.rng.random()*5
 
+			self.population_distribution = {
+				params.RaceParams.HUMAN   : 0.5,
+				params.RaceParams.ELF     : 0.2,
+				params.RaceParams.DWARF   : 0.1,
+				params.RaceParams.HALFING : 0.2
+			}
+
 		elif self.archetype == params.LocationParams.DESERT:
 
 			self.base_production[params.ModelParams.FOOD] = 0.25
@@ -466,6 +491,14 @@ class Location(object):
 			self.base_attractiveness = 0 - params.rng.random()*10
 			self.attractiveness += self.base_attractiveness
 			self.space = 40 + params.rng.random()*5
+
+			self.population_distribution = {
+				params.RaceParams.HUMAN   : 0.3,
+				params.RaceParams.ELF     : 0.3,
+				params.RaceParams.DWARF   : 0.3,
+				params.RaceParams.HALFING : 0.1
+			}
+
 		elif self.archetype == params.LocationParams.FOREST:
 			self.base_production[params.ModelParams.FOOD] = 0.75
 			self.base_production[params.ModelParams.MATERIALS] = 0.15
@@ -484,6 +517,13 @@ class Location(object):
 			self.base_attractiveness = 12 + params.rng.random()*4
 			self.attractiveness += self.base_attractiveness
 			self.space = 12 + params.rng.random()*6
+
+			self.population_distribution = {
+				params.RaceParams.HUMAN   : 0.17,
+				params.RaceParams.ELF     : 0.5,
+				params.RaceParams.DWARF   : 0.16,
+				params.RaceParams.HALFING : 0.17
+			}
 
 	def add_landmark(self, lm):
 		if lm in self.landmarks:
@@ -575,19 +615,29 @@ class Community(object):
 		self.food_consumption_from_pop = 0
 
 		self.randomness_of_life = {}
-		self.randomness_of_life["birth_rate_factor"] = 0
-		self.randomness_of_life["death_rate_factor"] = 0
+		self.randomness_of_life["birth_rate_factor"] = {}
+		self.randomness_of_life["death_rate_factor"] = {}
+		for race in params.RaceParams.RACES:
+			self.randomness_of_life["birth_rate_factor"][race] = 0
+			self.randomness_of_life["death_rate_factor"][race] = 0
 
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
 
-		if self.pop_archetype == "HUMAN_CITY":
-			# base_pop_factor = 0.1 + params.rng.random()*0.2
-			# total_pop = int(self.location.space * base_pop_factor * 100)
-			total_pop = 100
+		# if self.pop_archetype == "HUMAN_CITY":
+		# 	# base_pop_factor = 0.1 + params.rng.random()*0.2
+		# 	# total_pop = int(self.location.space * base_pop_factor * 100)
+		# 	total_pop = 100
 
-			self.population[HUMAN] = total_pop
+		# 	self.population[HUMAN] = total_pop
+
+		total_pop = 100
+
+		_dist = self.location.population_distribution
+
+		for k in _dist:
+			self.population[k] = total_pop * _dist[k]
 
 		self.space_used = self.get_total_pop() / 100.0
 
@@ -653,12 +703,12 @@ class Community(object):
 
 		drf_happ = 0
 		if self.happiness < 0:
-			drf_happ = abs(self.happiness * 0.1)
+			drf_happ = abs(self.happiness * 0.2)
 
 		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
 
-		self.actual_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"])
-		self.actual_death_rate *= (1 + self.randomness_of_life["death_rate_factor"])
+		# self.actual_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"])
+		# self.actual_death_rate *= (1 + self.randomness_of_life["death_rate_factor"])
 
 		self.population_control = 0
 		if self.actual_death_rate * 0.9 > self.actual_birth_rate:
@@ -668,12 +718,34 @@ class Community(object):
 			if net_food <= 0:
 				self.population_control = (self.actual_birth_rate-self.actual_death_rate)
 
-		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate) + self.population_control
+
 		if self.get_total_pop() <= 0:
 			self.net_growth_rate = 0
 
+		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate) + self.population_control
+
 		for race in self.population.keys():
-			self.population[race] = (float(self.population[race]) * (1 + (self.net_growth_rate/100.0)))
+			_prefered_location_factor = 1.0
+			if self.location.archetype in race.preferred_locations:
+				_prefered_location_factor += params.RaceParams.RACE_PREFERRED_LOCATION_FACTOR
+			elif self.location.archetype in race.hated_locations:
+				_prefered_location_factor -= params.RaceParams.RACE_PREFERRED_LOCATION_FACTOR
+
+			# _hated_location_factor    = 1.0
+			# if self.location.archetype in race.hated_locations:
+			# 	_hated_location_factor    = 1.2
+			_race_birth_rate = (self.actual_birth_rate*race.positive_growth_rate_factor*_prefered_location_factor)
+			_race_death_rate = (self.actual_death_rate*race.negative_growth_rate_factor)
+
+			_race_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"][race])
+			_race_death_rate *= (1 + self.randomness_of_life["death_rate_factor"][race])
+
+			_race_growth_rate = (_race_birth_rate - _race_death_rate)
+
+
+			_race_growth_rate += self.population_control
+
+			self.population[race] = float(self.population[race]) + ((float(self.population[race]) * (_race_growth_rate/100.0))/4.0)
 		
 		self.space_used = self.get_total_pop() / 100.0
 
@@ -800,17 +872,25 @@ class Community(object):
 			self.ressources_prev_net_worth[r] = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
 
 	def a_week_passed(self):
+		self.update_pops()
 		pass		
 
 	def a_month_passed(self):
-		self.update_pops()
+		for race in params.RaceParams.RACES:
+			self.randomness_of_life["birth_rate_factor"][race] += (-0.03 + params.rng.random() * 0.06)/3.0
+			self.randomness_of_life["death_rate_factor"][race] += (-0.03 + params.rng.random() * 0.06)/3.0
+
+			self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 1.0)
+			self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 1.0)
 
 	def a_quarter_passed(self):
-		self.randomness_of_life["birth_rate_factor"] += -0.1 + params.rng.random() * 0.2
-		self.randomness_of_life["death_rate_factor"] += -0.1 + params.rng.random() * 0.2
+		pass
+		# for race in params.RaceParams.RACES:
+		# 	self.randomness_of_life["birth_rate_factor"][race] += -0.03 + params.rng.random() * 0.06
+		# 	self.randomness_of_life["death_rate_factor"][race] += -0.03 + params.rng.random() * 0.06
 
-		self.randomness_of_life["birth_rate_factor"] = utils.clamp(self.randomness_of_life["birth_rate_factor"], 0, 1)
-		self.randomness_of_life["death_rate_factor"] = utils.clamp(self.randomness_of_life["death_rate_factor"], 0, 1)
+		# 	self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 1.0)
+		# 	self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 1.0)
 
 	def a_semester_passed(self):
 		pass
@@ -842,13 +922,18 @@ class Community(object):
 		lines.append("in {}".format(self.kingdom.name))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
-		for race in popprop:
-			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
-		lines.append("{} inhabitants : {}".format(self.get_total_pop(), str_popprop))
+		for race in sorted(popprop, key=popprop.get, reverse=True):
+			if popprop[race] != 0:
+				str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
+		lines.append("{} inhabitants".format(self.get_total_pop()))
+		lines.append(str_popprop[:-2])
 		lines.append("Happiness : {:+.2f}; Growth rate : {:+.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
-		lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(self.randomness_of_life["birth_rate_factor"] - self.randomness_of_life["death_rate_factor"], self.population_control))
+		lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(np.mean(list(self.randomness_of_life["birth_rate_factor"].values())) - np.mean(list(self.randomness_of_life["death_rate_factor"].values())), self.population_control))
 		for r in self.ressource_stockpile:
-			lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+			try:
+				lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+			except KeyError:
+				pass	
 
 		# lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
@@ -894,20 +979,6 @@ class Kingdom(object):
 	def add_community(self, comm):
 		if comm not in self.communities:
 			self.communities.append(comm)
-
-class Race(object):
-
-	def __init__(self, name):
-		self.name = name
-
-		self.affinities = {}
-
-	def set_affinity(self, other_race, aff):
-		self.affinities[other_race] = aff
-
-HUMAN = Race("Humans")
-
-RACES = [HUMAN]
 
 class Model(object):
 
@@ -1324,7 +1395,6 @@ class Model(object):
 
 
 		return g
-
 
 
 if __name__=='__main__':

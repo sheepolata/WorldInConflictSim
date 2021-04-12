@@ -88,7 +88,7 @@ def main():
 					pass
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
-					thread.pause()
+					thread.pause(forced=True)
 
 					mymodel.reset()
 					mymodel.set_map()
@@ -99,9 +99,9 @@ def main():
 					display.graph = graph
 					display.reset()
 
-					thread.pause()
+					thread.pause(forced=False)
 				elif event.key == K_r:
-					thread.pause()
+					thread.pause(forced=True)
 
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)
@@ -112,7 +112,7 @@ def main():
 					# display.reset_nodes_only()
 					display.reset()
 
-					thread.pause()
+					thread.pause(forced=False)
 				if event.key == K_RIGHT:
 					thread.increase_speed()
 				if event.key == K_LEFT:

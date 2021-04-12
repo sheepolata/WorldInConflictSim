@@ -4,6 +4,10 @@
 
 ### 12/04/2021
 
+Added 4 races (Humans, Elves, Dwarves and Halflings). Each race have preferred and hated location archetype. The birth rate of a race in their preferred location is increased, and the death rate in their hated locations is increased.
+
+Changed the frequency of pop update and randomness_of_life update without changing their values.
+
 Added Forest location archetype and did some balancing
 
 All communities now start with 100 pop (instead of a random percentage of max pop).

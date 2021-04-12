@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-# random_seed = 4011995
+# random_seed = 6011995
 random_seed = -1
 if random_seed < 0:
 	rng = np.random.default_rng()
@@ -74,6 +74,43 @@ class LocationParams(object):
 		DESERT    : (194,178,128),
 		FOREST    : (56,102,0)
 	}
+
+class Race(object):
+
+	def __init__(self, name, positive_growth_rate_perthousand, negative_growth_rate_perthousand, pref_loc, hat_loc):
+		self.name = name
+
+		self.affinities = {}
+
+		self.positive_growth_rate_factor = 1.0 + (positive_growth_rate_perthousand*0.001)
+		self.negative_growth_rate_factor = 1.0 + (negative_growth_rate_perthousand*0.001)
+
+		self.preferred_locations = pref_loc
+		self.hated_locations     = hat_loc
+
+	def set_affinity(self, other_race, aff):
+		self.affinities[other_race] = aff
+
+class RaceParams(object):
+	RACE_PREFERRED_LOCATION_FACTOR = 0.05
+
+	pl = [LocationParams.SEASIDE]
+	hl = []
+	HUMAN   = Race("Humans"  , 0, 0, pl, hl)
+
+	pl = [LocationParams.FOREST]
+	hl = [LocationParams.MOUNTAINS]
+	ELF     = Race("Elves"   , 0, 0, pl, hl)
+
+	pl = [LocationParams.MOUNTAINS]
+	hl = [LocationParams.SEASIDE]
+	DWARF   = Race("Dwarves" , 0, 0, pl, hl)
+
+	pl = []
+	hl = [LocationParams.DESERT]
+	HALFING = Race("Halfings", 0, 0, pl, hl)
+
+	RACES = [HUMAN, ELF, DWARF, HALFING]
 
 class ModelParams(object):
 
