@@ -240,8 +240,9 @@ class UserInterface(gd.GraphDisplay):
 
 		for dreg in self.voronoi_draw_regions:
 
-			c = (0,0,0,0)
 
+			c = (0,0,0,0)
+			transparency = 200
 			node = None
 
 			for loc_node in self.graph.nodes:
@@ -252,7 +253,7 @@ class UserInterface(gd.GraphDisplay):
 						node = loc_node
 						if loc_node.info["community"]:
 							c = params.UserInterfaceParams.COLOR_LIST[params.UserInterfaceParams.KINGDOM_TO_COLOR[loc_node.info["community"].kingdom.name]]
-							c = (c[0], c[1], c[2], 120)
+							c = (c[0], c[1], c[2], transparency)
 
 			if node != None:
 				_centroid = node.info["rect"].center
