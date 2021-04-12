@@ -2,6 +2,7 @@ import threading
 import math
 import numpy as np
 import time
+import parameters as params
 
 def get_sign(x):
     if x > 0:
@@ -95,12 +96,12 @@ def random_angle_in_direction(_dir, span):
     a = (_dir-span)%360
     b = (_dir+span)%360
     if a > b:
-        return np.random.randint(b, a)
+        return math.floor(b + math.floor(params.rng.random() * (b-a))) # (b, a)
     else:
-        return np.random.randint(a, b)
+        return math.floor(a + math.floor(params.rng.random() * (a-b))) # (a, b)
 
 def random_range(_min, _max):
-    _rnd = _min + np.random.random() * (_max - _min)
+    _rnd = _min + params.rng.random() * (_max - _min)
     return _rnd
 
 def flatten(l):

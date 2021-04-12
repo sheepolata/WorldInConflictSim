@@ -4,7 +4,6 @@ sys.path.append('./GraphEngine')
 import math
 # from datetime import datetime, timedelta
 import datetime
-import random
 import pygame
 import numpy as np
 
@@ -64,8 +63,6 @@ class UserInterface(gd.GraphDisplay):
 			for i, loc_node in enumerate(self.graph.nodes):
 				print("Set node graphic info {}/{}".format(i,len(self.graph.nodes)), end='\r', flush=True)
 				
-				# _x = (self.graph_surface_position[0]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[0]*0.8
-				# _y = (self.graph_surface_position[1]+random.random()*self.graph_surface_size[0]*0.2) + random.random()*self.graph_surface_size[1]*0.8
 				if loc_node.info["rect"] != None:
 					_x = loc_node.info["rect"].center[0]
 					_y = loc_node.info["rect"].center[1]
@@ -263,7 +260,7 @@ class UserInterface(gd.GraphDisplay):
 			else:
 				_centroid = centroid(dreg)
 
-			dist = 15
+			dist = 6
 			added_point = []
 			for dreg_point in dreg:
 
@@ -278,7 +275,8 @@ class UserInterface(gd.GraphDisplay):
 
 			complex_polygon = dreg + [dreg[0]] + [added_point[-1]] + added_point
 
-			pygame.draw.polygon(self.voronoi_surface, c, complex_polygon)
+			# pygame.draw.polygon(self.voronoi_surface, c, complex_polygon)
+			pygame.draw.lines(self.voronoi_surface, c, True, added_point, width=int(dist*2))
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)

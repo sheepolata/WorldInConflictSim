@@ -1,7 +1,6 @@
 # import the pygame module, so you can use it
 import pygame
 from pygame.locals import *
-import random
 import numpy as np
 
 import sys

@@ -1,4 +1,12 @@
 import math
+import numpy as np
+
+random_seed = 1995
+# random_seed = -1
+if random_seed < 0:
+	rng = np.random.default_rng()
+else:
+	rng = np.random.default_rng(random_seed)
 
 class TileParams(object):
 
@@ -75,6 +83,20 @@ class ModelParams(object):
 
 	MAP_SIZE = 100
 	GEN_ROADS_LIMIT = 250
+
+	# 0.01 consumed per week per pop
+	FOOD      = 0
+	# Used to build stuff
+	MATERIALS = 1
+	# Affect happiness; 0.01 consumed per month per pop
+	WEALTH    = 2
+
+	RESSOURCES = [FOOD, MATERIALS, WEALTH]
+	RESSOURCES_STR = {
+		FOOD:"FOOD",
+		MATERIALS:"MATERIALS",
+		WEALTH:"WEALTH"
+	}
 
 
 class UserInterfaceParams(object):

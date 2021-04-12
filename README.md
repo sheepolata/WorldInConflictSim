@@ -2,6 +2,10 @@
 
 ## News and DevLogs
 
+### 12/04/2021
+
+The random object is set in parameters.py. It is now possible to set the seed for random generation. Usefull for parameter tests and balancing.
+
 ### 11/04/2021
 
 Added Kingdom data. Each community is part of a Kingdom (for now, one kingdom per community).

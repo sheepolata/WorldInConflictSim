@@ -3,7 +3,10 @@
 from itertools import product
 import math
 import random
+import parameters as params
 
+if params.random_seed >= 0:
+    random.seed(params.random_seed)
 
 def smoothstep(t):
     """Smooth curve with a zero derivative at 0 and 1, making it useful for
@@ -58,6 +61,8 @@ class PerlinNoiseFactory(object):
     def _generate_gradient(self):
         # Generate a random unit vector at each grid point -- this is the
         # "gradient" vector, in that the grid tile slopes towards it
+
+        # Set random seed
 
         # 1 dimension is special, since the only unit vector is trivial;
         # instead, use a slope between -1 and 1
