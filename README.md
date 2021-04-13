@@ -4,6 +4,14 @@
 
 ### 13/04/2021
 
+Balancing is decent. If a kingdom has a main race that can thrive in its location, this race will grow much more than other, but other can still be present with the randomness of life and caravans.
+If a kingdom main race is not in its prefered location or is in a hated location, then it will still be there but with less proportion.
+
+Added a main race to the kingdom. A kindgom is favouring a race, chosen randomly amoung the race of the community at creation. The main race of a kingdom gets a boost to birth rate.
+The randomness of life is influence by the kingdom, such as the main race's randomness of life is more clement. Basically, the main race have a slight bonus to the birth rate of the randomness of life.
+
+Temporarely removed population control.
+
 Added a caravan system and removed the migration (for now). From time to time, a caravan can spawn at a city and bring a small amount of a random race to that city. Allow some mix of population and keep things interesting.
 
 Added a Hill location archetype and did some balancing.

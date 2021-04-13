@@ -638,6 +638,15 @@ class Community(object):
 
 		self.space_used = self.get_total_pop() / 100.0
 
+		_prop = self.get_pop_proportion()
+		_r = []
+		_p = []
+		for k in _prop:
+			_r.append(k)
+			_p.append(_prop[k])
+
+		self.kingdom.main_race = params.rng.choice(_r, p=_p)
+
 	def get_total_pop(self):
 		total = 0
 		for race in self.population.keys():
@@ -704,16 +713,13 @@ class Community(object):
 
 		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
 
-		# self.actual_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"])
-		# self.actual_death_rate *= (1 + self.randomness_of_life["death_rate_factor"])
-
-		self.population_control = 0
-		if self.actual_death_rate * 0.9 > self.actual_birth_rate:
-			net_food = sum(self.effective_gain[params.ModelParams.FOOD].values()) - sum(self.effective_consumption[params.ModelParams.FOOD].values())
-			# if(self.location.archetype==params.LocationParams.DESERT):
-			# 	print(net_food)
-			if net_food <= 0:
-				self.population_control = (self.actual_birth_rate-self.actual_death_rate)
+		# self.population_control = 0
+		# if self.actual_death_rate * 0.9 > self.actual_birth_rate:
+		# 	net_food = sum(self.effective_gain[params.ModelParams.FOOD].values()) - sum(self.effective_consumption[params.ModelParams.FOOD].values())
+		# 	# if(self.location.archetype==params.LocationParams.DESERT):
+		# 	# 	print(net_food)
+		# 	if net_food <= 0:
+		# 		self.population_control = (self.actual_birth_rate-self.actual_death_rate)
 
 
 		if self.get_total_pop() <= 0:
@@ -727,6 +733,9 @@ class Community(object):
 				_prefered_location_factor += params.RaceParams.RACE_PREFERRED_LOCATION_FACTOR
 			elif self.location.archetype in race.hated_locations:
 				_prefered_location_factor -= params.RaceParams.RACE_PREFERRED_LOCATION_FACTOR
+
+			if self.kingdom.main_race == race:
+				_prefered_location_factor += params.RaceParams.KINGDOM_MAIN_RACE_BOOST
 
 			# _hated_location_factor    = 1.0
 			# if self.location.archetype in race.hated_locations:
@@ -924,11 +933,15 @@ class Community(object):
 
 	def a_month_passed(self):
 		for race in params.RaceParams.RACES:
-			self.randomness_of_life["birth_rate_factor"][race] += (-0.03 + params.rng.random() * 0.06)/3.0
-			self.randomness_of_life["death_rate_factor"][race] += (-0.03 + params.rng.random() * 0.06)/3.0
+			main_race_influence = 0
+			if race == self.kingdom.main_race:
+				main_race_influence = 0
 
-			self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 1.0)
-			self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 1.0)
+			self.randomness_of_life["birth_rate_factor"][race] += ((-0.03 + params.rng.random() * 0.06) + (0.03*main_race_influence)) / 3.0
+			self.randomness_of_life["death_rate_factor"][race] += ((-0.03 + params.rng.random() * 0.06) - (0.00*main_race_influence)) / 3.0
+
+			self.randomness_of_life["birth_rate_factor"][race] = utils.clamp(self.randomness_of_life["birth_rate_factor"][race], 0, 0.2)
+			self.randomness_of_life["death_rate_factor"][race] = utils.clamp(self.randomness_of_life["death_rate_factor"][race], 0, 0.2)
 		
 		# self.migration()
 
@@ -962,7 +975,7 @@ class Community(object):
 
 		# lines.append("{}".format(self.name))
 		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
-		lines.append("in {}".format(self.kingdom.name))
+		lines.append("in {} ({} governement)".format(self.kingdom.name, self.kingdom.main_race.name_adjective))
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in sorted(popprop, key=popprop.get, reverse=True):
@@ -1018,6 +1031,8 @@ class Kingdom(object):
 	def __init__(self, name):
 		self.name = name
 		self.communities = []
+
+		self.main_race = None
 
 	def add_community(self, comm):
 		if comm not in self.communities:
@@ -1303,6 +1318,7 @@ class Model(object):
 			params.UserInterfaceParams.KINGDOM_TO_COLOR[kingdom.name] = kingdom_colors[i]
 			community = Community(city_names[i][:-1] if city_names[i][-1] == '\n' else city_names[i], loc, kingdom, "HUMAN_CITY")
 			community.model = self
+			kingdom.add_community(community)
 			
 			self.communities.append(community)
 			self.nb_community += 1

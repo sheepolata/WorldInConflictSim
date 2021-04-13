@@ -80,8 +80,24 @@ class LocationParams(object):
 
 class Race(object):
 
+	SINGULAR_NAME = {
+		"Humans"   : "Human",
+		"Elves"    : "Elf",
+		"Dwarves"  : "Dwarf",
+		"Halfings" : "Halfing"
+	}
+
+	ADJECTIVE_NAME = {
+		"Humans"   : "Human",
+		"Elves"    : "Elven",
+		"Dwarves"  : "Dwarven",
+		"Halfings" : "Halfing"
+	}
+
 	def __init__(self, name, positive_growth_rate_perthousand, negative_growth_rate_perthousand, pref_loc, hat_loc):
-		self.name = name
+		self.name           = name
+		self.name_singular  = Race.SINGULAR_NAME[self.name]
+		self.name_adjective = Race.ADJECTIVE_NAME[self.name]
 
 		self.affinities = {}
 
@@ -99,7 +115,7 @@ class RaceParams(object):
 	BASE_POP_VALUE = 500
 	
 	RACE_PREFERRED_LOCATION_FACTOR = 0.1
-	KINGDOM_MAIN_RACE_BOOST        = 0.1
+	KINGDOM_MAIN_RACE_BOOST        = 0.2
 
 	HUMAN   = Race("Humans"  , 0, 0, [LocationParams.PLAINS], [LocationParams.MOUNTAINS])
 	ELF     = Race("Elves"   , 0, 0, [LocationParams.FOREST], [LocationParams.MOUNTAINS, LocationParams.HILL])
