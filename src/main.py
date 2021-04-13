@@ -39,7 +39,7 @@ def main():
 	# graph._draw_delaunay = True
 	# graph.computeDelaunay()
 
-	display.set_log(myglobals.LogConsole)
+	display.set_log(myglobals.LogConsoleInst)
 	display.set_info(myglobals.InfoConsole)
 
 	thread.start()

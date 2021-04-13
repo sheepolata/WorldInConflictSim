@@ -2,6 +2,12 @@
 
 ## News and DevLogs
 
+### 13/04/2021
+
+Added a caravan system and removed the migration (for now). From time to time, a caravan can spawn at a city and bring a small amount of a random race to that city. Allow some mix of population and keep things interesting.
+
+Added a Hill location archetype and did some balancing.
+
 ### 12/04/2021
 
 Added a migration system. Fro each city, a certain number of population come from neighbouring cities, depending on happiness levels. Not conclusive yet.

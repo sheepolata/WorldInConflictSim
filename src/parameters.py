@@ -57,14 +57,16 @@ class LocationParams(object):
 	SEASIDE   = 2
 	DESERT    = 3
 	FOREST    = 4
-	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE, DESERT, FOREST]
+	HILL      = 5
+	ARCHETYPES = [PLAINS, MOUNTAINS, SEASIDE, DESERT, FOREST, HILL]
 
 	ARCHETYPES_STR = {
 		PLAINS    : "PLAINS",
 		MOUNTAINS : "MOUNTAINS",
 		SEASIDE   : "SEASIDE",
 		DESERT    : "DESERT",
-		FOREST    : "FOREST"
+		FOREST    : "FOREST",
+		HILL      : "HILL"
 	}
 
 	LOCATION_COLORS = {
@@ -72,7 +74,8 @@ class LocationParams(object):
 		MOUNTAINS : (139,69,19),
 		SEASIDE   : (15,94,156),
 		DESERT    : (194,178,128),
-		FOREST    : (56,102,0)
+		FOREST    : (56,102,0),
+		HILL      : (205,133,63)
 	}
 
 class Race(object):
@@ -92,25 +95,20 @@ class Race(object):
 		self.affinities[other_race] = aff
 
 class RaceParams(object):
-	RACE_PREFERRED_LOCATION_FACTOR = 0.05
+	
+	BASE_POP_VALUE = 500
+	
+	RACE_PREFERRED_LOCATION_FACTOR = 0.1
+	KINGDOM_MAIN_RACE_BOOST        = 0.1
 
-	pl = [LocationParams.SEASIDE]
-	hl = []
-	HUMAN   = Race("Humans"  , 0, 0, pl, hl)
+	HUMAN   = Race("Humans"  , 0, 0, [LocationParams.PLAINS], [LocationParams.MOUNTAINS])
+	ELF     = Race("Elves"   , 0, 0, [LocationParams.FOREST], [LocationParams.MOUNTAINS, LocationParams.HILL])
+	DWARF   = Race("Dwarves" , 0, 0, [LocationParams.MOUNTAINS], [LocationParams.FOREST])
 
-	pl = [LocationParams.FOREST]
-	hl = [LocationParams.MOUNTAINS]
-	ELF     = Race("Elves"   , 0, 0, pl, hl)
-
-	pl = [LocationParams.MOUNTAINS]
-	hl = [LocationParams.SEASIDE]
-	DWARF   = Race("Dwarves" , 0, 0, pl, hl)
-
-	pl = []
-	hl = [LocationParams.DESERT]
-	HALFING = Race("Halfings", 0, 0, pl, hl)
+	HALFING = Race("Halfings", 0, 0, [LocationParams.HILL], [LocationParams.DESERT])
 
 	RACES = [HUMAN, ELF, DWARF, HALFING]
+
 
 class ModelParams(object):
 
@@ -118,8 +116,8 @@ class ModelParams(object):
 		TileParams.PLAINS    : LocationParams.PLAINS,
 		TileParams.FOREST    : LocationParams.FOREST,
 		TileParams.MOUNTAINS : LocationParams.MOUNTAINS,
-		TileParams.HILLS     : LocationParams.MOUNTAINS,
 		TileParams.PEAKS     : LocationParams.MOUNTAINS,
+		TileParams.HILLS     : LocationParams.HILL,
 		TileParams.DESERT    : LocationParams.DESERT,
 		TileParams.BEACH     : LocationParams.SEASIDE,
 		TileParams.WATER     : LocationParams.SEASIDE,

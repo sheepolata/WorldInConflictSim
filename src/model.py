@@ -18,6 +18,7 @@ import graph
 import perlinNoise
 import pathfinding
 import parameters as params
+import myglobals
 
 from pygame import Rect
 
@@ -414,13 +415,6 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 20 + params.rng.random()*5
 
-			self.population_distribution = {
-				params.RaceParams.HUMAN   : 0.25,
-				params.RaceParams.ELF     : 0.25,
-				params.RaceParams.DWARF   : 0.25,
-				params.RaceParams.HALFING : 0.25
-			}
-
 		elif self.archetype == params.LocationParams.MOUNTAINS:
 
 			self.base_production[params.ModelParams.FOOD] = 0.25
@@ -440,13 +434,6 @@ class Location(object):
 			self.base_attractiveness = -10 - params.rng.random()*5
 			self.attractiveness += self.base_attractiveness
 			self.space = 12 + params.rng.random()*5
-
-			self.population_distribution = {
-				params.RaceParams.HUMAN   : 0.2,
-				params.RaceParams.ELF     : 0.1,
-				params.RaceParams.DWARF   : 0.5,
-				params.RaceParams.HALFING : 0.2
-			}
 
 		elif self.archetype == params.LocationParams.SEASIDE:
 
@@ -468,13 +455,6 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 10 + params.rng.random()*5
 
-			self.population_distribution = {
-				params.RaceParams.HUMAN   : 0.5,
-				params.RaceParams.ELF     : 0.2,
-				params.RaceParams.DWARF   : 0.1,
-				params.RaceParams.HALFING : 0.2
-			}
-
 		elif self.archetype == params.LocationParams.DESERT:
 
 			self.base_production[params.ModelParams.FOOD] = 0.25
@@ -495,13 +475,6 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 40 + params.rng.random()*5
 
-			self.population_distribution = {
-				params.RaceParams.HUMAN   : 0.3,
-				params.RaceParams.ELF     : 0.3,
-				params.RaceParams.DWARF   : 0.3,
-				params.RaceParams.HALFING : 0.1
-			}
-
 		elif self.archetype == params.LocationParams.FOREST:
 			self.base_production[params.ModelParams.FOOD] = 0.75
 			self.base_production[params.ModelParams.MATERIALS] = 0.15
@@ -521,12 +494,37 @@ class Location(object):
 			self.attractiveness += self.base_attractiveness
 			self.space = 12 + params.rng.random()*6
 
-			self.population_distribution = {
-				params.RaceParams.HUMAN   : 0.17,
-				params.RaceParams.ELF     : 0.5,
-				params.RaceParams.DWARF   : 0.16,
-				params.RaceParams.HALFING : 0.17
-			}
+		elif self.archetype == params.LocationParams.HILL:
+			self.base_production[params.ModelParams.FOOD] = 0.45
+			self.base_production[params.ModelParams.MATERIALS] = 0.25
+			self.base_production[params.ModelParams.WEALTH] = 0.1
+
+			self.bonus_per_100_pop[params.ModelParams.FOOD] = 0.08
+			self.bonus_per_100_pop[params.ModelParams.MATERIALS] = 0.04
+			self.bonus_per_100_pop[params.ModelParams.WEALTH] = 0.01
+			
+			self.base_storage[params.ModelParams.FOOD] = 400.0
+			self.base_storage[params.ModelParams.MATERIALS] = 550.0
+			self.base_storage[params.ModelParams.WEALTH] = 350.0
+
+			self.trade_factor = 0.01 + params.rng.random()*0.04
+
+			self.base_attractiveness = -5 + params.rng.random()*10
+			self.attractiveness += self.base_attractiveness
+			self.space = 16 + params.rng.random()*5
+
+		_p = [0] * len(params.RaceParams.RACES)
+		for i, r in enumerate(params.RaceParams.RACES):
+			if self.archetype in r.preferred_locations:
+				_p[i] = 3.0
+			elif self.archetype in r.hated_locations:
+				_p[i] = 1.0
+			else:
+				_p[i] = 2.0
+
+		self.base_population_distribution = {}
+		for i, r in enumerate(params.RaceParams.RACES):
+			self.base_population_distribution[r] = _p[i]/sum(_p)
 
 	def add_landmark(self, lm):
 		if lm in self.landmarks:
@@ -564,6 +562,8 @@ class Community(object):
 		self.location.community = self
 
 		self.kingdom = kingdom
+
+		self.model = None
 
 		self.pop_archetype = poparch
 		self.population = {}
@@ -629,16 +629,9 @@ class Community(object):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
 
-		# if self.pop_archetype == "HUMAN_CITY":
-		# 	# base_pop_factor = 0.1 + params.rng.random()*0.2
-		# 	# total_pop = int(self.location.space * base_pop_factor * 100)
-		# 	total_pop = 100
+		total_pop = params.RaceParams.BASE_POP_VALUE
 
-		# 	self.population[HUMAN] = total_pop
-
-		total_pop = 100
-
-		_dist = self.location.population_distribution
+		_dist = self.location.base_population_distribution
 
 		for k in _dist:
 			self.population[k] = total_pop * _dist[k]
@@ -783,6 +776,26 @@ class Community(object):
 			except KeyError:
 				self.population[r] = total_pop[r]
 
+	def caravan(self):
+		if params.rng.random() < (0.01/4.0):
+			if self.model != None:
+				_pop_number = (50 + params.rng.random()*100)
+				_race = params.rng.choice(params.RaceParams.RACES)
+
+				_nhapp = []
+				for nl in self.location.neighbouring_locations:
+					ncomm = nl.community
+					if ncomm != None:
+						_nhapp.append(ncomm.happiness)
+
+				avg_surrounding_happ = np.mean(_nhapp)
+				ash_factor = 1 - utils.normalise(avg_surrounding_happ, mini=-100, maxi=100)
+				_pop_number = int(_pop_number * ash_factor)
+
+				self.population[_race] += _pop_number
+
+				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
+
 	def a_day_passed(self):
 		if self.location == None:
 			return
@@ -907,6 +920,7 @@ class Community(object):
 
 	def a_week_passed(self):
 		self.update_pops()
+		self.caravan()
 
 	def a_month_passed(self):
 		for race in params.RaceParams.RACES:
@@ -964,11 +978,11 @@ class Community(object):
 			except KeyError:
 				pass	
 
-		# lines.append("Food Shortage value:{}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
+		# lines.append("Food Shortage :{:.3f}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
 		if len(self.location.landmarks) > 0:
 			lines.append("Landmarks: (Total is happiness {:+.02f})".format(sum([lm.happiness_value for lm in self.location.landmarks])))
-			for lm in self.location.landmarks:
+			for lm in sorted(self.location.landmarks, key=lambda x: x.happiness_value, reverse=True):
 				lines.append("- " + lm.to_string())
 
 		return lines
@@ -1288,7 +1302,8 @@ class Model(object):
 			kingdom = Kingdom(kingdom_names[i][:-1] if kingdom_names[i][-1] == '\n' else kingdom_names[i])
 			params.UserInterfaceParams.KINGDOM_TO_COLOR[kingdom.name] = kingdom_colors[i]
 			community = Community(city_names[i][:-1] if city_names[i][-1] == '\n' else city_names[i], loc, kingdom, "HUMAN_CITY")
-
+			community.model = self
+			
 			self.communities.append(community)
 			self.nb_community += 1
 		print("")
@@ -1297,7 +1312,26 @@ class Model(object):
 
 	def to_string_summary(self):
 		lines = []
+
+		_total_pop = {}
 		for comm in self.communities:
+			for r in params.RaceParams.RACES:
+				try:
+					_total_pop[r] += comm.population[r]
+				except KeyError:
+					_total_pop[r] = comm.population[r]
+
+		sum_all_pop = int(sum(list(_total_pop.values())))
+		s = f"{sum_all_pop} inhabitants"
+		lines.append(s)
+
+		str_popprop = ""
+		for race in sorted(_total_pop, key=_total_pop.get, reverse=True):
+			if _total_pop[race] != 0:
+				str_popprop += "{:.1f}% {} ({:.1f}k), ".format((_total_pop[race]/sum_all_pop)*100, race.name, _total_pop[race]/1000)
+		lines.append(str_popprop[:-2])
+
+		for comm in sorted(self.communities, key=lambda x: x.name, reverse=False):
 			# s = "{} at {} in {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
 			s = "{} ({}), {} inh.; Happ. {:0.0f}".format(comm.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
 			lines.append(s)

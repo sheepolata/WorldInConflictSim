@@ -11,13 +11,13 @@ from scipy.spatial import Voronoi
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-import console
 import ggraph
 import graphdisplay as gd
 import delaunaytriangulation as dt
 import utils
 import model
 import parameters as params
+import myglobals
 
 class UserInterface(gd.GraphDisplay):
 
@@ -62,6 +62,9 @@ class UserInterface(gd.GraphDisplay):
 		self.init_rect_for_nodes()
 		self.set_node_graphic_info()
 		self.compute_voronoi()
+
+		self.info_console.clear()
+		self.log.clear()
 
 	def reset_nodes_only(self):
 		self.init_rect_for_nodes()
@@ -208,7 +211,7 @@ class UserInterface(gd.GraphDisplay):
 					loc_node.info["radius"] = _rad_min + (_rad_factor*(_rad_max-_rad_min))
 
 	def update_info_tab(self):
-		self.info_console.log("{}".format(LogConsole.get_date_to_string(self.model.day)))
+		self.info_console.log("{}".format(myglobals.LogConsole.get_date_to_string(self.model.day)))
 
 		if self.selected == None:
 			model_summary = self.model.to_string_summary()
@@ -290,7 +293,6 @@ class UserInterface(gd.GraphDisplay):
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
-
 
 	def draw_landmarks(self):
 		if self.graph != None:
@@ -392,43 +394,6 @@ class UserInterface(gd.GraphDisplay):
 		self.blit_surfaces()
 
 		super(UserInterface, self).pygame_update_and_tick()
-
-class myDatetime(object):
-
-	def __init__(self, simu_day):
-		self.simu_day = simu_day
-
-		self.day   = ((self.simu_day % 365) % 30) + 1
-		self.month = (((self.simu_day % 365) // 30) % 12) + 1
-		self.year  = (self.simu_day // 365) + 1
-
-class LogConsole(console.Console):
-
-	def __init__(self):
-		super(LogConsole, self).__init__()
-
-	def get_date_to_string(day):
-		_year = math.floor(day/(12*28))
-		_month = (math.floor(day/28))%12
-		_day = day%28
-		d = myDatetime(day)
-		h = "{:02d}/{:02d}/{:04d}".format(d.day, d.month, d.year)
-		return h
-
-	def set_head(self, day):
-		self.line_head = "{} - ".format(LogConsole.get_date_to_string(day))
-
-	def log(self, s, day):
-		self.set_head(day)
-		super(LogConsole, self).log(s)
-
-	def push_back(self, s, day):
-		self.log(s, day)
-
-	def push_front(self, s, day):
-		self.set_head(day)
-		super(LogConsole, self).push_front(s)
-
 
 import matplotlib.pyplot as plt
 
