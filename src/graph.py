@@ -10,13 +10,33 @@ import parameters as params
 
 class CityNode(ggraph.gNode):
 
+	HUMAN_CITY_FILE = "../data/fx/human_city.png"
+	HUMAN_CITY_IMAGE = pygame.image.load(HUMAN_CITY_FILE)
+	HUMAN_CITY_CONTOUR_FILE = "../data/fx/human_city_contour.png"
+	HUMAN_CITY_CONTOUR_IMAGE = pygame.image.load(HUMAN_CITY_CONTOUR_FILE)
+
+	ELF_CITY_FILE = "../data/fx/elven_city.png"
+	ELF_CITY_IMAGE = pygame.image.load(ELF_CITY_FILE)
+	ELF_CITY_CONTOUR_FILE = "../data/fx/elven_city_contour.png"
+	ELF_CITY_CONTOUR_IMAGE = pygame.image.load(ELF_CITY_CONTOUR_FILE)
+
+	DWARF_CITY_FILE = "../data/fx/dwarven_city.png"
+	DWARF_CITY_IMAGE = pygame.image.load(DWARF_CITY_FILE)
+	DWARF_CITY_CONTOUR_FILE = "../data/fx/dwarven_city_contour.png"
+	DWARF_CITY_CONTOUR_IMAGE = pygame.image.load(DWARF_CITY_CONTOUR_FILE)
+
+	HALFLING_CITY_FILE = "../data/fx/halflings_city.png"
+	HALFLING_CITY_IMAGE = pygame.image.load(HALFLING_CITY_FILE)
+	HALFLING_CITY_CONTOUR_FILE = "../data/fx/halflings_city_contour.png"
+	HALFLING_CITY_CONTOUR_IMAGE = pygame.image.load(HALFLING_CITY_CONTOUR_FILE)
+
 	def __init__(self, _id):
 		if isinstance(_id, int):
 			_id = str(_id)
 		super(CityNode, self).__init__(_id)
 
 		self.info["pos"]    = (0, 0)
-		self.info["radius"] = 8
+		self.info["radius"] = 15
 		self.info["color"] = (255, 255, 255)
 
 		self.info["location"] = None
@@ -48,6 +68,58 @@ class CityNode(ggraph.gNode):
 
 	def drawNode(self, surface, color, outline_color=(255, 255, 255), outline_width=2):
 		super(CityNode, self).drawNode(surface, color, outline_color=outline_color, outline_width=outline_width)
+
+	def drawNode_image(self, surface, color, outline_color=(255, 255, 255)):
+		
+		def colorize(image, newColor, toone=False):
+			"""
+			Create a "colorized" copy of a surface (replaces RGB values with the given color, preserving the per-pixel alphas of
+			original).
+			:param image: Surface to create a colorized copy of
+			:param newColor: RGB color to use (original alpha values are preserved)
+			:return: New colorized Surface instance
+			"""
+			_image = image.copy()
+
+			_newColor = (newColor[0], newColor[1], newColor[2], 255)
+
+			if toone:
+				# zero out RGB values
+				_image.fill((255, 255, 255, 255), None, pygame.BLEND_RGB_ADD)
+			# add in new RGB values
+			_image.fill(_newColor[0:3] + (0,), None, pygame.BLEND_RGB_MULT)
+
+			return _image
+
+		if self.info["community"] == None:
+			self.drawNode(surface, color, outline_color=outline_color, outline_width=3)
+			return
+
+		if self.info["community"].kingdom.main_race == params.RaceParams.HUMAN:
+			_used_image    = CityNode.HUMAN_CITY_IMAGE
+			_contour_image = CityNode.HUMAN_CITY_CONTOUR_IMAGE
+		elif self.info["community"].kingdom.main_race == params.RaceParams.ELF:
+			_used_image    = CityNode.ELF_CITY_IMAGE
+			_contour_image = CityNode.ELF_CITY_CONTOUR_IMAGE
+		elif self.info["community"].kingdom.main_race == params.RaceParams.DWARF:
+			_used_image    = CityNode.DWARF_CITY_IMAGE
+			_contour_image = CityNode.DWARF_CITY_CONTOUR_IMAGE
+		elif self.info["community"].kingdom.main_race == params.RaceParams.HALFING:
+			_used_image    = CityNode.HALFLING_CITY_IMAGE
+			_contour_image = CityNode.HALFLING_CITY_CONTOUR_IMAGE
+		else:
+			_used_image    = CityNode.HUMAN_CITY_IMAGE
+			_contour_image = CityNode.HUMAN_CITY_CONTOUR_IMAGE
+
+
+		_used_rect     = _used_image.get_rect()
+		_contour_rect  = _contour_image.get_rect()
+
+		_used_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
+		_contour_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
+		surface.blit(colorize(_used_image, color), _used_rect)
+		surface.blit(colorize(_contour_image, outline_color, toone=True), _contour_rect)
+
 
 class CityGraph(ggraph.gGraph):
 
@@ -100,11 +172,14 @@ class CityGraph(ggraph.gGraph):
 					color = n.info["color"]
 				except KeyError:
 					color = (255, 255, 255)
+
 				try:
 					out_color = n.info["outline_color"]
-					n.drawNode(surface, color, outline_color=out_color, outline_width=2)
+					# n.drawNode(surface, color, outline_color=out_color, outline_width=2)
+					n.drawNode_image(surface, color, outline_color=out_color)
 				except KeyError:
-					n.drawNode(surface, color, outline_width=2)
+					# n.drawNode(surface, color, outline_width=2)
+					n.drawNode_image(surface, color, outline_width=2)
 
 
 		if self._draw_delaunay:

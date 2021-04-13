@@ -209,6 +209,18 @@ class UserInterfaceParams(object):
 
 	KINGDOM_TO_COLOR = {}
 
+def screen_coord_to_map_coord(screen_coord):
+	# tw = UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE
+	# th = UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE
+
+	_tw = (screen_coord[0] / (UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION)) * ModelParams.MAP_SIZE
+	_th = (screen_coord[1] / UserInterfaceParams.SCREENSIZE[1]) * ModelParams.MAP_SIZE
+
+	# _x = (map_coord[0] * tw)
+	# _y = (map_coord[1] * th)
+
+	return (math.floor(_tw), math.floor(_th))
+
 def map_coord_to_screen_coord(map_coord):
 	tw = UserInterfaceParams.SCREENSIZE[0]*UserInterfaceParams.GRAPH_SURFACE_WIDTH_PROPORTION / ModelParams.MAP_SIZE
 	th = UserInterfaceParams.SCREENSIZE[1] / ModelParams.MAP_SIZE

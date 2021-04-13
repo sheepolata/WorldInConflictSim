@@ -1040,7 +1040,7 @@ class Kingdom(object):
 
 class Model(object):
 
-	def __init__(self, map_size=20, map_location=20):
+	def __init__(self, map_size=20, max_location=20):
 		self.is_init = False
 
 		self.map_size = map_size
@@ -1048,7 +1048,7 @@ class Model(object):
 		self.nb_location  = 0
 		self.nb_community = 0
 
-		self.max_location = map_location
+		self.max_location = max_location
 
 		self.locations   = []
 		self.communities = []

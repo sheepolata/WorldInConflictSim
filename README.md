@@ -4,6 +4,8 @@
 
 ### 13/04/2021
 
+Cities are now little city icon, different for each governement! Yay!
+
 Balancing is decent. If a kingdom has a main race that can thrive in its location, this race will grow much more than other, but other can still be present with the randomness of life and caravans.
 If a kingdom main race is not in its prefered location or is in a hated location, then it will still be there but with less proportion.
 

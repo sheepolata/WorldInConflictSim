@@ -86,6 +86,21 @@ def main():
 					pass
 				if event.button == 3:
 					pass
+			elif event.type == pygame.MOUSEMOTION:
+				mpos = pygame.mouse.get_pos()
+				
+				smth = False
+				if display.collide_graph_surface(mpos):
+					mcoord = params.screen_coord_to_map_coord(mpos)
+
+					for city_node in display.graph.nodes:
+						if city_node.info["location"].in_area_of_influence(mcoord):
+							display.hovered = city_node
+							smth = True
+							break
+				if not smth:
+					display.hovered = None
+
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
 					thread.pause(forced=True)

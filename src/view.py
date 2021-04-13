@@ -29,6 +29,7 @@ class UserInterface(gd.GraphDisplay):
 		self.model = model
 
 		self.selected = None
+		self.hovered  = None
 
 		self.map_image_file = "../data/fx/map.png"
 		self.map_image = None
@@ -201,14 +202,16 @@ class UserInterface(gd.GraphDisplay):
 			for loc_node in self.graph.nodes:
 				if self.selected == loc_node:
 					loc_node.info["outline_color"] = (255, 255, 255)
+				elif self.hovered == loc_node:
+					loc_node.info["outline_color"] = (168, 168, 168)
 				else:
 					loc_node.info["outline_color"] = (0, 0, 0)
 
-				if loc_node.info["community"] != None:
-					_rad_factor = utils.normalise(loc_node.info["community"].get_total_pop(), maxi=8000)
-					_rad_min = 6
-					_rad_max = 14
-					loc_node.info["radius"] = _rad_min + (_rad_factor*(_rad_max-_rad_min))
+				# if loc_node.info["community"] != None:
+				# 	_rad_factor = utils.normalise(loc_node.info["community"].get_total_pop(), maxi=8000)
+				# 	_rad_min = 6
+				# 	_rad_max = 14
+				# 	loc_node.info["radius"] = _rad_min + (_rad_factor*(_rad_max-_rad_min))
 
 	def update_info_tab(self):
 		self.info_console.log("{}".format(myglobals.LogConsole.get_date_to_string(self.model.day)))
