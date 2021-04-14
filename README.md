@@ -2,6 +2,12 @@
 
 ## News and DevLogs
 
+### 14/04/2021
+
+Added a method to randomise race location archetype preferences. It randomise the model and make things less predictible.
+
+RaceParams.KINGDOM_MAIN_RACE_BOOST from 0.2 to 0.15 -> Will investigate the impact of the change over some test, but initially it seems to reduce the bias toward a kingdom main race.
+
 ### 13/04/2021
 
 Cities are now little city icon, different for each governement! Yay!

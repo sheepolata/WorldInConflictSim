@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-# random_seed = 6011995
+# random_seed = 8011995
 random_seed = -1
 if random_seed < 0:
 	rng = np.random.default_rng()
@@ -115,7 +115,7 @@ class RaceParams(object):
 	BASE_POP_VALUE = 500
 	
 	RACE_PREFERRED_LOCATION_FACTOR = 0.1
-	KINGDOM_MAIN_RACE_BOOST        = 0.2
+	KINGDOM_MAIN_RACE_BOOST        = 0.15
 
 	HUMAN   = Race("Humans"  , 0, 0, [LocationParams.PLAINS], [LocationParams.MOUNTAINS])
 	ELF     = Race("Elves"   , 0, 0, [LocationParams.FOREST], [LocationParams.MOUNTAINS, LocationParams.HILL])
@@ -124,6 +124,16 @@ class RaceParams(object):
 	HALFING = Race("Halfings", 0, 0, [LocationParams.HILL], [LocationParams.DESERT])
 
 	RACES = [HUMAN, ELF, DWARF, HALFING]
+
+	def randomiseArchetypePreference():
+		for r in RaceParams.RACES:
+			new_pl = rng.choice(LocationParams.ARCHETYPES, int(1+rng.random()*2), replace=False)
+			new_hl = rng.choice(list(set(LocationParams.ARCHETYPES)-set(new_pl)), int(1+rng.random()*2), replace=False)
+	
+			r.preferred_locations = new_pl
+			r.hated_locations     = new_hl
+
+			print(f"{r.name} prefs in {[LocationParams.ARCHETYPES_STR[a] for a in new_pl]} and hated is {[LocationParams.ARCHETYPES_STR[a] for a in new_hl]}")
 
 
 class ModelParams(object):

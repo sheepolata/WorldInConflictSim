@@ -23,6 +23,7 @@ def main():
 	mp = params.ModelParams.MAP_SIZE
 	gen_roads = mp <= params.ModelParams.GEN_ROADS_LIMIT
 
+	params.RaceParams.randomiseArchetypePreference()
 
 	mymodel = model.Model(map_size=mp)
 	mymodel.random_model_map_basic(mp)
