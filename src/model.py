@@ -67,6 +67,9 @@ class SimThread(threading.Thread):
 		else:
 			self._paused = forced
 
+	def is_fastest_speed(self):
+		return self.freq_index == (len(self.freq_list)-1)
+
 class Map(object):
 
 	class QuadTile(object):
@@ -1052,7 +1055,7 @@ class Community(object):
 		if self.show_happiness_details:
 			lines.append(f"▼ Happiness: {self.happiness:.2f} (H to hide)")
 			for k in self.happiness_details:
-				lines.append(f"    - {k}: {self.happiness_details[k]:.2f}")
+				lines.append(f"      {k}: {self.happiness_details[k]:.2f}")
 		else:
 			lines.append(f"► Happiness: {self.happiness:.2f} (H to show)")
 
@@ -1063,9 +1066,9 @@ class Community(object):
 			for race in sorted(popprop, key=popprop.get, reverse=True):
 				if popprop[race] != 0:
 					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
-			lines.append(f"    - {str_popprop[:-2]}")
-			lines.append("    - Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
-			lines.append(f"    - Space used: {self.space_used:.2f}/{self.location.space:.2f}")
+			lines.append(f"      {str_popprop[:-2]}")
+			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
+			lines.append(f"      Space used: {self.space_used:.2f}/{self.location.space:.2f}")
 		else:
 			lines.append("► Population: {} inhabitants (P to show)".format(self.get_total_pop()))
 		
@@ -1074,7 +1077,7 @@ class Community(object):
 			lines.append("▼ Ressources (R to hide)")
 			for r in self.ressource_stockpile:
 				try:
-					lines.append("    - {} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+					lines.append("      {} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
 				except KeyError:
 					pass
 		else:
@@ -1086,7 +1089,7 @@ class Community(object):
 			if self.show_landmarks:
 				lines.append("▼ Landmarks, happiness mod. {:+.02f}. (L to hide)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 				for lm in sorted(self.location.landmarks, key=lambda x: x.happiness_value, reverse=True):
-					lines.append("    - " + lm.to_string())
+					lines.append("      " + lm.to_string())
 			else:
 				lines.append("► Landmarks, happiness mod. {:+.02f}. (L to show)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 

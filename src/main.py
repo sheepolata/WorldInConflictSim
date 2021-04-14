@@ -134,14 +134,21 @@ def main():
 					thread.pause(forced=False)
 				if event.key == K_RIGHT:
 					thread.increase_speed()
+					if thread.is_fastest_speed():
+						display._draw_voronoi = False
 				if event.key == K_LEFT:
+					if thread.is_fastest_speed():
+						display._draw_voronoi = True
 					thread.decrease_speed()
 				if event.key == K_SPACE:
 					thread.pause()
 				if event.key == K_F1:
 					graph._draw_edges = not graph._draw_edges
 				if event.key == K_k:
-					display._draw_voronoi = not display._draw_voronoi
+					if thread.is_fastest_speed():
+						display._draw_voronoi = False
+					else:
+						display._draw_voronoi = not display._draw_voronoi
 				if event.key == K_r:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_ressources = not display.selected.info["community"].show_ressources
@@ -163,7 +170,7 @@ def main():
 		# 	pp.pprint(display.selected.info["community"].hapiness_details)
 
 		display.update_info_tab()
-		display.insert_info_console("inc./dec. with ->/<-; SPACE to pause; (Ctrl+)F2 to reset (all), K to display kingdoms", 1)
+		display.insert_info_console("inc./dec. with →/←; SPACE to pause; (Ctrl+)F2 to reset (all), K to display kingdoms", 1)
 		display.insert_info_console("{} days/second".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
 		display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
 
