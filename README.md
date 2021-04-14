@@ -4,6 +4,8 @@
 
 ### 14/04/2021
 
+Log event added to communities, so record all local activity. Only caravans are logged for now.
+
 Can display or hide information about current selected community using keyboard input.
 
 Added a small animation when a caravan arrives to a city.

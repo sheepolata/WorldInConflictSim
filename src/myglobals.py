@@ -6,7 +6,6 @@ import math
 import console
 
 class myDatetime(object):
-
 	def __init__(self, simu_day):
 		self.simu_day = simu_day
 

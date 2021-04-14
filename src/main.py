@@ -154,6 +154,9 @@ def main():
 				if event.key == K_h:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_happiness_details = not display.selected.info["community"].show_happiness_details
+				if event.key == K_o:
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_events = not display.selected.info["community"].show_events
 
 		# if display.selected != None:
 		# 	pp = pprint.PrettyPrinter(indent=4)

@@ -1,6 +1,9 @@
 import time
 import os
 
+import sys
+sys.path.append('./GraphEngine')
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,6 +16,7 @@ from shapely.geometry.polygon import Polygon
 
 import pprint
 
+import console
 import utils
 import graph
 import perlinNoise
@@ -552,6 +556,49 @@ class Community(object):
 
 	global_id = 0
 
+	class CommunityLog(console.Console):
+		class CommunityLogDatetime(object):
+			def __init__(self, simu_day):
+				self.simu_day = simu_day
+
+				self.day   = ((self.simu_day % 365) % 30) + 1
+				self.month = (((self.simu_day % 365) // 30) % 12) + 1
+				self.year  = (self.simu_day // 365) + 1
+
+		def __init__(self):
+			super(Community.CommunityLog, self).__init__()
+			self.max = -1
+
+		def get_date_to_string(day):
+			_year = math.floor(day/(12*28))
+			_month = (math.floor(day/28))%12
+			_day = day%28
+			d = Community.CommunityLog.CommunityLogDatetime(day)
+			h = "{:02d}/{:02d}/{:04d}".format(d.day, d.month, d.year)
+			return h
+
+		def set_head(self, day):
+			self.line_head = "{} - ".format(Community.CommunityLog.get_date_to_string(day))
+
+		def log(self, s, day):
+			self.set_head(day)
+			l = "{}{}{}".format(self.line_head, s, self.line_tail)
+			self.lines.append(l)
+
+		def push_back(self, s, day):
+			self.log(s, day)
+
+		def push_front(self, s, day):
+			self.set_head(day)
+			l = "{}{}{}".format(self.line_head, s, self.line_tail)
+			self.lines.insert(0, l)
+
+		def insert(self, s, pos, day):
+			self.set_head(day)
+			l = "{}{}{}".format(self.line_head, s, self.line_tail)
+			_pos = utils.clamp(pos, 0, len(self.lines)-1)
+			self.lines.insert(_pos, l)
+
 	def __init__(self, name, location, kingdom, poparch):
 
 		self.name = name
@@ -632,12 +679,16 @@ class Community(object):
 		self.show_happiness_details = False
 		self.show_ressources        = False
 		self.show_landmarks         = False
+		self.show_events            = False
+
+		self.event_log = Community.CommunityLog()
 
 	def reset_show_booleans(self):
 		self.show_pop_details       = False
 		self.show_happiness_details = False
 		self.show_ressources        = False
 		self.show_landmarks         = False
+		self.show_events            = False
 
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
@@ -820,6 +871,7 @@ class Community(object):
 
 				self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
 				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
+				self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived.", self.model.day)
 
 	def a_day_passed(self):
 		if self.location == None:
@@ -1012,7 +1064,8 @@ class Community(object):
 				if popprop[race] != 0:
 					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
 			lines.append(f"    - {str_popprop[:-2]}")
-			lines.append("    - Basic growth rate: {:+.2f} ({:.2f}-{:.2f}); Space used: {:.2f}/{:.2f}".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
+			lines.append("    - Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
+			lines.append(f"    - Space used: {self.space_used:.2f}/{self.location.space:.2f}")
 		else:
 			lines.append("► Population: {} inhabitants (P to show)".format(self.get_total_pop()))
 		
@@ -1036,6 +1089,13 @@ class Community(object):
 					lines.append("    - " + lm.to_string())
 			else:
 				lines.append("► Landmarks, happiness mod. {:+.02f}. (L to show)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
+
+
+		lines.append(f"{'▼' if self.show_events else '►'} Event log, {len(self.event_log.get_lines())} entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'}. (O to {'hide' if self.show_events else 'show'})")
+		if self.show_events:
+			for l in self.event_log.get_lines()[-5:]:
+				lines.append(f"      {l}")
+
 
 		return lines
 
