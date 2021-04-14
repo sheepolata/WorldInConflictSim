@@ -150,7 +150,7 @@ class ModelParams(object):
 		TileParams.DEEPWATER : LocationParams.SEASIDE
 	}
 
-	MAP_SIZE = 100
+	MAP_SIZE = 150
 	GEN_ROADS_LIMIT = 250
 
 	# 0.01 consumed per week per pop
