@@ -598,7 +598,7 @@ class Community(object):
 		for r in params.ModelParams.RESSOURCES:
 			self.ressources_prev_net_worth[r] = 0
 
-		self.hapiness_details = {}
+		self.happiness_details = {}
 		self.happiness = 0
 		self.happiness_from_surplus = {}
 		for r in params.ModelParams.RESSOURCES:
@@ -627,6 +627,17 @@ class Community(object):
 
 		self.caravan_arrived_countdown_max = 30
 		self.caravan_arrived_countdown = 0	
+
+		self.show_pop_details       = False
+		self.show_happiness_details = False
+		self.show_ressources        = False
+		self.show_landmarks         = False
+
+	def reset_show_booleans(self):
+		self.show_pop_details       = False
+		self.show_happiness_details = False
+		self.show_ressources        = False
+		self.show_landmarks         = False
 
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
@@ -883,11 +894,11 @@ class Community(object):
 		# CALCULATE HAPPINESS
 		# Happ from location
 		self.happiness = self.location.attractiveness
-		self.hapiness_details["LOCATION_ATTRACTIVENESS"] = self.location.attractiveness
+		self.happiness_details["LOCATION_ATTRACTIVENESS"] = self.location.attractiveness
 
 		# Unrest from food shortage
 		self.happiness -= self.food_shortage*2
-		self.hapiness_details["FOOD_SHORTAGE"] = -self.food_shortage*2
+		self.happiness_details["FOOD_SHORTAGE"] = -self.food_shortage*2
 
 		# Happ from stockpiled wealth
 		# _v = self.ressource_stockpile[params.ModelParams.WEALTH] * 0.2
@@ -896,31 +907,32 @@ class Community(object):
 		else:
 			_v = 0
 		self.happiness += _v
-		self.hapiness_details["STOCKPILES_WEALTH"] = _v
+		self.happiness_details["STOCKPILES_WEALTH"] = _v
 
 		# Unrest from overpopulation
 		# overpop_unrest = self.location.space - self.space_used
 		overpop_unrest = -(self.space_used / self.location.space)
-		self.happiness += overpop_unrest * 50
-		self.hapiness_details["OVERPOPULATION"] = overpop_unrest * 50
+		overpop_unrest *= 50
+		self.happiness += overpop_unrest
+		self.happiness_details["OVERPOPULATION"] = overpop_unrest
 
 		# Happ from wealth consumption
 		if self.ressource_stockpile[params.ModelParams.WEALTH] > 0:
 			_v = sum(self.effective_consumption[params.ModelParams.WEALTH].values()) * 10
 			self.happiness += _v
-			self.hapiness_details["WEALTH_CONSUMPTION"] = _v
+			self.happiness_details["WEALTH_CONSUMPTION"] = _v
 
 		# Happiness from food situation
 		happ_food_factor = (self.food_consumption_per_pop - self.food_consumption_per_pop_min) * 1000 * 2
 		happ_food_factor = round(happ_food_factor)
 		self.happiness += happ_food_factor
-		self.hapiness_details["FOOD_SITUATION"] = happ_food_factor
+		self.happiness_details["FOOD_SITUATION"] = happ_food_factor
 
 		# Unrest due to lack of stored food
 		stored_food_unrest = (self.ressource_stockpile[params.ModelParams.FOOD] - self.actual_storage[params.ModelParams.FOOD])
 		stored_food_unrest = stored_food_unrest*0.1
 		self.happiness += stored_food_unrest
-		self.hapiness_details["STORED_FOOD_UNREST"] = stored_food_unrest
+		self.happiness_details["STORED_FOOD_UNREST"] = stored_food_unrest
 
 		# Clamp happiness
 		self.happiness = utils.clamp(self.happiness, -100, 100)
@@ -984,27 +996,46 @@ class Community(object):
 		# lines.append("{}".format(self.name))
 		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
 		lines.append("in {} ({} governement)".format(self.kingdom.name, self.kingdom.main_race.name_adjective))
-		str_popprop = ""
-		popprop = self.get_pop_proportion()
-		for race in sorted(popprop, key=popprop.get, reverse=True):
-			if popprop[race] != 0:
-				str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
-		lines.append("{} inhabitants".format(self.get_total_pop()))
-		lines.append(str_popprop[:-2])
-		lines.append("Happiness : {:+.2f}; Growth rate : {:+.2f} ({:.2f}-{:.2f}); Space : {:.2f}/{:.2f}".format(self.happiness, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
-		lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(np.mean(list(self.randomness_of_life["birth_rate_factor"].values())) - np.mean(list(self.randomness_of_life["death_rate_factor"].values())), self.population_control))
-		for r in self.ressource_stockpile:
-			try:
-				lines.append("{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
-			except KeyError:
-				pass	
+
+		if self.show_happiness_details:
+			lines.append(f"▼ Happiness: {self.happiness:.2f} (H to hide)")
+			for k in self.happiness_details:
+				lines.append(f"    - {k}: {self.happiness_details[k]:.2f}")
+		else:
+			lines.append(f"► Happiness: {self.happiness:.2f} (H to show)")
+
+		if self.show_pop_details:
+			lines.append("▼ Population: {} inhabitants (P to hide)".format(self.get_total_pop()))
+			str_popprop = ""
+			popprop = self.get_pop_proportion()
+			for race in sorted(popprop, key=popprop.get, reverse=True):
+				if popprop[race] != 0:
+					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
+			lines.append(f"    - {str_popprop[:-2]}")
+			lines.append("    - Basic growth rate: {:+.2f} ({:.2f}-{:.2f}); Space used: {:.2f}/{:.2f}".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate, self.space_used, self.location.space))
+		else:
+			lines.append("► Population: {} inhabitants (P to show)".format(self.get_total_pop()))
+		
+		# lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(np.mean(list(self.randomness_of_life["birth_rate_factor"].values())) - np.mean(list(self.randomness_of_life["death_rate_factor"].values())), self.population_control))
+		if self.show_ressources:
+			lines.append("▼ Ressources (R to hide)")
+			for r in self.ressource_stockpile:
+				try:
+					lines.append("    - {} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+				except KeyError:
+					pass
+		else:
+			lines.append("► Ressources (R to show)")
 
 		# lines.append("Food Shortage :{:.3f}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
 		if len(self.location.landmarks) > 0:
-			lines.append("Landmarks: (Total is happiness {:+.02f})".format(sum([lm.happiness_value for lm in self.location.landmarks])))
-			for lm in sorted(self.location.landmarks, key=lambda x: x.happiness_value, reverse=True):
-				lines.append("- " + lm.to_string())
+			if self.show_landmarks:
+				lines.append("▼ Landmarks, happiness mod. {:+.02f}. (L to hide)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
+				for lm in sorted(self.location.landmarks, key=lambda x: x.happiness_value, reverse=True):
+					lines.append("    - " + lm.to_string())
+			else:
+				lines.append("► Landmarks, happiness mod. {:+.02f}. (L to show)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 
 		return lines
 
@@ -1550,7 +1581,7 @@ if __name__=='__main__':
 				clear()
 				print("Day {}".format(day))
 				print(community1.to_string())
-				pp.pprint(community1.hapiness_details)
+				pp.pprint(community1.happiness_details)
 				time.sleep(0.2)
 
 

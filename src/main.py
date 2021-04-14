@@ -75,7 +75,10 @@ def main():
 								smth = True
 								break
 						if not smth:
-							display.selected = None
+							if display.selected != None:
+								if display.selected.info["community"] != None:
+									display.selected.info["community"].reset_show_booleans()
+								display.selected = None
 
 					# print(mpos)
 							
@@ -103,7 +106,7 @@ def main():
 					display.hovered = None
 
 			elif event.type == pygame.KEYDOWN:
-				if event.key == K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
+				if event.key == K_F2 and pygame.key.get_mods() & pygame.KMOD_CTRL:
 					thread.pause(forced=True)
 
 					mymodel.reset()
@@ -116,7 +119,7 @@ def main():
 					display.reset()
 
 					thread.pause(forced=False)
-				elif event.key == K_r:
+				elif event.key == K_F2:
 					thread.pause(forced=True)
 
 					mymodel.reset()
@@ -139,17 +142,25 @@ def main():
 					graph._draw_edges = not graph._draw_edges
 				if event.key == K_k:
 					display._draw_voronoi = not display._draw_voronoi
+				if event.key == K_r:
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_ressources = not display.selected.info["community"].show_ressources
+				if event.key == K_l:
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_landmarks = not display.selected.info["community"].show_landmarks
 				if event.key == K_p:
-					pass
-				if event.key == K_d:
-					pass
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_pop_details = not display.selected.info["community"].show_pop_details
+				if event.key == K_h:
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_happiness_details = not display.selected.info["community"].show_happiness_details
 
 		# if display.selected != None:
 		# 	pp = pprint.PrettyPrinter(indent=4)
 		# 	pp.pprint(display.selected.info["community"].hapiness_details)
 
 		display.update_info_tab()
-		display.insert_info_console("inc./dec. with ->/<-; SPACE to pause; (Ctrl+)R to reset (all), K to display kingdoms", 1)
+		display.insert_info_console("inc./dec. with ->/<-; SPACE to pause; (Ctrl+)F2 to reset (all), K to display kingdoms", 1)
 		display.insert_info_console("{} days/second".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
 		display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
 

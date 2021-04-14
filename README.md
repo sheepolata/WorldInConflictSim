@@ -4,6 +4,8 @@
 
 ### 14/04/2021
 
+Can display or hide information about current selected community using keyboard input.
+
 Added a small animation when a caravan arrives to a city.
 
 Receiving a caravan now slightly boost the race's birth rate.
