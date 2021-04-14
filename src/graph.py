@@ -30,6 +30,10 @@ class CityNode(ggraph.gNode):
 	HALFLING_CITY_CONTOUR_FILE = "../data/fx/halflings_city_contour.png"
 	HALFLING_CITY_CONTOUR_IMAGE = pygame.image.load(HALFLING_CITY_CONTOUR_FILE)
 
+	CARAVAN_ICON_FILE = "../data/fx/caravan_icon.png"
+	CARAVAN_ICON_IMAGE = pygame.image.load(CARAVAN_ICON_FILE)
+
+
 	def __init__(self, _id):
 		if isinstance(_id, int):
 			_id = str(_id)
@@ -111,7 +115,6 @@ class CityNode(ggraph.gNode):
 			_used_image    = CityNode.HUMAN_CITY_IMAGE
 			_contour_image = CityNode.HUMAN_CITY_CONTOUR_IMAGE
 
-
 		_used_rect     = _used_image.get_rect()
 		_contour_rect  = _contour_image.get_rect()
 
@@ -119,6 +122,12 @@ class CityNode(ggraph.gNode):
 		_contour_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
 		surface.blit(colorize(_used_image, color), _used_rect)
 		surface.blit(colorize(_contour_image, outline_color, toone=True), _contour_rect)
+
+		if self.info["community"].caravan_arrived_countdown > 0:
+			_rect = CityNode.CARAVAN_ICON_IMAGE.get_rect()
+			_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
+			_rect.center = (_rect.center[0], _rect.center[1]+self.info["community"].caravan_arrived_countdown)
+			surface.blit(colorize(CityNode.CARAVAN_ICON_IMAGE, (255,255,255), toone=True), _rect)
 
 
 class CityGraph(ggraph.gGraph):

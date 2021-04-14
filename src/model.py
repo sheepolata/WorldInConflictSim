@@ -625,6 +625,9 @@ class Community(object):
 			self.randomness_of_life["birth_rate_factor"][race] = 0
 			self.randomness_of_life["death_rate_factor"][race] = 0
 
+		self.caravan_arrived_countdown_max = 30
+		self.caravan_arrived_countdown = 0	
+
 	def init_population(self, pop_archetype=None):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
@@ -802,7 +805,9 @@ class Community(object):
 				_pop_number = int(_pop_number * ash_factor)
 
 				self.population[_race] += _pop_number
+				self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
 
+				self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
 				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
 
 	def a_day_passed(self):
@@ -926,6 +931,9 @@ class Community(object):
 		# Save previous net worth
 		for r in params.ModelParams.RESSOURCES:
 			self.ressources_prev_net_worth[r] = sum(self.effective_gain[r].values()) - sum(self.effective_consumption[r].values())
+
+		# Update misc. count down/up
+		self.caravan_arrived_countdown = max(0, self.caravan_arrived_countdown - 1)
 
 	def a_week_passed(self):
 		self.update_pops()
