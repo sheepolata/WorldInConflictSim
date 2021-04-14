@@ -41,5 +41,5 @@ class LogConsole(console.Console):
 		self.set_head(day)
 		super(LogConsole, self).push_front(s)
 
-InfoConsole = console.Console(max_lines=50)
+InfoConsole = console.Console(max_lines=1000)
 LogConsoleInst = LogConsole(max_lines=18)

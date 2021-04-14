@@ -41,7 +41,10 @@ def main():
 	# graph.computeDelaunay()
 
 	display.set_log(myglobals.LogConsoleInst)
-	display.set_info(myglobals.InfoConsole)
+	display.set_info(myglobals.InfoConsole, force_max=True)
+
+	_p = thread.pause()
+	display._display_pause = _p
 
 	thread.start()
 
@@ -141,7 +144,8 @@ def main():
 						display._draw_voronoi = True
 					thread.decrease_speed()
 				if event.key == K_SPACE:
-					thread.pause()
+					_p = thread.pause()
+					display._display_pause = _p
 				if event.key == K_F1:
 					graph._draw_edges = not graph._draw_edges
 				if event.key == K_k:
@@ -152,15 +156,21 @@ def main():
 				if event.key == K_r:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_ressources = not display.selected.info["community"].show_ressources
+					else:
+						mymodel.show_race = not mymodel.show_race
 				if event.key == K_l:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_landmarks = not display.selected.info["community"].show_landmarks
 				if event.key == K_p:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_pop_details = not display.selected.info["community"].show_pop_details
+					else:
+						mymodel.show_population = not mymodel.show_population
 				if event.key == K_h:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_happiness_details = not display.selected.info["community"].show_happiness_details
+					else:
+						mymodel.show_happiness = not mymodel.show_happiness
 				if event.key == K_o:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_events = not display.selected.info["community"].show_events
@@ -171,8 +181,8 @@ def main():
 
 		display.update_info_tab()
 		display.insert_info_console("inc./dec. with →/←; SPACE to pause; (Ctrl+)F2 to reset (all), K to display kingdoms", 1)
-		display.insert_info_console("{} days/second".format(thread.freq if thread.freq > 0 else "Fastest"), 1)
-		display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
+		display.insert_info_console(f"{'' if not thread._paused else 'PAUSED '}{thread.freq if thread.freq > 0 else 'Fastest'} days/second", 1)
+		# display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
 
 		display.main_loop_end()
 

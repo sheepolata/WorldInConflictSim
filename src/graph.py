@@ -6,6 +6,7 @@ import pygame
 import ggraph
 import delaunaytriangulation as dt
 import parameters as params
+import utils
 
 
 class CityNode(ggraph.gNode):
@@ -74,26 +75,6 @@ class CityNode(ggraph.gNode):
 		super(CityNode, self).drawNode(surface, color, outline_color=outline_color, outline_width=outline_width)
 
 	def drawNode_image(self, surface, color, outline_color=(255, 255, 255)):
-		
-		def colorize(image, newColor, toone=False):
-			"""
-			Create a "colorized" copy of a surface (replaces RGB values with the given color, preserving the per-pixel alphas of
-			original).
-			:param image: Surface to create a colorized copy of
-			:param newColor: RGB color to use (original alpha values are preserved)
-			:return: New colorized Surface instance
-			"""
-			_image = image.copy()
-
-			_newColor = (newColor[0], newColor[1], newColor[2], 255)
-
-			if toone:
-				# zero out RGB values
-				_image.fill((255, 255, 255, 255), None, pygame.BLEND_RGB_ADD)
-			# add in new RGB values
-			_image.fill(_newColor[0:3] + (0,), None, pygame.BLEND_RGB_MULT)
-
-			return _image
 
 		if self.info["community"] == None:
 			self.drawNode(surface, color, outline_color=outline_color, outline_width=3)
@@ -120,14 +101,14 @@ class CityNode(ggraph.gNode):
 
 		_used_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
 		_contour_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
-		surface.blit(colorize(_used_image, color), _used_rect)
-		surface.blit(colorize(_contour_image, outline_color, toone=True), _contour_rect)
+		surface.blit(utils.colorize(_used_image, color), _used_rect)
+		surface.blit(utils.colorize(_contour_image, outline_color, toone=True), _contour_rect)
 
 		if self.info["community"].caravan_arrived_countdown > 0:
 			_rect = CityNode.CARAVAN_ICON_IMAGE.get_rect()
 			_rect.center = params.map_coord_to_screen_coord_centered(self.info["location"].map_position)
 			_rect.center = (_rect.center[0], _rect.center[1]+self.info["community"].caravan_arrived_countdown)
-			surface.blit(colorize(CityNode.CARAVAN_ICON_IMAGE, (255,255,255), toone=True), _rect)
+			surface.blit(utils.colorize(CityNode.CARAVAN_ICON_IMAGE, (255,255,255), toone=True), _rect)
 
 
 class CityGraph(ggraph.gGraph):

@@ -4,6 +4,8 @@
 
 ### 14/04/2021
 
+Overall large UI update, lots of new stuff: new info displayed, interaction while displaying stuff, new pause feedback... Just have a look!
+
 Log event added to communities, so record all local activity. Only caravans are logged for now.
 
 Can display or hide information about current selected community using keyboard input.

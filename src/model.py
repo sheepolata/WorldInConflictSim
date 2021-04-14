@@ -32,7 +32,7 @@ class SimThread(threading.Thread):
 		super(SimThread, self).__init__()
 		self.model = model
 		self._stop = False
-		self._paused = True
+		self._paused = False
 
 
 		self.freq_list = [1, 7, 30, 90, 182, 365, -1]
@@ -66,6 +66,7 @@ class SimThread(threading.Thread):
 			self._paused = not self._paused
 		else:
 			self._paused = forced
+		return self._paused
 
 	def is_fastest_speed(self):
 		return self.freq_index == (len(self.freq_list)-1)
@@ -674,6 +675,7 @@ class Community(object):
 		for race in params.RaceParams.RACES:
 			self.randomness_of_life["birth_rate_factor"][race] = 0
 			self.randomness_of_life["death_rate_factor"][race] = 0
+		self.race_growth_rate = {}
 
 		self.caravan_arrived_countdown_max = 30
 		self.caravan_arrived_countdown = 0	
@@ -816,9 +818,9 @@ class Community(object):
 
 			_race_growth_rate = (_race_birth_rate - _race_death_rate)
 
-
 			_race_growth_rate += self.population_control
 
+			self.race_growth_rate[race] = _race_growth_rate
 			self.population[race] = float(self.population[race]) + ((float(self.population[race]) * (_race_growth_rate/100.0))/4.0)
 		
 		self.space_used = self.get_total_pop() / 100.0
@@ -1068,6 +1070,14 @@ class Community(object):
 					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
 			lines.append(f"      {str_popprop[:-2]}")
 			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
+			s = ""
+			for race in params.RaceParams.RACES:
+				try:
+					s += f"   {race.name}: {self.race_growth_rate[race]:.2f}, "
+				except KeyError:
+					pass
+			if s != "":
+				lines.append("      GR/race: " + s[:-2])
 			lines.append(f"      Space used: {self.space_used:.2f}/{self.location.space:.2f}")
 		else:
 			lines.append("► Population: {} inhabitants (P to show)".format(self.get_total_pop()))
@@ -1094,10 +1104,13 @@ class Community(object):
 				lines.append("► Landmarks, happiness mod. {:+.02f}. (L to show)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 
 
-		lines.append(f"{'▼' if self.show_events else '►'} Event log, {len(self.event_log.get_lines())} entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'}. (O to {'hide' if self.show_events else 'show'})")
+		nb_to_show = 5
 		if self.show_events:
-			for l in self.event_log.get_lines()[-5:]:
+			lines.append(f"▼ Event log, entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'} {max(0 if len(self.event_log.get_lines())==0 else 1, len(self.event_log.get_lines()) - nb_to_show + 1)} to {len(self.event_log.get_lines())}. (O to {'hide' if self.show_events else 'show'})")
+			for l in self.event_log.get_lines()[-nb_to_show:]:
 				lines.append(f"      {l}")
+		else:
+			lines.append(f"► Event log, {len(self.event_log.get_lines())} entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'}. (O to {'hide' if self.show_events else 'show'})")
 
 
 		return lines
@@ -1161,6 +1174,10 @@ class Model(object):
 
 		self.map = Map(self.map_size, self.map_size, int(self.max_location*1.5))
 
+		self.show_population = False
+		self.show_race       = False
+		self.show_happiness  = False
+
 	def reset(self):
 		self.nb_location  = 0
 		self.nb_community = 0
@@ -1173,6 +1190,11 @@ class Model(object):
 		for i in range(self.map.width):
 			for j in range(self.map.height):
 				self.map.get_tile(i, j).has_road = False
+
+	def reset_show_booleans(self):
+		self.show_population = False
+		self.show_race       = False
+		self.show_happiness  = False
 
 	def set_map(self):
 		self.map = Map(self.map_size, self.map_size, int(self.max_location*1.5))		
@@ -1428,7 +1450,15 @@ class Model(object):
 
 		self.is_init = True
 
-	def to_string_summary(self):
+	def get_kingdoms(self):
+		kingdom_set = set()
+
+		for comm in self.communities:
+			kingdom_set.add(comm.kingdom)
+
+		return list(kingdom_set)
+
+	def to_string_summary(self, used_font=None):
 		lines = []
 
 		_total_pop = {}
@@ -1440,19 +1470,72 @@ class Model(object):
 					_total_pop[r] = comm.population[r]
 
 		sum_all_pop = int(sum(list(_total_pop.values())))
-		s = f"{sum_all_pop} inhabitants"
-		lines.append(s)
 
-		str_popprop = ""
-		for race in sorted(_total_pop, key=_total_pop.get, reverse=True):
-			if _total_pop[race] != 0:
-				str_popprop += "{:.1f}% {} ({:.1f}k), ".format((_total_pop[race]/sum_all_pop)*100, race.name, _total_pop[race]/1000)
-		lines.append(str_popprop[:-2])
+		def get_str_offset(_el, _list, _font):
+			if _font == None:
+				return ''
+			_max_name_length = max([_font.size(e)[0] for e in _list])
+			offset = ''
+			tw, _ = _font.size(_el + offset)
+			while tw <= _max_name_length:
+				offset += ' '
+				tw, _ = _font.size(_el + offset)
+			return offset
 
-		for comm in sorted(self.communities, key=lambda x: x.name, reverse=False):
-			# s = "{} at {} in {}, {} inh.; Happ. {:0.0f}".format(comm.name, comm.location.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
-			s = "{} ({}), {} inh.; Happ. {:0.0f}".format(comm.name, comm.kingdom.name, comm.get_total_pop(), comm.happiness)
-			lines.append(s)
+		lines.append(f"{'▼' if self.show_race else '►'} Races information (R to {'hide' if self.show_race else 'show'})")
+		if self.show_race:
+			s1 = "     "
+			s2 = "     "
+			for i, r in enumerate(params.RaceParams.RACES):
+				if i == len(params.RaceParams.RACES)-1:
+					s1 += r.name
+				elif i == len(params.RaceParams.RACES)-2:
+					s1 += r.name + " and "
+				else:
+					s1 += r.name + ", "
+			lines.append(s1)
+
+			for r in params.RaceParams.RACES:
+				offset_name = get_str_offset(r.name, [_r.name for _r in params.RaceParams.RACES], used_font)
+				offset_pref = get_str_offset(str([params.LocationParams.ARCHETYPES_STR[a] for a in r.preferred_locations]), [str([params.LocationParams.ARCHETYPES_STR[a] for a in r.preferred_locations]) for r in params.RaceParams.RACES], used_font)
+				lines.append(f"     {r.name}{offset_name} prefs are {[params.LocationParams.ARCHETYPES_STR[a] for a in r.preferred_locations]}{offset_pref} and hated are {[params.LocationParams.ARCHETYPES_STR[a] for a in r.hated_locations]}")
+
+
+		k_list = self.get_kingdoms()
+
+		lines.append(f"{'▼' if self.show_population else '►'} Population: {sum_all_pop} inhabitants in {len(k_list)} Kingdom{'s' if len(k_list)>1 else ''} (P to {'hide' if self.show_population else 'show'})")
+		if self.show_population:
+			str_popprop = "     "
+			for race in sorted(_total_pop, key=_total_pop.get, reverse=True):
+				if _total_pop[race] != 0:
+					str_popprop += "{:.0f}% {} ({:.1f}k), ".format((_total_pop[race]/sum_all_pop)*100, race.name, _total_pop[race]/1000)
+			lines.append(str_popprop[:-2])
+			lines.append(f"     Average population in Communities: {sum_all_pop/len(self.communities)}")
+			lines.append(f"     Kingdoms:")
+			data = {}
+			for k in k_list:
+				for c in k.communities:
+					try:
+						data[k] += c.get_total_pop()
+					except KeyError:
+						data[k] = c.get_total_pop()
+			for k in data:
+				offset = get_str_offset(k.name, [_k.name for _k in data.keys()], used_font)
+				lines.append(f"        {k.name}{offset}: {data[k]/1000:.1f}k inhabitants")
+
+		lines.append(f"{'▼' if self.show_happiness else '►'} Average happiness: {sum([c.happiness for c in self.communities])/len(self.communities):.2f} (H to {'hide' if self.show_happiness else 'show'})")
+		if self.show_happiness:
+			data = {}
+			for k in k_list:
+				for c in k.communities:
+					try:
+						data[k] += c.happiness
+					except KeyError:
+						data[k] = c.happiness
+			for k in data:
+				offset = get_str_offset(k.name, [_k.name for _k in data.keys()], used_font)
+				lines.append(f"        {k.name}{offset}: {data[k]/len(k.communities):.1f} avg. happiness")
+
 		return lines
 
 	def get_location_by_position(self, pos):

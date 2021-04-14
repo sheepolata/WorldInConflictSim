@@ -37,21 +37,31 @@ class UserInterface(gd.GraphDisplay):
 
 		self.positive_landmark_file = "../data/fx/positive_landmark.png"
 		self.positive_landmark_image = pygame.image.load(self.positive_landmark_file)
-		# self.positive_landmark_image = pygame.transform.scale(self.positive_landmark_image, (15, 15))
 		self.positive_landmark_rect = self.positive_landmark_image.get_rect()
 
 		self.negative_landmark_file = "../data/fx/negative_landmark.png"
 		self.negative_landmark_image = pygame.image.load(self.negative_landmark_file)
-		# self.negative_landmark_image = pygame.transform.scale(self.negative_landmark_image, (15, 15))
 		self.negative_landmark_rect = self.negative_landmark_image.get_rect()
 
 		self.voronoi_surface = pygame.Surface(self.graph_surface.get_size(), pygame.SRCALPHA)
-		# self.voronoi_surface.set_alpha(200)
+
+		self.pausedisplay_surface = pygame.Surface(self.graph_surface.get_size(), pygame.SRCALPHA)
+
+		self.pause_layer_file = "../data/fx/pause_layer.png"
+		self.pause_layer_image = pygame.image.load(self.pause_layer_file)
+		self.pause_layer_rect = self.pause_layer_image.get_rect()
+
+		self.play_layer_file = "../data/fx/play_layer.png"
+		self.play_layer_image = pygame.image.load(self.play_layer_file)
+		self.play_layer_rect = self.pause_layer_image.get_rect()
+		self.pause_layer_transparency = 100
 
 		self.voronoi = None
 		self.voronoi_points = []
 
 		self._draw_voronoi = True
+
+		self._display_pause = False
 
 		self.save_map_image()
 		self.init_rect_for_nodes()
@@ -215,9 +225,8 @@ class UserInterface(gd.GraphDisplay):
 
 	def update_info_tab(self):
 		self.info_console.log("{}".format(myglobals.LogConsole.get_date_to_string(self.model.day)))
-
 		if self.selected == None:
-			model_summary = self.model.to_string_summary()
+			model_summary = self.model.to_string_summary(used_font=self.info_font)
 			for l in model_summary:
 				self.info_console.log(l)
 		else:
@@ -239,7 +248,7 @@ class UserInterface(gd.GraphDisplay):
 		return self.graph_surface.get_rect().collidepoint(pos)
 
 	def draw_voronoi(self):
-		if self.voronoi == None:
+		if self.voronoi == None or not self._draw_voronoi:
 			return
 		
 		# First, the Voronoi vertices
@@ -255,8 +264,6 @@ class UserInterface(gd.GraphDisplay):
 			 return(_x, _y)
 
 		for dreg in self.voronoi_draw_regions:
-
-
 			c = (0,0,0,0)
 			transparency = 200
 			node = None
@@ -277,7 +284,7 @@ class UserInterface(gd.GraphDisplay):
 				_centroid = centroid(dreg)
 
 			dist = 6
-			added_point = []
+			shrinked_reg = []
 			for dreg_point in dreg:
 
 				angle = math.atan2(_centroid[1]-dreg_point[1], _centroid[0]-dreg_point[0])
@@ -285,14 +292,14 @@ class UserInterface(gd.GraphDisplay):
 				_x = dreg_point[0] + (dist * math.cos(angle))
 				_y = dreg_point[1] + (dist * math.sin(angle))
 				new_p = (_x, _y)
-				added_point.append(new_p)
+				shrinked_reg.append(new_p)
 
-			added_point.reverse()
+			shrinked_reg.reverse()
 
-			complex_polygon = dreg + [dreg[0]] + [added_point[-1]] + added_point
+			complex_polygon = dreg + [dreg[0]] + [shrinked_reg[-1]] + shrinked_reg
 
 			# pygame.draw.polygon(self.voronoi_surface, c, complex_polygon)
-			pygame.draw.lines(self.voronoi_surface, c, True, added_point, width=int(dist*2))
+			pygame.draw.lines(self.voronoi_surface, c, True, shrinked_reg, width=int(dist*2))
 
 	def draw_map(self):
 		self.graph_surface.blit(self.map_image, self.map_image_rect)
@@ -316,6 +323,20 @@ class UserInterface(gd.GraphDisplay):
 			for qt in self.model.map.quadmap.qtiles:
 				_r = pygame.Rect(params.map_coord_to_screen_coord_centered(qt.rect.topleft), params.map_coord_to_screen_coord_centered(qt.rect.bottomright))
 				pygame.draw.rect(self.graph_surface, (255,0,0), _r, width=1)
+
+	def draw_pause(self):
+		if self._display_pause:
+			self.pause_layer_transparency = 100
+			_image = self.pause_layer_image
+			_rect  = self.pause_layer_rect
+		else:
+			self.pause_layer_transparency = max(0, self.pause_layer_transparency - 10)
+			_image = self.play_layer_image
+			_rect  = self.play_layer_rect
+
+		if self.pause_layer_transparency > 0:
+			self.pausedisplay_surface.set_alpha(self.pause_layer_transparency)
+			self.pausedisplay_surface.blit(_image, _rect)
 
 	def init_rect_for_nodes(self):
 		ceiled_tw = math.ceil(self.graph_surface_size[0] / self.model.map.width)
@@ -375,10 +396,12 @@ class UserInterface(gd.GraphDisplay):
 	def fill_surfaces(self):
 		super(UserInterface, self).fill_surfaces()
 		self.voronoi_surface.fill((0,0,0,0))
+		self.pausedisplay_surface.fill((0,0,0,0))
 
 	def blit_surfaces(self):
 		super(UserInterface, self).blit_surfaces()
-		self.screen.blit(self.voronoi_surface, self.graph_surface_position)		
+		self.screen.blit(self.voronoi_surface, self.graph_surface_position)
+		self.screen.blit(self.pausedisplay_surface, self.graph_surface_position)
 
 	def main_loop_end(self):
 		self.update_node_info()
@@ -388,9 +411,10 @@ class UserInterface(gd.GraphDisplay):
 		self.draw_map()
 
 		self.draw_landmarks()
+	
+		self.draw_voronoi()
 
-		if self._draw_voronoi:
-			self.draw_voronoi()
+		self.draw_pause()	
 
 		super(UserInterface, self).main_loop_logic()
 

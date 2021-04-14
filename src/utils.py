@@ -2,6 +2,8 @@ import threading
 import math
 import numpy as np
 import time
+import pygame
+
 import parameters as params
 
 def get_sign(x):
@@ -135,3 +137,27 @@ def flatten(seq):
             yield from flatten(el)
         else:
             yield el
+
+def colorize(image, newColor, toone=False):
+    """
+    Create a "colorized" copy of a surface (replaces RGB values with the given color, preserving the per-pixel alphas of
+    original).
+    :param image: Surface to create a colorized copy of
+    :param newColor: RGB color to use (original alpha values are preserved)
+    :return: New colorized Surface instance
+    """
+    _image = image.copy()
+
+    _newColor = (newColor[0], newColor[1], newColor[2], 255)
+
+    if toone:
+        # zero out RGB values
+        _image.fill((255, 255, 255, 255), None, pygame.BLEND_RGB_ADD)
+    
+    # add in new RGB values
+    if len(newColor) == 3:
+        _image.fill(_newColor[0:3] + (0,), None, pygame.BLEND_RGB_MULT)
+    elif len(newColor) == 4:
+        _image.fill(_newColor, None, pygame.BLEND_RGB_MULT)
+
+    return _image
