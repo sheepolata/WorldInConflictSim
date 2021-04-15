@@ -111,6 +111,7 @@ def main():
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_F2 and pygame.key.get_mods() & pygame.KMOD_CTRL:
 					thread.pause(forced=True)
+					display._display_pause = True
 
 					mymodel.reset()
 					mymodel.set_map()
@@ -121,9 +122,10 @@ def main():
 					display.graph = graph
 					display.reset()
 
-					thread.pause(forced=False)
+					# thread.pause(forced=False)
 				elif event.key == K_F2:
 					thread.pause(forced=True)
+					display._display_pause = True
 
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)
@@ -134,7 +136,7 @@ def main():
 					# display.reset_nodes_only()
 					display.reset()
 
-					thread.pause(forced=False)
+					# thread.pause(forced=False)
 				if event.key == K_RIGHT:
 					thread.increase_speed()
 					if thread.is_fastest_speed():

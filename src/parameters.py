@@ -1,8 +1,8 @@
 import math
 import numpy as np
 
-# random_seed = 8011995
-random_seed = -1
+random_seed = 4011995
+# random_seed = -1
 if random_seed < 0:
 	rng = np.random.default_rng()
 else:
@@ -78,6 +78,10 @@ class LocationParams(object):
 		HILL      : (205,133,63)
 	}
 
+class CommunityParams(object):
+
+	BASE_POP_VALUE = 500
+
 class Race(object):
 
 	SINGULAR_NAME = {
@@ -111,8 +115,6 @@ class Race(object):
 		self.affinities[other_race] = aff
 
 class RaceParams(object):
-	
-	BASE_POP_VALUE = 500
 	
 	RACE_PREFERRED_LOCATION_FACTOR = 0.1
 	KINGDOM_MAIN_RACE_BOOST        = 0.15
@@ -160,10 +162,10 @@ class SocialClass(object):
 
 class SocialClassParams(object):
 
-	NOBILITY    = SocialClass("Nobility"   , 1.0, 1.0)
-	BOURGEOISIE = SocialClass("Bourgeoisie", 1.0, 1.0)
-	MIDDLE      = SocialClass("Middle"     , 1.0, 1.0)
-	POOR        = SocialClass("Poor"       , 1.0, 1.0)
+	NOBILITY    = SocialClass("Nobility"   , 1.00, 1.00)
+	BOURGEOISIE = SocialClass("Bourgeoisie", 1.00, 1.00)
+	MIDDLE      = SocialClass("Middle"     , 1.00, 1.00)
+	POOR        = SocialClass("Poor"       , 1.00, 1.00)
 
 	CLASSES = [NOBILITY, BOURGEOISIE, MIDDLE, POOR]
 

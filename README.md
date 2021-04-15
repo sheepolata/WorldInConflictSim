@@ -4,6 +4,8 @@
 
 ### 15/04/2021
 
+Social classes are now in place, they are set at the start, with a distribution depending on the race, the kingdom's race and the location.
+
 Caravans now brings people from all social classes, in random proportion (very little noble, a few bourgeois, some commonners and poors).
 
 Added display of social class proportion for each race.

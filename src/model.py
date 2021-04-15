@@ -699,15 +699,53 @@ class Community(object):
 		if pop_archetype != None:
 			self.pop_archetype = pop_archetype
 
-		total_pop = params.RaceParams.BASE_POP_VALUE
+		self.kingdom.set_main_race(self.location)
 
+		def get_class_dist(_race):
+			class_dist = {}
+			print(self.kingdom.main_race.name)
+			if _race == self.kingdom.main_race and self.location.archetype in _race.preferred_locations:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.35
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.25
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.20
+				class_dist[params.SocialClassParams.POOR]        = 0.20
+			elif _race == self.kingdom.main_race and self.location.archetype in _race.hated_locations:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.70
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.10
+				class_dist[params.SocialClassParams.POOR]        = 0.00
+			elif _race == self.kingdom.main_race:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.50
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.20
+				class_dist[params.SocialClassParams.POOR]        = 0.10
+			elif self.location.archetype in _race.preferred_locations:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.10
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.40
+				class_dist[params.SocialClassParams.POOR]        = 0.30
+			elif self.location.archetype in _race.hated_locations:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.00
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.15
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.25
+				class_dist[params.SocialClassParams.POOR]        = 0.60
+			else:
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.05
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.15
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.50
+				class_dist[params.SocialClassParams.POOR]        = 0.30
+			return class_dist
+
+		total_pop = params.CommunityParams.BASE_POP_VALUE
 		_dist = self.location.base_population_distribution
 
 		for race in _dist:
 			_total_pop_race = total_pop * _dist[race]
 			self.population[race] = {}
-			for _class in params.SocialClassParams.CLASSES:
-				self.population[race][_class] = round(_total_pop_race * (1.0/len(params.SocialClassParams.CLASSES)))
+
+			_class_dist = get_class_dist(race)
+			for _class in _class_dist:
+				self.population[race][_class] = round(_total_pop_race * _class_dist[_class])
 
 		# pp = pprint.PrettyPrinter(indent=4)
 		# pp.pprint(self.population)
@@ -715,18 +753,10 @@ class Community(object):
 
 		self.space_used = self.get_total_pop() / 100.0
 
-		_prop = self.get_pop_proportion()
-		_r = []
-		_p = []
-		for k in _prop:
-			_r.append(k)
-			_p.append(_prop[k])
+		# print(_r)
+		# print(_p)
+		# print(sum(_p))
 
-		print(_r)
-		print(_p)
-		print(sum(_p))
-
-		self.kingdom.main_race = params.rng.choice(_r, p=_p)
 
 	def get_total_pop(self):
 		total = 0
@@ -739,6 +769,12 @@ class Community(object):
 	def get_total_pop_race(self, race):
 		total = 0
 		for _class in self.population[race]:
+			total += math.floor(self.population[race][_class])
+		return total
+	
+	def get_total_pop_class(self, _class):
+		total = 0
+		for race in self.population.keys():
 			total += math.floor(self.population[race][_class])
 		return total
 
@@ -827,7 +863,9 @@ class Community(object):
 			_race_birth_rate = (self.actual_birth_rate*race.positive_growth_rate_factor*_prefered_location_factor)
 			_race_death_rate = (self.actual_death_rate*race.negative_growth_rate_factor)
 
-			self.race_growth_rate[race] = (_race_birth_rate - _race_death_rate)
+			_avg_birth_rate_race = 0
+			_avg_death_rate_race = 0
+
 			for social_class in self.population[race].keys():
 
 				_race_class_birth_rate = _race_birth_rate * social_class.birth_rate_factor
@@ -836,10 +874,18 @@ class Community(object):
 				_race_class_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"][race])
 				_race_class_death_rate *= (1 + self.randomness_of_life["death_rate_factor"][race])
 
+
+				_avg_birth_rate_race += _race_class_birth_rate
+				_avg_death_rate_race += _race_class_death_rate
+
 				_race_class_growth_rate = _race_class_birth_rate - _race_class_death_rate
 				_race_class_growth_rate += self.population_control
 
+
 				self.population[race][social_class] = float(self.population[race][social_class]) + ((float(self.population[race][social_class]) * (_race_class_growth_rate/100.0))/4.0)
+			
+			# self.race_growth_rate[race] = (_race_birth_rate - _race_death_rate)
+			self.race_growth_rate[race] = ((_avg_birth_rate_race/len(self.population[race].keys())) - (_avg_death_rate_race/len(self.population[race].keys())))
 		
 		self.space_used = self.get_total_pop() / 100.0
 
@@ -1123,8 +1169,10 @@ class Community(object):
 				_class_race_offset = ""
 				while used_font.size(_class_race_offset)[0] < _class_race_offset_pxvalue:
 					_class_race_offset += " "
-				_race_header = f"      {_class_race_offset}  " + str([_r.name for _r in params.RaceParams.RACES]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
-				_race_value  = f"      {_class_race_offset} " + str([f"{int(self.get_total_pop_race(_r))}{get_str_offset(str(int(self.get_total_pop_race(_r))), [_r.name], used_font)}" for _r in params.RaceParams.RACES]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				
+				_race_header = f"      {_class_race_offset}  " + str([_r.name for _r in params.RaceParams.RACES] + ['Total']).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				_race_value  = f"      {_class_race_offset} " + str([f"{int(self.get_total_pop_race(_r))}{get_str_offset(str(int(self.get_total_pop_race(_r))), [_r.name], used_font)}" for _r in params.RaceParams.RACES] + [self.get_total_pop()]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				
 				_class_prop  = []
 				for _sc in params.SocialClassParams.CLASSES:
 					_class_name_offset = get_str_offset(_sc.name, [_c.name for _c in params.SocialClassParams.CLASSES], used_font)
@@ -1132,12 +1180,15 @@ class Community(object):
 					for _race in params.RaceParams.RACES:
 						value = self.population[_race][_sc]
 						try:
-							_s += f" {(math.floor(value)/self.get_total_pop_race(_race))*100.0:.0f}%      "
+							_s += f" {int((math.floor(value)/self.get_total_pop_race(_race))*100):02d}%        "
 						except ZeroDivisionError:
-							_s += f" N/A      "
+							_s += f" N/A        "
 						# _s += f" {math.floor(value)}    "
-
 					_class_prop.append(_s)
+
+				for _si, _c in zip(enumerate(_class_prop), params.SocialClassParams.CLASSES):
+					_class_prop[_si[0]] += f"{(self.get_total_pop_class(_c)/self.get_total_pop())*100:.1f}%"
+					# _class_prop[_si[0]] += f"{self.get_total_pop_class(_c)}%"
 
 				lines.append(_race_header)
 				lines.append(_race_value)
@@ -1227,6 +1278,26 @@ class Kingdom(object):
 	def add_community(self, comm):
 		if comm not in self.communities:
 			self.communities.append(comm)
+
+	def set_main_race(self, location):
+		_dist = location.base_population_distribution
+		total_pop = params.CommunityParams.BASE_POP_VALUE
+		_data = {}
+		for race in _dist:
+			_total_pop_race = total_pop * _dist[race]
+			_data[race] = _total_pop_race
+		_prop = {}
+		for k in _data:
+			try:
+				_prop[k] = _data[k] / total_pop
+			except ZeroDivisionError:
+				_prop[k] = 0
+		_r = []
+		_p = []
+		for k in _prop:
+			_r.append(k)
+			_p.append(_prop[k])
+		self.main_race = params.rng.choice(_r, p=_p)
 
 class Model(object):
 
