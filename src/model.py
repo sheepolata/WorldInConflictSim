@@ -706,23 +706,23 @@ class Community(object):
 			print(self.kingdom.main_race.name)
 			if _race == self.kingdom.main_race and self.location.archetype in _race.preferred_locations:
 				class_dist[params.SocialClassParams.NOBILITY]    = 0.35
-				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.25
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.30
 				class_dist[params.SocialClassParams.MIDDLE]      = 0.20
-				class_dist[params.SocialClassParams.POOR]        = 0.20
+				class_dist[params.SocialClassParams.POOR]        = 0.15
 			elif _race == self.kingdom.main_race and self.location.archetype in _race.hated_locations:
 				class_dist[params.SocialClassParams.NOBILITY]    = 0.70
 				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
 				class_dist[params.SocialClassParams.MIDDLE]      = 0.10
 				class_dist[params.SocialClassParams.POOR]        = 0.00
 			elif _race == self.kingdom.main_race:
-				class_dist[params.SocialClassParams.NOBILITY]    = 0.50
-				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.45
+				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.25
 				class_dist[params.SocialClassParams.MIDDLE]      = 0.20
 				class_dist[params.SocialClassParams.POOR]        = 0.10
 			elif self.location.archetype in _race.preferred_locations:
-				class_dist[params.SocialClassParams.NOBILITY]    = 0.10
+				class_dist[params.SocialClassParams.NOBILITY]    = 0.08
 				class_dist[params.SocialClassParams.BOURGEOISIE] = 0.20
-				class_dist[params.SocialClassParams.MIDDLE]      = 0.40
+				class_dist[params.SocialClassParams.MIDDLE]      = 0.42
 				class_dist[params.SocialClassParams.POOR]        = 0.30
 			elif self.location.archetype in _race.hated_locations:
 				class_dist[params.SocialClassParams.NOBILITY]    = 0.00
@@ -746,16 +746,8 @@ class Community(object):
 			_class_dist = get_class_dist(race)
 			for _class in _class_dist:
 				self.population[race][_class] = round(_total_pop_race * _class_dist[_class])
-
-		# pp = pprint.PrettyPrinter(indent=4)
-		# pp.pprint(self.population)
-		# print(self.get_total_pop())
-
+				
 		self.space_used = self.get_total_pop() / 100.0
-
-		# print(_r)
-		# print(_p)
-		# print(sum(_p))
 
 
 	def get_total_pop(self):
