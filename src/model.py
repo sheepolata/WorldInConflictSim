@@ -703,8 +703,15 @@ class Community(object):
 
 		_dist = self.location.base_population_distribution
 
-		for k in _dist:
-			self.population[k] = total_pop * _dist[k]
+		for race in _dist:
+			_total_pop_race = total_pop * _dist[race]
+			self.population[race] = {}
+			for _class in params.SocialClassParams.CLASSES:
+				self.population[race][_class] = round(_total_pop_race * (1.0/len(params.SocialClassParams.CLASSES)))
+
+		# pp = pprint.PrettyPrinter(indent=4)
+		# pp.pprint(self.population)
+		# print(self.get_total_pop())
 
 		self.space_used = self.get_total_pop() / 100.0
 
@@ -715,13 +722,24 @@ class Community(object):
 			_r.append(k)
 			_p.append(_prop[k])
 
+		print(_r)
+		print(_p)
+		print(sum(_p))
+
 		self.kingdom.main_race = params.rng.choice(_r, p=_p)
 
 	def get_total_pop(self):
 		total = 0
 		for race in self.population.keys():
-			total += int(self.population[race])
+			for _class in self.population[race].keys():
+				total += int(self.population[race][_class])
 
+		return total
+
+	def get_total_pop_race(self, race):
+		total = 0
+		for _class in self.population[race]:
+			total += self.population[race][_class]
 		return total
 
 	def get_pop_proportion(self):
@@ -731,7 +749,7 @@ class Community(object):
 
 		for race in self.population.keys():
 			try:
-				pop_prop[race] = int(self.population[race]) / total
+				pop_prop[race] = int(self.get_total_pop_race(race)) / total
 			except ZeroDivisionError:
 				pop_prop[race] = 0
 
@@ -798,6 +816,7 @@ class Community(object):
 		self.net_growth_rate = (self.actual_birth_rate-self.actual_death_rate) + self.population_control
 
 		for race in self.population.keys():
+
 			_prefered_location_factor = 1.0
 			if self.location.archetype in race.preferred_locations:
 				_prefered_location_factor += params.RaceParams.RACE_PREFERRED_LOCATION_FACTOR
@@ -807,53 +826,56 @@ class Community(object):
 			if self.kingdom.main_race == race:
 				_prefered_location_factor += params.RaceParams.KINGDOM_MAIN_RACE_BOOST
 
-			# _hated_location_factor    = 1.0
-			# if self.location.archetype in race.hated_locations:
-			# 	_hated_location_factor    = 1.2
+
 			_race_birth_rate = (self.actual_birth_rate*race.positive_growth_rate_factor*_prefered_location_factor)
 			_race_death_rate = (self.actual_death_rate*race.negative_growth_rate_factor)
 
-			_race_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"][race])
-			_race_death_rate *= (1 + self.randomness_of_life["death_rate_factor"][race])
+			self.race_growth_rate[race] = (_race_birth_rate - _race_death_rate)
+			for social_class in self.population[race].keys():
 
-			_race_growth_rate = (_race_birth_rate - _race_death_rate)
+				_race_class_birth_rate = _race_birth_rate * social_class.birth_rate_factor
+				_race_class_death_rate = _race_death_rate * social_class.death_rate_factor
 
-			_race_growth_rate += self.population_control
+				_race_class_birth_rate *= (1 + self.randomness_of_life["birth_rate_factor"][race])
+				_race_class_death_rate *= (1 + self.randomness_of_life["death_rate_factor"][race])
 
-			self.race_growth_rate[race] = _race_growth_rate
-			self.population[race] = float(self.population[race]) + ((float(self.population[race]) * (_race_growth_rate/100.0))/4.0)
+				_race_class_growth_rate = _race_class_birth_rate - _race_class_death_rate
+				_race_class_growth_rate += self.population_control
+
+				self.population[race][social_class] = float(self.population[race][social_class]) + ((float(self.population[race][social_class]) * (_race_class_growth_rate/100.0))/4.0)
 		
 		self.space_used = self.get_total_pop() / 100.0
 
 	def migration(self):
-		pops = []
-		happ = []
-		for nl in self.location.neighbouring_locations:
-			ncomm = nl.community
-			if ncomm != None:
-				_data = {}
-				for r in params.RaceParams.RACES:
-					_data[r] = (ncomm.get_total_pop() * ncomm.get_pop_proportion()[r]) * (1.0-utils.normalise(ncomm.happiness, mini=-100, maxi=100)) * 0.01
-				pops.append(_data)
-				happ.append(ncomm.happiness)
+		return
+		# pops = []
+		# happ = []
+		# for nl in self.location.neighbouring_locations:
+		# 	ncomm = nl.community
+		# 	if ncomm != None:
+		# 		_data = {}
+		# 		for r in params.RaceParams.RACES:
+		# 			_data[r] = (ncomm.get_total_pop() * ncomm.get_pop_proportion()[r]) * (1.0-utils.normalise(ncomm.happiness, mini=-100, maxi=100)) * 0.01
+		# 		pops.append(_data)
+		# 		happ.append(ncomm.happiness)
 
 
-		total_pop = {}
-		for i, _d in enumerate(pops):
-			for k in _d:
-				try:
-					total_pop[k] += _d[k]
-				except KeyError:
-					total_pop[k] = _d[k]
+		# total_pop = {}
+		# for i, _d in enumerate(pops):
+		# 	for k in _d:
+		# 		try:
+		# 			total_pop[k] += _d[k]
+		# 		except KeyError:
+		# 			total_pop[k] = _d[k]
 
-		# pp = pprint.PrettyPrinter(indent=4)
-		# pp.pprint(total_pop)
+		# # pp = pprint.PrettyPrinter(indent=4)
+		# # pp.pprint(total_pop)
 
-		for r in params.RaceParams.RACES:
-			try:
-				self.population[r] += total_pop[r]
-			except KeyError:
-				self.population[r] = total_pop[r]
+		# for r in params.RaceParams.RACES:
+		# 	try:
+		# 		self.population[r] += total_pop[r]
+		# 	except KeyError:
+		# 		self.population[r] = total_pop[r]
 
 	def caravan(self):
 		if params.rng.random() < (0.01/4.0):
@@ -871,8 +893,14 @@ class Community(object):
 				ash_factor = 1 - utils.normalise(avg_surrounding_happ, mini=-100, maxi=100)
 				_pop_number = int(_pop_number * ash_factor)
 
-				self.population[_race] += _pop_number
+				
 				self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
+
+				random_proportion_high_class = 0.05 + params.rng.random()*0.1
+				self.population[_race][params.SocialClassParams.POOR] += _pop_number * (1.0-random_proportion_high_class)
+				
+				_middle_class = params.rng.choice([params.SocialClassParams.MIDDLE, params.SocialClassParams.BOURGEOISIE], p=[0.75, 0.25])
+				self.population[_race][_middle_class] += _pop_number * random_proportion_high_class
 
 				self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
 				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
@@ -1037,7 +1065,7 @@ class Community(object):
 		str_popprop = ""
 		popprop = self.get_pop_proportion()
 		for race in popprop:
-			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.population[race]))
+			str_popprop += "{:.1f}% {} ({})".format(popprop[race]*100, race.name, int(self.get_total_pop_race(race)))
 		s += "{} inhabitants : {}\n".format(self.get_total_pop(), str_popprop)
 		s += "Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}\n".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space)
 		for r in self.ressource_stockpile:
@@ -1067,7 +1095,7 @@ class Community(object):
 			popprop = self.get_pop_proportion()
 			for race in sorted(popprop, key=popprop.get, reverse=True):
 				if popprop[race] != 0:
-					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.population[race]))
+					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.get_total_pop_race(race)))
 			lines.append(f"      {str_popprop[:-2]}")
 			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
 			s = ""
@@ -1465,9 +1493,9 @@ class Model(object):
 		for comm in self.communities:
 			for r in params.RaceParams.RACES:
 				try:
-					_total_pop[r] += comm.population[r]
+					_total_pop[r] += comm.get_total_pop_race(r)
 				except KeyError:
-					_total_pop[r] = comm.population[r]
+					_total_pop[r] = comm.get_total_pop_race(r)
 
 		sum_all_pop = int(sum(list(_total_pop.values())))
 

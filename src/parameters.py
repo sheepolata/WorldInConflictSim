@@ -135,6 +135,20 @@ class RaceParams(object):
 
 			print(f"{r.name} prefs in {[LocationParams.ARCHETYPES_STR[a] for a in new_pl]} and hated is {[LocationParams.ARCHETYPES_STR[a] for a in new_hl]}")
 
+class SocialClass(object):
+	def __init__(self, name, brf, drf):
+		self.name = name
+		self.birth_rate_factor = brf
+		self.death_rate_factor = drf
+
+class SocialClassParams(object):
+
+	NOBILITY    = SocialClass("Nobility"   , 1.0, 1.0)
+	BOURGEOISIE = SocialClass("Bourgeoisie", 1.0, 1.0)
+	MIDDLE      = SocialClass("Middle"     , 1.0, 1.0)
+	POOR        = SocialClass("Poor"       , 1.0, 1.0)
+
+	CLASSES = [NOBILITY, BOURGEOISIE, MIDDLE, POOR]
 
 class ModelParams(object):
 
