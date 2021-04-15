@@ -2,6 +2,12 @@
 
 ## News and DevLogs
 
+### 15/04/2021
+
+Caravans now brings people from all social classes, in random proportion (very little noble, a few bourgeois, some commonners and poors).
+
+Added display of social class proportion for each race.
+
 ### 14/04/2021
 
 Added skeleton for social class in population. Will need to implement a happiness value for each population race and class.

@@ -231,7 +231,7 @@ class UserInterface(gd.GraphDisplay):
 				self.info_console.log(l)
 		else:
 			if self.selected.info["community"] != None:
-				comm_info = self.selected.info["community"].to_string_list()
+				comm_info = self.selected.info["community"].to_string_list(used_font=self.info_font)
 				for l in comm_info:
 					self.info_console.log(l)
 			elif self.selected.info["location"] != None:

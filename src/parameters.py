@@ -136,8 +136,25 @@ class RaceParams(object):
 			print(f"{r.name} prefs in {[LocationParams.ARCHETYPES_STR[a] for a in new_pl]} and hated is {[LocationParams.ARCHETYPES_STR[a] for a in new_hl]}")
 
 class SocialClass(object):
+
+	ADJECTIVE_NAME = {
+		"Nobility"    : "Nobles",
+		"Bourgeoisie" : "Bourgeois",
+		"Middle"      : "Commoners",
+		"Poor"        : "Destitutes"
+	}
+
+	ADJECTIVE_SHORT_NAME = {
+		"Nobility"    : "Nobl.",
+		"Bourgeoisie" : "Bourg.",
+		"Middle"      : "Com.",
+		"Poor"        : "Poor"
+	}
+
 	def __init__(self, name, brf, drf):
 		self.name = name
+		self.adjective = SocialClass.ADJECTIVE_NAME[self.name]
+		self.adjective_short = SocialClass.ADJECTIVE_SHORT_NAME[self.name]
 		self.birth_rate_factor = brf
 		self.death_rate_factor = drf
 

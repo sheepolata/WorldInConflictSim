@@ -732,14 +732,14 @@ class Community(object):
 		total = 0
 		for race in self.population.keys():
 			for _class in self.population[race].keys():
-				total += int(self.population[race][_class])
+				total += math.floor(self.population[race][_class])
 
 		return total
 
 	def get_total_pop_race(self, race):
 		total = 0
 		for _class in self.population[race]:
-			total += self.population[race][_class]
+			total += math.floor(self.population[race][_class])
 		return total
 
 	def get_pop_proportion(self):
@@ -769,7 +769,6 @@ class Community(object):
 		# Update pops
 		
 		# br increases as accumulated wealth decreases
-		# base_birth_rate = 3.69
 		base_birth_rate = 1.0
 		brf_space = 0
 		if self.space_used < (self.location.space*0.75):
@@ -785,9 +784,7 @@ class Community(object):
 		self.actual_birth_rate = base_birth_rate * (1 + (brf_space + brf_wealth + brf_happ + brf_food))
 
 		# dr increases as accumulated wealth decreases
-		# base_death_rate = 1.91
 		base_death_rate = base_birth_rate * 0.52
-		# drf_space = max(0, self.space_used - self.location.space) / 100.0
 		drf_space = 0
 		if self.space_used >= (self.location.space*0.5):
 			drf_space = (self.space_used / self.location.space)
@@ -896,15 +893,26 @@ class Community(object):
 				
 				self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
 
-				random_proportion_high_class = 0.05 + params.rng.random()*0.1
-				self.population[_race][params.SocialClassParams.POOR] += _pop_number * (1.0-random_proportion_high_class)
+				random_proportion_noble_class       = params.rng.random()*0.05
+				random_proportion_bourgeoisie_class = 0.1 + params.rng.random()*0.05
+				random_proportion_middle_class      = 0.2 + params.rng.random()*0.3
+				random_proportion_poor_class        = 1.0 - (random_proportion_middle_class+random_proportion_bourgeoisie_class+random_proportion_noble_class)
 				
-				_middle_class = params.rng.choice([params.SocialClassParams.MIDDLE, params.SocialClassParams.BOURGEOISIE], p=[0.75, 0.25])
-				self.population[_race][_middle_class] += _pop_number * random_proportion_high_class
+				noble_pop = _pop_number * random_proportion_noble_class
+				self.population[_race][params.SocialClassParams.NOBILITY] += noble_pop
+				
+				bourgeois_pop = _pop_number * random_proportion_bourgeoisie_class
+				self.population[_race][params.SocialClassParams.BOURGEOISIE] += bourgeois_pop
+
+				middle_pop = _pop_number * random_proportion_middle_class
+				self.population[_race][params.SocialClassParams.MIDDLE] += middle_pop
+
+				poor_pop = _pop_number * random_proportion_poor_class
+				self.population[_race][params.SocialClassParams.POOR] += poor_pop
 
 				self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
 				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
-				self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived.", self.model.day)
+				self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
 
 	def a_day_passed(self):
 		if self.location == None:
@@ -1075,8 +1083,19 @@ class Community(object):
 
 		return s
 
-	def to_string_list(self):
+	def to_string_list(self, used_font=None):
 		lines = []
+
+		def get_str_offset(_el, _list, _font):
+			if _font == None:
+				return ''
+			_max_name_length = max([_font.size(e)[0] for e in _list])
+			offset = ''
+			tw, _ = _font.size(_el + offset)
+			while tw <= _max_name_length:
+				offset += ' '
+				tw, _ = _font.size(_el + offset)
+			return offset
 
 		# lines.append("{}".format(self.name))
 		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
@@ -1095,8 +1114,36 @@ class Community(object):
 			popprop = self.get_pop_proportion()
 			for race in sorted(popprop, key=popprop.get, reverse=True):
 				if popprop[race] != 0:
-					str_popprop += "{:.1f}% {} ({}), ".format(popprop[race]*100, race.name, int(self.get_total_pop_race(race)))
+					# str_popprop += f"{popprop[race]*100:.1f}% {race.name} ({int(self.get_total_pop_race(race))}), "
+					str_popprop += f"{popprop[race]*100:.1f}% {race.name}, "
 			lines.append(f"      {str_popprop[:-2]}")
+
+			if used_font != None:
+				_class_race_offset_pxvalue = (max([used_font.size(_class.name)[0] for _class in params.SocialClassParams.CLASSES]))
+				_class_race_offset = ""
+				while used_font.size(_class_race_offset)[0] < _class_race_offset_pxvalue:
+					_class_race_offset += " "
+				_race_header = f"      {_class_race_offset}  " + str([_r.name for _r in params.RaceParams.RACES]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				_race_value  = f"      {_class_race_offset} " + str([f"{int(self.get_total_pop_race(_r))}{get_str_offset(str(int(self.get_total_pop_race(_r))), [_r.name], used_font)}" for _r in params.RaceParams.RACES]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				_class_prop  = []
+				for _sc in params.SocialClassParams.CLASSES:
+					_class_name_offset = get_str_offset(_sc.name, [_c.name for _c in params.SocialClassParams.CLASSES], used_font)
+					_s = f"      {_sc.name}{_class_name_offset}:"
+					for _race in params.RaceParams.RACES:
+						value = self.population[_race][_sc]
+						try:
+							_s += f" {(math.floor(value)/self.get_total_pop_race(_race))*100.0:.0f}%      "
+						except ZeroDivisionError:
+							_s += f" N/A      "
+						# _s += f" {math.floor(value)}    "
+
+					_class_prop.append(_s)
+
+				lines.append(_race_header)
+				lines.append(_race_value)
+				for _s in _class_prop:
+					lines.append(_s)
+
 			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
 			s = ""
 			for race in params.RaceParams.RACES:
