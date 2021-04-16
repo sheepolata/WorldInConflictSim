@@ -401,7 +401,8 @@ class UserInterface(gd.GraphDisplay):
 	def blit_surfaces(self):
 		super(UserInterface, self).blit_surfaces()
 		self.screen.blit(self.voronoi_surface, self.graph_surface_position)
-		self.screen.blit(self.pausedisplay_surface, self.graph_surface_position)
+		if self.pause_layer_transparency > 0:
+			self.screen.blit(self.pausedisplay_surface, self.graph_surface_position)
 
 	def main_loop_end(self):
 		self.update_node_info()

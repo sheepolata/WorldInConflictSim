@@ -913,44 +913,43 @@ class Community(object):
 		# 		self.population[r] = total_pop[r]
 
 	def caravan(self):
-		if params.rng.random() < (0.01/4.0):
-			if self.model != None:
-				_pop_number = (50 + params.rng.random()*100)
-				_race = params.rng.choice(params.RaceParams.RACES)
+		if self.model != None:
+			_pop_number = (50 + params.rng.random()*100)
+			_race = params.rng.choice(params.RaceParams.RACES)
 
-				_nhapp = []
-				for nl in self.location.neighbouring_locations:
-					ncomm = nl.community
-					if ncomm != None:
-						_nhapp.append(ncomm.happiness)
+			_nhapp = []
+			for nl in self.location.neighbouring_locations:
+				ncomm = nl.community
+				if ncomm != None:
+					_nhapp.append(ncomm.happiness)
 
-				avg_surrounding_happ = np.mean(_nhapp)
-				ash_factor = 1 - utils.normalise(avg_surrounding_happ, mini=-100, maxi=100)
-				_pop_number = int(_pop_number * ash_factor)
+			avg_surrounding_happ = np.mean(_nhapp)
+			ash_factor = 1 - utils.normalise(avg_surrounding_happ, mini=-100, maxi=100)
+			_pop_number = int(_pop_number * ash_factor)
 
-				
-				self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
+			
+			self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
 
-				random_proportion_noble_class       = params.rng.random()*0.05
-				random_proportion_bourgeoisie_class = 0.1 + params.rng.random()*0.05
-				random_proportion_middle_class      = 0.2 + params.rng.random()*0.3
-				random_proportion_poor_class        = 1.0 - (random_proportion_middle_class+random_proportion_bourgeoisie_class+random_proportion_noble_class)
-				
-				noble_pop = _pop_number * random_proportion_noble_class
-				self.population[_race][params.SocialClassParams.NOBILITY] += noble_pop
-				
-				bourgeois_pop = _pop_number * random_proportion_bourgeoisie_class
-				self.population[_race][params.SocialClassParams.BOURGEOISIE] += bourgeois_pop
+			random_proportion_noble_class       = params.rng.random()*0.05
+			random_proportion_bourgeoisie_class = 0.1 + params.rng.random()*0.05
+			random_proportion_middle_class      = 0.2 + params.rng.random()*0.3
+			random_proportion_poor_class        = 1.0 - (random_proportion_middle_class+random_proportion_bourgeoisie_class+random_proportion_noble_class)
+			
+			noble_pop = _pop_number * random_proportion_noble_class
+			self.population[_race][params.SocialClassParams.NOBILITY] += noble_pop
+			
+			bourgeois_pop = _pop_number * random_proportion_bourgeoisie_class
+			self.population[_race][params.SocialClassParams.BOURGEOISIE] += bourgeois_pop
 
-				middle_pop = _pop_number * random_proportion_middle_class
-				self.population[_race][params.SocialClassParams.MIDDLE] += middle_pop
+			middle_pop = _pop_number * random_proportion_middle_class
+			self.population[_race][params.SocialClassParams.MIDDLE] += middle_pop
 
-				poor_pop = _pop_number * random_proportion_poor_class
-				self.population[_race][params.SocialClassParams.POOR] += poor_pop
+			poor_pop = _pop_number * random_proportion_poor_class
+			self.population[_race][params.SocialClassParams.POOR] += poor_pop
 
-				self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
-				myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
-				self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
+			self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
+			myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
+			self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
 
 	def a_day_passed(self):
 		if self.location == None:
@@ -1080,7 +1079,8 @@ class Community(object):
 
 	def a_week_passed(self):
 		self.update_pops()
-		self.caravan()
+		if params.rng.random() < (0.02/4.0):
+			self.caravan()
 
 	def a_month_passed(self):
 		for race in params.RaceParams.RACES:
