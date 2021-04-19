@@ -110,8 +110,8 @@ def main():
 
 			elif event.type == pygame.KEYDOWN:
 				if event.key == K_F2 and pygame.key.get_mods() & pygame.KMOD_CTRL:
-					thread.pause(forced=True)
 					display._display_pause = True
+					thread.pause(forced=True)
 
 					mymodel.reset()
 					mymodel.set_map()
@@ -124,8 +124,8 @@ def main():
 
 					# thread.pause(forced=False)
 				elif event.key == K_F2:
-					thread.pause(forced=True)
 					display._display_pause = True
+					thread.pause(forced=True)
 
 					mymodel.reset()
 					mymodel.random_model_map_basic(mp)

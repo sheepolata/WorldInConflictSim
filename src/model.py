@@ -152,16 +152,19 @@ class Map(object):
 		print("")
 
 		new_noise = []
-		noise_min = min(utils.flatten(noise))
-		noise_max = max(utils.flatten(noise))
+		flattened_noise = list(utils.flatten(noise))
+		noise_min = min(flattened_noise)
+		noise_max = max(flattened_noise)
 
 		new_forest_noise = []
-		forest_noise_min = min(utils.flatten(forest_noise))
-		forest_noise_max = max(utils.flatten(forest_noise))
+		flattened_forest_noise = list(utils.flatten(forest_noise))
+		forest_noise_min = min(flattened_forest_noise)
+		forest_noise_max = max(flattened_forest_noise)
 
 		new_desert_noise = []
-		desert_noise_min = min(utils.flatten(desert_noise))
-		desert_noise_max = max(utils.flatten(desert_noise))
+		flattened_desert_noise = list(utils.flatten(desert_noise))
+		desert_noise_min = min(flattened_desert_noise)
+		desert_noise_max = max(flattened_desert_noise)
 		for x in range(len(noise)):
 			print("Normalising noise column {}".format(x), end='\r', flush=True)
 			new_noise.append(utils.normalise_list2(noise[x], noise_min, noise_max))
