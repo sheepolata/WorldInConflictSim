@@ -623,6 +623,9 @@ class Community(object):
 		self.population = {}
 		self.space_used = 0
 
+		self.social_ascension_index = 1.0
+		self.social_decay_index     = 1.0
+
 		self.init_population()
 
 		self.ressource_production_bonus = {}
@@ -751,7 +754,6 @@ class Community(object):
 				self.population[race][_class] = round(_total_pop_race * _class_dist[_class])
 				
 		self.space_used = self.get_total_pop() / 100.0
-
 
 	def get_total_pop(self):
 		total = 0
@@ -931,7 +933,7 @@ class Community(object):
 			_pop_number = int(_pop_number * ash_factor)
 
 			
-			self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.1)
+			self.randomness_of_life["birth_rate_factor"][_race] += abs(self.randomness_of_life["birth_rate_factor"][_race]*0.2)
 
 			random_proportion_noble_class       = params.rng.random()*0.05
 			random_proportion_bourgeoisie_class = 0.1 + params.rng.random()*0.05
@@ -953,6 +955,62 @@ class Community(object):
 			self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
 			myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
 			self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
+
+	def update_social_indexes(self):
+		nobility_prop = (self.get_total_pop_class(params.SocialClassParams.NOBILITY)/self.get_total_pop())
+		wealth_factor  = self.ressource_stockpile[params.ModelParams.WEALTH] / self.actual_storage[params.ModelParams.WEALTH]
+
+		self.social_ascension_index = (1.0 * ((1.0-nobility_prop) * wealth_factor)) + self.actual_production[params.ModelParams.WEALTH]
+
+		poor_prop = (self.get_total_pop_class(params.SocialClassParams.POOR)/self.get_total_pop())
+
+		self.social_decay_index = 1.0 + (poor_prop-nobility_prop) + (1.0-wealth_factor) + sum(list(self.effective_consumption[params.ModelParams.WEALTH].values()))
+
+	def social_evolution(self):
+		# Ascend
+		for _race in params.RaceParams.RACES:
+			if self.get_total_pop_race(_race) > 0:
+
+				ascend_random_factor  = params.randrange(0.8, 1.2)
+				descend_random_factor = params.randrange(0.8, 1.2)
+				if self.kingdom.main_race == _race and self.location.archetype in _race.preferred_locations:
+					ascend_random_factor  = params.randrange(1.2, 1.6)
+					descend_random_factor = params.randrange(0.4, 0.8)
+				elif self.kingdom.main_race == _race and self.location.archetype in _race.hated_locations:
+					ascend_random_factor  = params.randrange(0.9, 1.3)
+					descend_random_factor = params.randrange(0.7, 1.1)
+				elif self.kingdom.main_race == _race:
+					ascend_random_factor  = params.randrange(0.9, 1.2)
+					descend_random_factor = params.randrange(0.8, 1.1)
+				elif self.location.archetype in _race.preferred_locations:
+					ascend_random_factor  = params.randrange(1.0, 1.1)
+					descend_random_factor = params.randrange(0.9, 1.0)
+				elif self.location.archetype in _race.hated_locations:
+					ascend_random_factor  = params.randrange(0.9, 1.0)
+					descend_random_factor = params.randrange(1.0, 1.1)
+
+				_poors_ascend  = (self.population[_race][params.SocialClassParams.POOR] * ((self.social_ascension_index*ascend_random_factor)/100.0))
+
+				_middle_ascend  = (self.population[_race][params.SocialClassParams.MIDDLE] * ((self.social_ascension_index*ascend_random_factor)/100.0))
+				_middle_descent = (self.population[_race][params.SocialClassParams.MIDDLE] * ((self.social_decay_index*descend_random_factor)/100.0))
+
+				_bourgeois_ascend  = (self.population[_race][params.SocialClassParams.BOURGEOISIE] * ((self.social_ascension_index*ascend_random_factor)/100.0))
+				_bourgeois_descent = (self.population[_race][params.SocialClassParams.BOURGEOISIE] * ((self.social_decay_index*descend_random_factor)/100.0))
+
+				_nobles_descend = self.population[_race][params.SocialClassParams.NOBILITY] * ((self.social_decay_index*descend_random_factor)/100.0)
+
+				self.population[_race][params.SocialClassParams.POOR]        = max(0, self.population[_race][params.SocialClassParams.POOR]        + math.floor(_middle_descent - _poors_ascend))
+				self.population[_race][params.SocialClassParams.MIDDLE]      = max(0, self.population[_race][params.SocialClassParams.MIDDLE]      + math.floor((_poors_ascend + _bourgeois_descent) - (_middle_ascend + _middle_descent)))
+				self.population[_race][params.SocialClassParams.BOURGEOISIE] = max(0, self.population[_race][params.SocialClassParams.BOURGEOISIE] + math.floor((_middle_ascend + _nobles_descend) - (_bourgeois_ascend + _bourgeois_descent)))
+				self.population[_race][params.SocialClassParams.NOBILITY]    = max(0, self.population[_race][params.SocialClassParams.NOBILITY]    + math.floor(_bourgeois_ascend - _nobles_descend))
+
+				# print(math.floor(_middle_descent - _poors_ascend))
+				# print(math.floor((_poors_ascend + _bourgeois_descent) - (_middle_ascend + _middle_descent)))
+				# print(math.floor((_middle_ascend + _nobles_descend) - (_bourgeois_ascend + _bourgeois_descent)))
+				# print(math.floor(_bourgeois_ascend - _nobles_descend))
+
+
+		# Descend
 
 	def a_day_passed(self):
 		if self.location == None:
@@ -1103,7 +1161,8 @@ class Community(object):
 		pass
 
 	def a_semester_passed(self):
-		pass
+		self.update_social_indexes()
+		self.social_evolution()
 
 	def a_year_passed(self):
 		pass
@@ -1175,7 +1234,8 @@ class Community(object):
 					for _race in params.RaceParams.RACES:
 						value = self.population[_race][_sc]
 						try:
-							_s += f" {int((math.floor(value)/self.get_total_pop_race(_race))*100):02d}%        "
+							number_modf = math.modf((math.floor(value)/self.get_total_pop_race(_race))*100)
+							_s += f" {int(number_modf[1]):02d}.{math.floor(number_modf[0]*10):01d}%     "
 						except ZeroDivisionError:
 							_s += f" N/A        "
 						# _s += f" {math.floor(value)}    "
@@ -1189,6 +1249,8 @@ class Community(object):
 				lines.append(_race_value)
 				for _s in _class_prop:
 					lines.append(_s)
+
+			lines.append(f"      Social ascension: {self.social_ascension_index:.2f}, Social decay: {self.social_decay_index:.2f}")
 
 			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
 			s = ""

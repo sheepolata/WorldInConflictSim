@@ -8,6 +8,9 @@ if random_seed < 0:
 else:
 	rng = np.random.default_rng(random_seed)
 
+def randrange(a, b):
+	return a + rng.random()*(b-a)
+
 class TileParams(object):
 
 	WATER     = 0

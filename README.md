@@ -2,6 +2,13 @@
 
 ## News and DevLogs
 
+### 20/04/2021
+
+Added two indices tracking how easy it is to change its social class to a better one or to a worst one.
+Use this indices to evolve the social class repartition, coupled with a tiny bit of randomness.
+
+Some text improvement in the population display of a community.
+
 ### 15/04/2021
 
 Social classes are now in place, they are set at the start, with a distribution depending on the race, the kingdom's race and the location.
