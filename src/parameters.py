@@ -172,6 +172,156 @@ class SocialClassParams(object):
 
 	CLASSES = [NOBILITY, BOURGEOISIE, MIDDLE, POOR]
 
+class KingdomParams(object):
+
+	DEMOCRACY   = 0
+	MONARCHY    = 1
+	EMPIRE      = 2
+	ARISTOCRACY = 3
+
+	NOGOV       = 99
+
+	GOVERNEMENTS = [DEMOCRACY, MONARCHY, EMPIRE, ARISTOCRACY]
+
+	GOVERNEMENTS_STR = {
+		DEMOCRACY   : "Democracy",
+		MONARCHY    : "Monarchy",
+		EMPIRE      : "Empire",
+		ARISTOCRACY : "Aristocracy",
+
+		NOGOV       : "EMPTY GOV."
+	}
+
+	MILITARIST = 0
+	BELIGERANT = 1
+	RELIGIOUS  = 2
+	CORPORATE  = 3
+	SOCIALIST  = 4
+	ANARCHIST  = 5
+	SCIENTIFIC = 6
+
+	NOPOL      = 99
+
+	POLITICS = [MILITARIST, BELIGERANT, RELIGIOUS, CORPORATE, SOCIALIST, ANARCHIST, SCIENTIFIC]
+
+	POLITICS_AFFINITY = {
+		MILITARIST : {
+			MILITARIST : -10,
+			BELIGERANT : -20,
+			RELIGIOUS  : 0,
+			CORPORATE  : 5,
+			SOCIALIST  : 0,
+			ANARCHIST  : -10,
+			SCIENTIFIC : 10
+		},
+		BELIGERANT : {
+			MILITARIST : -10,
+			BELIGERANT : -20,
+			RELIGIOUS  : 0,
+			CORPORATE  : 0,
+			SOCIALIST  : 0,
+			ANARCHIST  : 20,
+			SCIENTIFIC : 10
+		},
+		RELIGIOUS : {
+			MILITARIST : 0,
+			BELIGERANT : 0,
+			RELIGIOUS  : 30,
+			CORPORATE  : -10,
+			SOCIALIST  : 10,
+			ANARCHIST  : -30,
+			SCIENTIFIC : -10
+		},
+		CORPORATE : {
+			MILITARIST : 10,
+			BELIGERANT : 10,
+			RELIGIOUS  : -10,
+			CORPORATE  : -20,
+			SOCIALIST  : 0,
+			ANARCHIST  : -20,
+			SCIENTIFIC : 15
+		},
+		SOCIALIST : {
+			MILITARIST : 0,
+			BELIGERANT : -10,
+			RELIGIOUS  : -5,
+			CORPORATE  : 10,
+			SOCIALIST  : 30,
+			ANARCHIST  : -20,
+			SCIENTIFIC : 0	
+		},
+		ANARCHIST : {
+			MILITARIST : 10,
+			BELIGERANT : 10,
+			RELIGIOUS  : -20,
+			CORPORATE  : -5,
+			SOCIALIST  : -5,
+			ANARCHIST  : 40,
+			SCIENTIFIC : -10
+		},	
+		SCIENTIFIC : {
+			MILITARIST : 15,
+			BELIGERANT : -5,
+			RELIGIOUS  : -10,
+			CORPORATE  : 5,
+			SOCIALIST  : 0,
+			ANARCHIST  : -15,
+			SCIENTIFIC : 20
+		}
+	}
+
+	POLITICS_STR = {
+		MILITARIST : "Militarist",
+		BELIGERANT : "Beligerant",
+		RELIGIOUS  : "Religious",
+		CORPORATE  : "Corporate",
+		SOCIALIST  : "Socialist",
+		ANARCHIST  : "Anarchist",
+		SCIENTIFIC : "Scientific",
+
+		NOPOL      : "EMPTY POLITIC"
+	}
+
+	POLITICS_STR_SHORT = {
+		MILITARIST : "Mili.",
+		BELIGERANT : "Beli.",
+		RELIGIOUS  : "Reli.",
+		CORPORATE  : "Corp.",
+		SOCIALIST  : "Soci.",
+		ANARCHIST  : "Anar.",
+		SCIENTIFIC : "Scie."
+	}
+
+	GOVERNEMENT_TYPE_STR = {
+		(MILITARIST, BELIGERANT) : "Aggressive",
+		(MILITARIST, RELIGIOUS)  : "Holy",
+		(MILITARIST, CORPORATE)  : "TBD",
+		(MILITARIST, SOCIALIST)  : "TBD",
+		(MILITARIST, ANARCHIST)  : "Anarchist",
+		(MILITARIST, SCIENTIFIC) : "Powerful",
+
+		(BELIGERANT, RELIGIOUS)  : "Unforgiving",
+		(BELIGERANT, CORPORATE)  : "TBD",
+		(BELIGERANT, SOCIALIST)  : "TBD",
+		(BELIGERANT, ANARCHIST)  : "Barbarian",
+		(BELIGERANT, SCIENTIFIC) : "TBD",
+
+		(RELIGIOUS, CORPORATE)   : "TBD",
+		(RELIGIOUS, SOCIALIST)   : "TBD",
+		(RELIGIOUS, ANARCHIST)   : "Zealous",
+		(RELIGIOUS, SCIENTIFIC)  : "Enlighted",
+
+		(CORPORATE, SOCIALIST)   : "Mercantile",
+		(CORPORATE, ANARCHIST)   : "TBD",
+		(CORPORATE, SCIENTIFIC)  : "TBD",
+
+		(SOCIALIST, ANARCHIST)   : "Poeple\'s",
+		(SOCIALIST, SCIENTIFIC)  : "TBD",
+
+		(ANARCHIST, SCIENTIFIC)  : "Unforeseen"
+
+	}
+
 class ModelParams(object):
 
 	TILE_TYPE_TO_LOCATION_ARCHETYPE = {

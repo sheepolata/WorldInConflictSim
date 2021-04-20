@@ -4,6 +4,8 @@
 
 ### 20/04/2021
 
+Added Governements and politics into Kingdoms. Added affinity between kingdoms depending on they governement types and policies.
+
 Added two indices tracking how easy it is to change its social class to a better one or to a worst one.
 Use this indices to evolve the social class repartition, coupled with a tiny bit of randomness.
 

@@ -150,11 +150,22 @@ def main():
 					display._display_pause = _p
 				if event.key == K_F1:
 					graph._draw_edges = not graph._draw_edges
-				if event.key == K_k:
+				if event.key == K_F3:
 					if thread.is_fastest_speed():
 						display._draw_voronoi = False
 					else:
 						display._draw_voronoi = not display._draw_voronoi
+				if event.key == K_k:
+					if display.selected != None and display.selected.info["community"] != None:
+						display.selected.info["community"].show_kingdom = not display.selected.info["community"].show_kingdom
+					else:
+						pass
+				if event.key == K_d:
+					if display.selected != None and display.selected.info["community"] != None:
+						if display.selected.info["community"].show_kingdom:
+							display.selected.info["community"].show_kingdom_details = not display.selected.info["community"].show_kingdom_details
+					else:
+						pass
 				if event.key == K_r:
 					if display.selected != None and display.selected.info["community"] != None:
 						display.selected.info["community"].show_ressources = not display.selected.info["community"].show_ressources
@@ -182,7 +193,7 @@ def main():
 		# 	pp.pprint(display.selected.info["community"].hapiness_details)
 
 		display.update_info_tab()
-		display.insert_info_console("inc./dec. with →/←; SPACE to pause; (Ctrl+)F2 to reset (all), K to display kingdoms", 1)
+		display.insert_info_console("inc./dec. with →/←; SPACE to pause; (Ctrl+)F2 to reset (all), F3 to display kingdoms", 1)
 		display.insert_info_console(f"{'' if not thread._paused else 'PAUSED '}{thread.freq if thread.freq > 0 else 'Fastest'} days/second", 1)
 		# display.insert_info_console("{}".format("Play" if not thread._paused else "Paused"), 1)
 

@@ -691,6 +691,8 @@ class Community(object):
 		self.show_ressources        = False
 		self.show_landmarks         = False
 		self.show_events            = False
+		self.show_kingdom           = False
+		self.show_kingdom_details   = False
 
 		self.event_log = Community.CommunityLog()
 
@@ -1186,6 +1188,9 @@ class Community(object):
 	def to_string_list(self, used_font=None):
 		lines = []
 
+		tab       = "      "
+		small_tab = "   "
+
 		def get_str_offset(_el, _list, _font):
 			if _font == None:
 				return ''
@@ -1199,12 +1204,20 @@ class Community(object):
 
 		# lines.append("{}".format(self.name))
 		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
-		lines.append("in {} ({} governement)".format(self.kingdom.name, self.kingdom.main_race.name_adjective))
+		lines.append(f"{'▼' if self.show_kingdom else '►'} {self.kingdom.name} (K to {'hide' if self.show_kingdom else 'show'})")
+		if self.show_kingdom:
+			lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {self.kingdom.gov_type_str} {params.KingdomParams.GOVERNEMENTS_STR[self.kingdom.governement]} ({params.KingdomParams.POLITICS_STR_SHORT[self.kingdom.main_politic]} {params.KingdomParams.POLITICS_STR_SHORT[self.kingdom.secondary_politic]})")
+			lines.append(f"{tab}Relations: (D to {'hide' if self.show_kingdom_details else 'show'} details)")
+			for k in self.kingdom.relations:
+				lines.append(f"{tab}{'▼' if self.show_kingdom_details else '►'} {k.name}: {sum(self.kingdom.relations[k].values())}")
+				if self.show_kingdom_details:
+					for detail in self.kingdom.relations[k]:
+						lines.append(f"{tab}{small_tab}{detail}: {self.kingdom.relations[k][detail]}")
 
 		if self.show_happiness_details:
 			lines.append(f"▼ Happiness: {self.happiness:.2f} (H to hide)")
 			for k in self.happiness_details:
-				lines.append(f"      {k}: {self.happiness_details[k]:.2f}")
+				lines.append(f"{tab}{k}: {self.happiness_details[k]:.2f}")
 		else:
 			lines.append(f"► Happiness: {self.happiness:.2f} (H to show)")
 
@@ -1216,7 +1229,7 @@ class Community(object):
 				if popprop[race] != 0:
 					# str_popprop += f"{popprop[race]*100:.1f}% {race.name} ({int(self.get_total_pop_race(race))}), "
 					str_popprop += f"{popprop[race]*100:.1f}% {race.name}, "
-			lines.append(f"      {str_popprop[:-2]}")
+			lines.append(f"{tab}{str_popprop[:-2]}")
 
 			if used_font != None:
 				_class_race_offset_pxvalue = (max([used_font.size(_class.name)[0] for _class in params.SocialClassParams.CLASSES]))
@@ -1224,13 +1237,13 @@ class Community(object):
 				while used_font.size(_class_race_offset)[0] < _class_race_offset_pxvalue:
 					_class_race_offset += " "
 				
-				_race_header = f"      {_class_race_offset}  " + str([_r.name for _r in params.RaceParams.RACES] + ['Total']).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
-				_race_value  = f"      {_class_race_offset} " + str([f"{int(self.get_total_pop_race(_r))}{get_str_offset(str(int(self.get_total_pop_race(_r))), [_r.name], used_font)}" for _r in params.RaceParams.RACES] + [self.get_total_pop()]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				_race_header = f"{tab}{_class_race_offset}  " + str([_r.name for _r in params.RaceParams.RACES] + ['Total']).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
+				_race_value  = f"{tab}{_class_race_offset} " + str([f"{int(self.get_total_pop_race(_r))}{get_str_offset(str(int(self.get_total_pop_race(_r))), [_r.name], used_font)}" for _r in params.RaceParams.RACES] + [self.get_total_pop()]).replace('\'', '').replace("[", '').replace("]",'').replace(",", " |")
 				
 				_class_prop  = []
 				for _sc in params.SocialClassParams.CLASSES:
 					_class_name_offset = get_str_offset(_sc.name, [_c.name for _c in params.SocialClassParams.CLASSES], used_font)
-					_s = f"      {_sc.name}{_class_name_offset}:"
+					_s = f"{tab}{_sc.name}{_class_name_offset}:"
 					for _race in params.RaceParams.RACES:
 						value = self.population[_race][_sc]
 						try:
@@ -1250,9 +1263,9 @@ class Community(object):
 				for _s in _class_prop:
 					lines.append(_s)
 
-			lines.append(f"      Social ascension: {self.social_ascension_index:.2f}, Social decay: {self.social_decay_index:.2f}")
+			lines.append(f"{tab}Social ascension: {self.social_ascension_index:.2f}, Social decay: {self.social_decay_index:.2f}")
 
-			lines.append("      Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
+			lines.append("{}Basic growth rate: {:+.2f} ({:.2f}-{:.2f})".format(tab, self.net_growth_rate, self.actual_birth_rate, self.actual_death_rate))
 			s = ""
 			for race in params.RaceParams.RACES:
 				try:
@@ -1260,8 +1273,8 @@ class Community(object):
 				except KeyError:
 					pass
 			if s != "":
-				lines.append("      GR/race: " + s[:-2])
-			lines.append(f"      Space used: {self.space_used:.2f}/{self.location.space:.2f}")
+				lines.append(f"{tab}GR/race: " + s[:-2])
+			lines.append(f"{tab}Space used: {self.space_used:.2f}/{self.location.space:.2f}")
 		else:
 			lines.append("► Population: {} inhabitants (P to show)".format(self.get_total_pop()))
 		
@@ -1270,7 +1283,7 @@ class Community(object):
 			lines.append("▼ Ressources (R to hide)")
 			for r in self.ressource_stockpile:
 				try:
-					lines.append("      {} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+					lines.append("{}{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(tab, params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
 				except KeyError:
 					pass
 		else:
@@ -1282,7 +1295,7 @@ class Community(object):
 			if self.show_landmarks:
 				lines.append("▼ Landmarks, happiness mod. {:+.02f}. (L to hide)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 				for lm in sorted(self.location.landmarks, key=lambda x: x.happiness_value, reverse=True):
-					lines.append("      " + lm.to_string())
+					lines.append(tab + lm.to_string())
 			else:
 				lines.append("► Landmarks, happiness mod. {:+.02f}. (L to show)".format(sum([lm.happiness_value for lm in self.location.landmarks])))
 
@@ -1291,7 +1304,7 @@ class Community(object):
 		if self.show_events:
 			lines.append(f"▼ Event log, entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'} {max(0 if len(self.event_log.get_lines())==0 else 1, len(self.event_log.get_lines()) - nb_to_show + 1)} to {len(self.event_log.get_lines())}. (O to {'hide' if self.show_events else 'show'})")
 			for l in self.event_log.get_lines()[-nb_to_show:]:
-				lines.append(f"      {l}")
+				lines.append(f"{tab}{l}")
 		else:
 			lines.append(f"► Event log, {len(self.event_log.get_lines())} entr{'y' if len(self.event_log.get_lines())<=1 else 'ies'}. (O to {'hide' if self.show_events else 'show'})")
 
@@ -1332,6 +1345,28 @@ class Kingdom(object):
 
 		self.main_race = None
 
+		self.governement       = params.KingdomParams.NOGOV
+
+		self.main_politic      = params.KingdomParams.NOPOL
+		self.secondary_politic = params.KingdomParams.NOPOL
+
+		self.gov_type_str = "Empty gov. type"
+
+		self.init_gov_and_politics()
+
+		self.relations = {}
+
+	def init_gov_and_politics(self):
+		self.governement  = params.rng.choice(params.KingdomParams.GOVERNEMENTS)
+
+		self.main_politic      = params.rng.choice(params.KingdomParams.POLITICS)
+		self.secondary_politic = params.rng.choice(list(set(params.KingdomParams.POLITICS)-set([self.main_politic])))
+
+		try:
+			self.gov_type_str = params.KingdomParams.GOVERNEMENT_TYPE_STR[(self.main_politic, self.secondary_politic)]
+		except KeyError:
+			self.gov_type_str = params.KingdomParams.GOVERNEMENT_TYPE_STR[(self.secondary_politic, self.main_politic)]
+
 	def add_community(self, comm):
 		if comm not in self.communities:
 			self.communities.append(comm)
@@ -1356,6 +1391,26 @@ class Kingdom(object):
 			_p.append(_prop[k])
 		self.main_race = params.rng.choice(_r, p=_p)
 
+	def get_neighbouring_kingdoms(self):
+		res = set()
+		for comm in self.communities:
+			loc = comm.location
+			for nloc in loc.neighbouring_locations:
+				if nloc.community != None:
+					res.add(nloc.community.kingdom)
+		return list(res)
+
+	def monthly_update(self):
+		nkingdom = self.get_neighbouring_kingdoms()
+		for k in nkingdom:
+			try:
+				self.relations[k]
+			except KeyError:
+				self.relations[k] = {}
+
+			self.relations[k]["Affinity Main Politic"] = params.KingdomParams.POLITICS_AFFINITY[self.main_politic][k.main_politic] + (params.KingdomParams.POLITICS_AFFINITY[self.main_politic][k.secondary_politic] / 2.0)
+			self.relations[k]["Affinity Secondary Politic"] = (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.main_politic] / 2.0) + (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.secondary_politic] / 4.0)
+
 class Model(object):
 
 	def __init__(self, map_size=20, max_location=20):
@@ -1370,6 +1425,7 @@ class Model(object):
 
 		self.locations   = []
 		self.communities = []
+		self.kingdoms    = []
 
 		self.day = 0
 
@@ -1387,6 +1443,7 @@ class Model(object):
 
 		self.locations   = []
 		self.communities = []
+		self.kingdoms    = []
 
 		self.day = 0
 
@@ -1405,6 +1462,11 @@ class Model(object):
 	def loop(self):
 		if not self.is_init:
 			return
+
+		for kingdom in self.kingdoms:
+			if self.day%30 == 0:
+				kingdom.monthly_update()
+
 
 		for community in self.communities:
 			community.a_day_passed()
@@ -1648,6 +1710,7 @@ class Model(object):
 			kingdom.add_community(community)
 			
 			self.communities.append(community)
+			self.kingdoms.append(kingdom)
 			self.nb_community += 1
 		print("")
 
