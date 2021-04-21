@@ -327,15 +327,15 @@ class KingdomParams(object):
 
 
 	GOVERNEMENTS_STR = {
-		DEMOCRACY   : "Democracy",
-		MONARCHY    : "Monarchy",
-		EMPIRE      : "Empire",
-		TRIBAL      : "Tribes",
-		OLIGARCHY   : "Oligarchy",
-		CORPORATION : "Corporation",
-		DICTATURE   : "Dictature",
+		DEMOCRACY   : ["Democracy", "Republic", "Commonwealth"],
+		MONARCHY    : ["Monarchy", "Sovereignty", "Principality"],
+		EMPIRE      : ["Empire", "Federation", "Confederation"],
+		TRIBAL      : ["Tribes", "Nations", "Dynasty"],
+		OLIGARCHY   : ["Oligarchy", "Aristocracy", "Technocracy"],
+		CORPORATION : ["Corporation", "Organisation", "Guild"],
+		DICTATURE   : ["Dictature", "Monocracy", "Autocracy"],
 
-		NOGOV       : "EMPTY GOV."
+		NOGOV       : ["EMPTY GOV."]
 	}
 
 	GOVERNEMENTS = [DEMOCRACY, MONARCHY, EMPIRE, TRIBAL, OLIGARCHY, CORPORATION, DICTATURE]

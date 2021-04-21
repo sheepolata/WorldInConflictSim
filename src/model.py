@@ -1019,7 +1019,7 @@ class Community(object):
 		for nloc in self.location.neighbouring_locations:
 			if nloc.community != None:
 				trade_factor_list.append(nloc.community.trade_factor)
-				
+
 		return np.mean(trade_factor_list)
 
 	def a_day_passed(self):
@@ -1214,7 +1214,7 @@ class Community(object):
 		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
 		lines.append(f"{'▼' if self.show_kingdom else '►'} {self.kingdom.name} (K to {'hide' if self.show_kingdom else 'show'})")
 		if self.show_kingdom:
-			lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {self.kingdom.gov_type_str} {params.KingdomParams.GOVERNEMENTS_STR[self.kingdom.governement]} ({params.KingdomParams.POLITICS_STR[self.kingdom.main_politic]} {params.KingdomParams.POLITICS_STR[self.kingdom.secondary_politic]})")
+			lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {self.kingdom.gov_type_str} {self.kingdom.governement_name} ({params.KingdomParams.POLITICS_STR[self.kingdom.main_politic]} {params.KingdomParams.POLITICS_STR[self.kingdom.secondary_politic]})")
 			lines.append(f"{tab}Relations: (D to {'hide' if self.show_kingdom_details else 'show'} details)")
 			for k in self.kingdom.relations:
 				lines.append(f"{tab}{'▼' if self.show_kingdom_details else '►'} {k.name}: {sum(self.kingdom.relations[k].values())}")
@@ -1373,11 +1373,13 @@ class Kingdom(object):
 		self.main_race = None
 
 		self.governement       = params.KingdomParams.NOGOV
+		self.governement_name  = params.rng.choice(params.KingdomParams.GOVERNEMENTS_STR[self.governement])
 
 		self.main_politic      = params.KingdomParams.NOPOL
 		self.secondary_politic = params.KingdomParams.NOPOL
 
 		self.gov_type_str = "Empty gov. type"
+
 
 		self.init_gov_and_politics()
 
@@ -1396,13 +1398,14 @@ class Kingdom(object):
 			self.gov_type_str = params.rng.choice(params.KingdomParams.GOVERNEMENT_TYPE_STR[(self.secondary_politic, self.main_politic)])
 			self.governement = params.rng.choice(params.KingdomParams.GOVERNEMENT_FROM_POLICIES[(self.secondary_politic, self.main_politic)])
 
-		self.name = self.name.upper().replace("GOVNAME", params.KingdomParams.GOVERNEMENTS_STR[self.governement]).title()
+		self.governement_name = params.rng.choice(params.KingdomParams.GOVERNEMENTS_STR[self.governement])
+		self.name = self.name.upper().replace("GOVNAME", params.rng.choice(params.KingdomParams.GOVERNEMENTS_STR[self.governement])).title()
 
 	def generate_name(self):
 		govtype = self.gov_type_str
-		gov     = params.KingdomParams.GOVERNEMENTS_STR[self.governement]
+		gov     = self.governement_name
 
-		govadj  = params.rng.choice(["", params.rng.choice([self.main_race.name_adjective, params.rng.choice(params.KingdomParams.GLOBAL_KINGDOM_ADJ_ONLY)], p=[0.3, 0.7])], p=[0.6, 0.4])
+		govadj  = params.rng.choice(["", params.rng.choice([self.main_race.name_adjective, params.rng.choice(params.KingdomParams.GLOBAL_KINGDOM_ADJ_ONLY), f"{self.main_race.name_adjective} {params.rng.choice(params.KingdomParams.GLOBAL_KINGDOM_ADJ_ONLY)}"], p=[0.3, 0.55, 0.15])], p=[0.5, 0.5])
 
 		govname = params.rng.choice([params.rng.choice(self.communities).location.name, params.rng.choice(params.KingdomParams.GLOBAL_KINGDOM_NAMES_ONLY)], p=[0.3, 0.7])
 		try:
