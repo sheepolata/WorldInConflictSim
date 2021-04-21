@@ -174,23 +174,17 @@ class SocialClassParams(object):
 
 class KingdomParams(object):
 
-	DEMOCRACY   = 0
-	MONARCHY    = 1
-	EMPIRE      = 2
-	ARISTOCRACY = 3
+	kingdomnamesonly_list = open("../data/namelists/kingdom_names_only.txt")
+	kingdomnamesonly_from_file = kingdomnamesonly_list.readlines()
+	kingdomnamesonly_list.close()
 
-	NOGOV       = 99
+	GLOBAL_KINGDOM_NAMES_ONLY = [_s.replace('\n', '') for _s in kingdomnamesonly_from_file]
 
-	GOVERNEMENTS = [DEMOCRACY, MONARCHY, EMPIRE, ARISTOCRACY]
+	kingdomadjonly_list = open("../data/namelists/kingdom_adj_only.txt")
+	kingdomadjonly_from_file = kingdomadjonly_list.readlines()
+	kingdomadjonly_list.close()
 
-	GOVERNEMENTS_STR = {
-		DEMOCRACY   : "Democracy",
-		MONARCHY    : "Monarchy",
-		EMPIRE      : "Empire",
-		ARISTOCRACY : "Aristocracy",
-
-		NOGOV       : "EMPTY GOV."
-	}
+	GLOBAL_KINGDOM_ADJ_ONLY = [_s.replace('\n', '') for _s in kingdomadjonly_from_file]
 
 	MILITARIST = 0
 	BELIGERANT = 1
@@ -283,43 +277,162 @@ class KingdomParams(object):
 	}
 
 	POLITICS_STR_SHORT = {
-		MILITARIST : "Mili.",
-		BELIGERANT : "Beli.",
-		RELIGIOUS  : "Reli.",
-		CORPORATE  : "Corp.",
-		SOCIALIST  : "Soci.",
-		ANARCHIST  : "Anar.",
-		SCIENTIFIC : "Scie."
+		MILITARIST : "Mil.",
+		BELIGERANT : "Bel.",
+		RELIGIOUS  : "Rel.",
+		CORPORATE  : "Cor.",
+		SOCIALIST  : "Soc.",
+		ANARCHIST  : "Ana.",
+		SCIENTIFIC : "Sci."
 	}
 
 	GOVERNEMENT_TYPE_STR = {
-		(MILITARIST, BELIGERANT) : "Aggressive",
-		(MILITARIST, RELIGIOUS)  : "Holy",
-		(MILITARIST, CORPORATE)  : "TBD",
-		(MILITARIST, SOCIALIST)  : "TBD",
-		(MILITARIST, ANARCHIST)  : "Anarchist",
-		(MILITARIST, SCIENTIFIC) : "Powerful",
+		(MILITARIST, BELIGERANT) : ["Aggressive"],
+		(MILITARIST, RELIGIOUS)  : ["Holy"],
+		(MILITARIST, CORPORATE)  : ["Mercenary"],
+		(MILITARIST, SOCIALIST)  : ["Free", "Soviet"],
+		(MILITARIST, ANARCHIST)  : ["Anarchist"],
+		(MILITARIST, SCIENTIFIC) : ["Powerful"],
 
-		(BELIGERANT, RELIGIOUS)  : "Unforgiving",
-		(BELIGERANT, CORPORATE)  : "TBD",
-		(BELIGERANT, SOCIALIST)  : "TBD",
-		(BELIGERANT, ANARCHIST)  : "Barbarian",
-		(BELIGERANT, SCIENTIFIC) : "TBD",
+		(BELIGERANT, RELIGIOUS)  : ["Unforgiving"],
+		(BELIGERANT, CORPORATE)  : ["Syndicate"], 
+		(BELIGERANT, SOCIALIST)  : ["Purist", "Revolutionnary"],
+		(BELIGERANT, ANARCHIST)  : ["Barbarian"],
+		(BELIGERANT, SCIENTIFIC) : ["Facist", "Utilitaristic", "Protectionnist", "Rejunevative"],
 
-		(RELIGIOUS, CORPORATE)   : "TBD",
-		(RELIGIOUS, SOCIALIST)   : "TBD",
-		(RELIGIOUS, ANARCHIST)   : "Zealous",
-		(RELIGIOUS, SCIENTIFIC)  : "Enlighted",
+		(RELIGIOUS, CORPORATE)   : ["Ordered", "Sectarian"],
+		(RELIGIOUS, SOCIALIST)   : ["United", "Benevolent"],
+		(RELIGIOUS, ANARCHIST)   : ["Zealous"],
+		(RELIGIOUS, SCIENTIFIC)  : ["Enlighted"],
 
-		(CORPORATE, SOCIALIST)   : "Mercantile",
-		(CORPORATE, ANARCHIST)   : "TBD",
-		(CORPORATE, SCIENTIFIC)  : "TBD",
+		(CORPORATE, SOCIALIST)   : ["Mercantile"],
+		(CORPORATE, ANARCHIST)   : ["Unified Chaos", "Artisanal"],
+		(CORPORATE, SCIENTIFIC)  : ["Vanguard"],
 
-		(SOCIALIST, ANARCHIST)   : "Poeple\'s",
-		(SOCIALIST, SCIENTIFIC)  : "TBD",
+		(SOCIALIST, ANARCHIST)   : ["People\'s"],
+		(SOCIALIST, SCIENTIFIC)  : ["Humanist", "Materialist"],
 
-		(ANARCHIST, SCIENTIFIC)  : "Unforeseen"
+		(ANARCHIST, SCIENTIFIC)  : ["Unforeseen"]
+	}
 
+	DEMOCRACY   = 0
+	MONARCHY    = 1
+	EMPIRE      = 2
+	TRIBAL      = 4
+	OLIGARCHY   = 5
+	CORPORATION = 6
+	DICTATURE   = 7
+
+	NOGOV       = 99
+
+
+	GOVERNEMENTS_STR = {
+		DEMOCRACY   : "Democracy",
+		MONARCHY    : "Monarchy",
+		EMPIRE      : "Empire",
+		TRIBAL      : "Tribes",
+		OLIGARCHY   : "Oligarchy",
+		CORPORATION : "Corporation",
+		DICTATURE   : "Dictature",
+
+		NOGOV       : "EMPTY GOV."
+	}
+
+	GOVERNEMENTS = [DEMOCRACY, MONARCHY, EMPIRE, TRIBAL, OLIGARCHY, CORPORATION, DICTATURE]
+
+	GOVERNEMENT_FROM_POLICIES = {
+		(MILITARIST, BELIGERANT) : [DEMOCRACY, MONARCHY, EMPIRE, TRIBAL, OLIGARCHY, DICTATURE],
+		(MILITARIST, RELIGIOUS)  : [MONARCHY, EMPIRE, TRIBAL, OLIGARCHY, DICTATURE],
+		(MILITARIST, CORPORATE)  : [OLIGARCHY, EMPIRE],
+		(MILITARIST, SOCIALIST)  : [CORPORATION, OLIGARCHY],
+		(MILITARIST, ANARCHIST)  : [TRIBAL, DEMOCRACY],
+		(MILITARIST, SCIENTIFIC) : [OLIGARCHY, MONARCHY, EMPIRE],
+
+		(BELIGERANT, RELIGIOUS)  : [MONARCHY, EMPIRE, TRIBAL, OLIGARCHY, DICTATURE],
+		(BELIGERANT, CORPORATE)  : [CORPORATION, EMPIRE, OLIGARCHY],
+		(BELIGERANT, SOCIALIST)  : [TRIBAL, DEMOCRACY, EMPIRE, DICTATURE],
+		(BELIGERANT, ANARCHIST)  : [TRIBAL, EMPIRE, DEMOCRACY],
+		(BELIGERANT, SCIENTIFIC) : [DEMOCRACY, OLIGARCHY, EMPIRE, DICTATURE],
+
+		(RELIGIOUS, CORPORATE)   : [CORPORATION, OLIGARCHY, MONARCHY],
+		(RELIGIOUS, SOCIALIST)   : [MONARCHY, TRIBAL],
+		(RELIGIOUS, ANARCHIST)   : [TRIBAL],
+		(RELIGIOUS, SCIENTIFIC)  : [CORPORATION, OLIGARCHY, MONARCHY],
+
+		(CORPORATE, SOCIALIST)   : [CORPORATION, TRIBAL, EMPIRE],
+		(CORPORATE, ANARCHIST)   : [CORPORATION, TRIBAL, DICTATURE],
+		(CORPORATE, SCIENTIFIC)  : [CORPORATION],
+
+		(SOCIALIST, ANARCHIST)   : [DICTATURE, EMPIRE],
+		(SOCIALIST, SCIENTIFIC)  : [EMPIRE, TRIBAL],
+
+		(ANARCHIST, SCIENTIFIC)  : [OLIGARCHY, TRIBAL, EMPIRE, DICTATURE]
+	}
+
+	GOVERNEMENTS_AFFINITY = {
+		DEMOCRACY   : {
+			DEMOCRACY   : 20,
+			MONARCHY    : -10,
+			EMPIRE      : -10,
+			TRIBAL      : 10,
+			OLIGARCHY   : 5,
+			CORPORATION : 15,
+			DICTATURE   : -20
+		},
+		MONARCHY    : {
+			DEMOCRACY   : 0,
+			MONARCHY    : 15,
+			EMPIRE      : 15,
+			TRIBAL      : -5,
+			OLIGARCHY   : 5,
+			CORPORATION : -5,
+			DICTATURE   : 5
+		},
+		EMPIRE      : {
+			DEMOCRACY   : -10,
+			MONARCHY    : 10,
+			EMPIRE      : -5,
+			TRIBAL      : 0,
+			OLIGARCHY   : 10,
+			CORPORATION : 5,
+			DICTATURE   : 15
+		},
+		TRIBAL      : {
+			DEMOCRACY   : 15,
+			MONARCHY    : -10,
+			EMPIRE      : -15,
+			TRIBAL      : 25,
+			OLIGARCHY   : -10,
+			CORPORATION : -5,
+			DICTATURE   : -15
+		},
+		OLIGARCHY   : {
+			DEMOCRACY   : -25,
+			MONARCHY    : 10,
+			EMPIRE      : 0,
+			TRIBAL      : -10,
+			OLIGARCHY   : 25,
+			CORPORATION : 10,
+			DICTATURE   : 0
+		},
+		CORPORATION : {
+			DEMOCRACY   : 30,
+			MONARCHY    : 10,
+			EMPIRE      : -15,
+			TRIBAL      : 15,
+			OLIGARCHY   : -15,
+			CORPORATION : -30,
+			DICTATURE   : 0
+		},
+		DICTATURE   : {
+			DEMOCRACY   : -20,
+			MONARCHY    : 10,
+			EMPIRE      : 10,
+			TRIBAL      : -20,
+			OLIGARCHY   : 10,
+			CORPORATION : -10,
+			DICTATURE   : -20
+		}
 	}
 
 class ModelParams(object):

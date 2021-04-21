@@ -2,6 +2,13 @@
 
 ## News and DevLogs
 
+### 21/04/2021
+
+Revamped the kingdom naming system. It should be closer to what the governement actually is thatn before, when it was completely random.
+Revamped Kingdom relation display to be able to display more stuff on the same line. Slightly less readable though. Will see in time.
+
+The trade factor used to calculate how much wealth is generated from materials surplus is now calculated with the average of neighbourhing communitites' trade factors.
+
 ### 20/04/2021
 
 Added Governements and politics into Kingdoms. Added affinity between kingdoms depending on they governement types and policies.

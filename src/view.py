@@ -275,7 +275,7 @@ class UserInterface(gd.GraphDisplay):
 					if poly.contains(p):
 						node = loc_node
 						if loc_node.info["community"]:
-							c = params.UserInterfaceParams.COLOR_LIST[params.UserInterfaceParams.KINGDOM_TO_COLOR[loc_node.info["community"].kingdom.name]]
+							c = params.UserInterfaceParams.COLOR_LIST[params.UserInterfaceParams.KINGDOM_TO_COLOR[loc_node.info["community"].kingdom.id]]
 							c = (c[0], c[1], c[2], transparency)
 
 			if node != None:
