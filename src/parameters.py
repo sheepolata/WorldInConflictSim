@@ -42,15 +42,15 @@ class TileParams(object):
 	}
 
 	TYPE_TO_COST = {
-	    DEEPWATER : 10,
-	    WATER     : 6,
-	    DESERT    : 3,
-	    BEACH     : 1,
-	    PLAINS    : 1,
-	    HILLS     : 2,
-	    MOUNTAINS : 6,
-	    PEAKS     : 10,
-	    FOREST    : 3
+		DEEPWATER : 10,
+		WATER     : 6,
+		DESERT    : 3,
+		BEACH     : 1,
+		PLAINS    : 1,
+		HILLS     : 2,
+		MOUNTAINS : 6,
+		PEAKS     : 10,
+		FOREST    : 3
 	}
 
 class LocationParams(object):
@@ -492,29 +492,37 @@ class UserInterfaceParams(object):
 
 	COLOR_LIST = {
 		"Black" 		: 	(0,0,0),
-	  	"White" 		: 	(255,255,255),
-	  	"Red" 			: 	(255,0,0),
-	  	"Lime" 			: 	(0,255,0),
-	  	"Blue" 			: 	(0,0,255),
-	  	"Yellow" 		: 	(255,255,0),
-	  	"Cyan" 			: 	(0,255,255),
-	  	"Magenta" 		: 	(255,0,255),
-	  	"Silver" 		: 	(192,192,192),
-	  	"Gray" 			: 	(128,128,128),
-	  	"Maroon" 		: 	(128,0,0),
-	  	"Olive" 		: 	(128,128,0),
-	  	"Green" 		: 	(0,128,0),
-	  	"Purple" 		: 	(128,0,128),
-	  	"Teal" 			: 	(0,128,128),
-	  	"Navy" 			: 	(0,0,128),
-  	 	"Orange" 		: 	(255,165,0),
-  	 	"Olivedrab" 	: 	(107,142,35),
-  	 	"Aqua" 			: 	(0,255,255),
-  	 	"Aquamarine" 	: 	(127,255,212),
-  	 	"Midnightblue" 	: 	(25,25,112),
-  	 	"Darkmagenta" 	: 	(139,0,139),
-  	 	"Chocolate" 	: 	(210,105,30)
-  	}
+		"White" 		: 	(255,255,255),
+		"Red" 			: 	(255,0,0),
+		"Lime" 			: 	(0,255,0),
+		"Blue" 			: 	(0,0,255),
+		"Yellow" 		: 	(255,255,0),
+		"Cyan" 			: 	(0,255,255),
+		"Magenta" 		: 	(255,0,255),
+		"Silver" 		: 	(192,192,192),
+		"Gray" 			: 	(128,128,128),
+		"Maroon" 		: 	(128,0,0),
+		"Olive" 		: 	(128,128,0),
+		"Green" 		: 	(0,128,0),
+		"Purple" 		: 	(128,0,128),
+		"Teal" 			: 	(0,128,128),
+		"Navy" 			: 	(0,0,128),
+		"Orange" 		: 	(255,165,0),
+		"Olivedrab" 	: 	(107,142,35),
+		"Aqua" 			: 	(0,255,255),
+		"Aquamarine" 	: 	(127,255,212),
+		"Midnightblue" 	: 	(25,25,112),
+		"Darkmagenta" 	: 	(139,0,139),
+		"Chocolate" 	: 	(210,105,30)
+	}
+
+	RELATION_DISPLAY_GRADIENT = [
+		(237, 41, 56),
+		(178, 95, 74),
+		(235, 235, 235),
+		(59, 202, 109),
+		(0, 255, 127)
+	]
 
 	KINGDOM_TO_COLOR = {}
 

@@ -4,6 +4,8 @@
 
 ### 21/04/2021
 
+When displaying the graph (F1), the edges are now colored depending on the relation (the greener the better, the reder the worst, white for neutral).
+
 Revamped the kingdom naming system. It should be closer to what the governement actually is thatn before, when it was completely random.
 Revamped Kingdom relation display to be able to display more stuff on the same line. Slightly less readable though. Will see in time.
 

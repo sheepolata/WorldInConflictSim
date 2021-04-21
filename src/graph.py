@@ -1,6 +1,7 @@
 import sys
 sys.path.append('./GraphEngine')
 
+import math
 import pygame
 
 import ggraph
@@ -73,6 +74,41 @@ class CityNode(ggraph.gNode):
 
 	def drawNode(self, surface, color, outline_color=(255, 255, 255), outline_width=2):
 		super(CityNode, self).drawNode(surface, color, outline_color=outline_color, outline_width=outline_width)
+
+	def drawEdges_relations(self, surface, width=1):
+		try:
+			self.info["pos"]
+		except KeyError:
+			warnings.warn("{} does not possess a position information (info[\"pos\"])".format(self.id), stacklevel=2)
+			return
+
+		try:
+			radius = self.info["radius"]
+		except KeyError:
+			radius = 8
+
+		color = (0,0,0)
+
+		for e in self.edges:
+			if e.end == self:
+				pygame.draw.circle(surface, color, (self.info["pos"][0], self.info["pos"][1]-radius), radius*1.2, width=width)
+			else:
+				try:
+					rel_value = sum(list(self.info["community"].kingdom.relations[e.end.info["community"].kingdom].values()))
+
+					rel_color_index = math.floor(utils.normalise(rel_value, mini=-100, maxi=100) * len(params.UserInterfaceParams.RELATION_DISPLAY_GRADIENT))
+					color = params.UserInterfaceParams.RELATION_DISPLAY_GRADIENT[rel_color_index]
+
+					if self.parent.oriented:
+						v = (e.end.info["pos"][0] - self.info["pos"][0], e.end.info["pos"][1] - self.info["pos"][1])
+						mag_v = np.linalg.norm(np.array(v))
+						u = (v[0] / mag_v, v[1] / mag_v)
+						ep = (e.end.info["pos"][0] - radius*1.5*u[0], e.end.info["pos"][1]- radius*1.5*u[1])
+						drawer.arrow(surface, color, self.info["pos"], ep)
+					else:
+						pygame.draw.line(surface, color, self.info["pos"], e.end.info["pos"], width=width)
+				except KeyError:
+					warnings.warn("{} does not possess a position information (info[\"pos\"])".format(e.end.id), stacklevel=2)     
 
 	def drawNode_image(self, surface, color, outline_color=(255, 255, 255)):
 
@@ -154,7 +190,8 @@ class CityGraph(ggraph.gGraph):
 		if self._draw_edges:
 			for n in self.nodes:
 				color = (204, 204, 204)
-				n.drawEdges(surface, color, width=4)
+				# n.drawEdges(surface, color, width=4)
+				n.drawEdges_relations(surface, width=4)
 
 		if self._draw_nodes:
 			for n in self.nodes:
