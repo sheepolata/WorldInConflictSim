@@ -4,6 +4,8 @@
 
 ### 22/04/2021
 
+Starting to work on AI: AIKingdomController is used to set the diplomatic stance of a kingdom. This diplomatic stance will influence the decisions and actions a kingdom will take in its territory, if and when to declare war, what type of relations to have, etc.
+
 Slight change to the trade factor: now takes into account its own TF plus the average TF of all neighbours. It now displayed on the Resources tab.
 
 Added the possibility of a city name to be based on its location (somehting like *LOCATION_NAME's Respite*).

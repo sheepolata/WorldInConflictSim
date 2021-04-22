@@ -172,6 +172,28 @@ class SocialClassParams(object):
 
 	CLASSES = [NOBILITY, BOURGEOISIE, MIDDLE, POOR]
 
+class AIKingdomControllerParams(object):
+
+	BALANCED     = 0
+	EXPANSIONIST = 1
+	AGGRESSIVE   = 2
+	ISOLATIONIST = 3
+	MERCANTILE   = 4
+
+	NOBEHAVIOUR = 99
+
+	DIPLOSTANCE_ARCHETYPES = [BALANCED, EXPANSIONIST, AGGRESSIVE, ISOLATIONIST, MERCANTILE]
+
+	DIPLOSTANCE_STR = {
+		BALANCED     : "Balanced",
+		EXPANSIONIST : "Expansionist",
+		AGGRESSIVE   : "Aggresive",
+		ISOLATIONIST : "Isolationist",
+		MERCANTILE   : "Mercantile",
+
+		NOBEHAVIOUR  : 99
+	}
+
 class KingdomParams(object):
 
 	kingdomnamesonly_list = open("../data/namelists/kingdom_names_only.txt")
@@ -445,6 +467,36 @@ class KingdomParams(object):
 			CORPORATION : -10,
 			DICTATURE   : -20
 		}
+	}
+
+	# DIPLOSTANCE_ARCHETYPES = [BALANCED, EXPANSIONIST, AGGRESSIVE, ISOLATIONIST, MERCANTILE]
+	DIPLOSTANCE_FROM_GOV = {
+		(MILITARIST, BELIGERANT) : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 4, 4, 3, 0]),
+		(MILITARIST, RELIGIOUS)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 4, 2, 4, 1]),
+		(MILITARIST, CORPORATE)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 3, 1, 0, 4]),
+		(MILITARIST, SOCIALIST)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [3, 3, 3, 1, 1]),
+		(MILITARIST, ANARCHIST)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 2, 4, 1, 0]),
+		(MILITARIST, SCIENTIFIC) : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 4, 2, 4, 2]),
+
+		(BELIGERANT, RELIGIOUS)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 4, 4, 2, 0]),
+		(BELIGERANT, CORPORATE)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 2, 1, 0, 4]), 
+		(BELIGERANT, SOCIALIST)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 4, 4, 1, 0]),
+		(BELIGERANT, ANARCHIST)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 2, 4, 1, 0]),
+		(BELIGERANT, SCIENTIFIC) : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 3, 3, 1, 1]),
+
+		(RELIGIOUS, CORPORATE)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 3, 1, 3, 4]),
+		(RELIGIOUS, SOCIALIST)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 1, 1, 4, 2]),
+		(RELIGIOUS, ANARCHIST)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 4, 3, 1, 1]),
+		(RELIGIOUS, SCIENTIFIC)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 1, 1, 4, 3]),
+
+		(CORPORATE, SOCIALIST)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 1, 1, 0, 4]),
+		(CORPORATE, ANARCHIST)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 2, 3, 0, 4]),
+		(CORPORATE, SCIENTIFIC)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [3, 2, 1, 1, 4]),
+
+		(SOCIALIST, ANARCHIST)   : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 1, 3, 1, 1]),
+		(SOCIALIST, SCIENTIFIC)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [2, 3, 1, 1, 3]),
+
+		(ANARCHIST, SCIENTIFIC)  : (AIKingdomControllerParams.DIPLOSTANCE_ARCHETYPES, [1, 3, 2, 1, 3])
 	}
 
 class ModelParams(object):

@@ -1236,6 +1236,7 @@ class Community(object):
 		if self.show_kingdom:
 			# lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {self.kingdom.gov_type_str} {self.kingdom.governement_name_simple} ({params.KingdomParams.POLITICS_STR[self.kingdom.main_politic]} {params.KingdomParams.POLITICS_STR[self.kingdom.secondary_politic]})")
 			lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {params.KingdomParams.POLITICS_STR[self.kingdom.main_politic]} and {params.KingdomParams.POLITICS_STR[self.kingdom.secondary_politic]} {self.kingdom.governement_name_simple}")
+			lines.append(f"{tab}Diplomatic stance: {self.kingdom.ai_controller.stance_str}")
 			lines.append(f"{tab}Relations: (D to {'hide' if self.show_kingdom_details else 'show'} details)")
 			for k in self.kingdom.relations:
 				lines.append(f"{tab}{'▼' if self.show_kingdom_details else '►'} {k.name}: {sum(self.kingdom.relations[k].values())}")
@@ -1382,6 +1383,13 @@ class Community(object):
 
 		return s
 
+class AIKingdomController(object):
+	
+	def __init__(self, diplomatic_stance):
+		self.diplomatic_stance = diplomatic_stance
+
+		self.stance_str = params.AIKingdomControllerParams.DIPLOSTANCE_STR[self.diplomatic_stance]
+
 class Kingdom(object):
 
 	global_id = 0
@@ -1403,10 +1411,11 @@ class Kingdom(object):
 
 		self.gov_type_str = "Empty gov. type"
 
-
 		self.init_gov_and_politics()
 
 		self.relations = {}
+
+		self.ai_controller = AIKingdomController(params.AIKingdomControllerParams.NOBEHAVIOUR)
 
 	def init_gov_and_politics(self):
 		# self.governement  = params.rng.choice(params.KingdomParams.GOVERNEMENTS)
@@ -1424,6 +1433,19 @@ class Kingdom(object):
 		self.governement_name = params.rng.choice(params.KingdomParams.GOVERNEMENTS_STR[self.governement])
 		self.governement_name_simple  = params.KingdomParams.GOVERNEMENTS_STR_SIMPLE[self.governement]
 		self.name = self.name.upper().replace("GOVNAME", params.rng.choice(params.KingdomParams.GOVERNEMENTS_STR[self.governement])).title()
+
+	def set_ai_controller(self, diplomatic_stance):
+		self.ai_controller = AIKingdomController(diplomatic_stance)
+
+	def set_ai_controller_auto(self):
+		try:
+			b_arc_data = params.KingdomParams.DIPLOSTANCE_FROM_GOV[(self.main_politic, self.secondary_politic)]
+		except KeyError:
+			b_arc_data = params.KingdomParams.DIPLOSTANCE_FROM_GOV[(self.secondary_politic, self.main_politic)]
+
+		b_arc = params.rng.choice(b_arc_data[0], p=[x/sum(b_arc_data[1]) for x in b_arc_data[1]])
+
+		self.ai_controller = AIKingdomController(b_arc)
 
 	def generate_name(self):
 		govtype = self.gov_type_str
@@ -1484,6 +1506,9 @@ class Kingdom(object):
 			self.relations[k]["Aff.SP"] = (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.main_politic] / 2.0) + (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.secondary_politic] / 4.0)
 			self.relations[k]["Aff.Go"] = params.KingdomParams.GOVERNEMENTS_AFFINITY[self.governement][k.governement]
 
+	def yearly_update(self):
+		self.set_ai_controller_auto()
+
 class Model(object):
 
 	def __init__(self, map_size=20, max_location=20):
@@ -1539,6 +1564,8 @@ class Model(object):
 		for kingdom in self.kingdoms:
 			if self.day%30 == 0:
 				kingdom.monthly_update()
+			if self.day%365 == 0:
+				kingdom.yearly_update()
 
 
 		for community in self.communities:
@@ -1780,10 +1807,13 @@ class Model(object):
 			params.UserInterfaceParams.KINGDOM_TO_COLOR[kingdom.id] = kingdom_colors[i]
 			community = Community(city_names[i][:-1] if city_names[i][-1] == '\n' else city_names[i], loc, kingdom, "HUMAN_CITY")
 			community.model = self
+
 			kingdom.add_community(community)
 			kingdom.generate_name()
+			kingdom.set_ai_controller_auto()
 			
 			community.randomly_generate_name()
+
 			self.communities.append(community)
 			self.kingdoms.append(kingdom)
 			self.nb_community += 1
