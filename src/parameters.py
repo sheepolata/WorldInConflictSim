@@ -326,6 +326,18 @@ class KingdomParams(object):
 	NOGOV       = 99
 
 
+	GOVERNEMENTS_STR_SIMPLE = {
+		DEMOCRACY   : "Democracy",
+		MONARCHY    : "Monarchy",
+		EMPIRE      : "Empire",
+		TRIBAL      : "Tribal system",
+		OLIGARCHY   : "Oligarchy",
+		CORPORATION : "Guild",
+		DICTATURE   : "Dictature",
+
+		NOGOV       : "EMPTY GOV."
+	}
+
 	GOVERNEMENTS_STR = {
 		DEMOCRACY   : ["Democracy", "Republic", "Commonwealth"],
 		MONARCHY    : ["Monarchy", "Sovereignty", "Principality"],

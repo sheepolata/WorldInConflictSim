@@ -1,7 +1,12 @@
 Speartipped
 Lesser
 Great
+First
+Forth
+Fifth
+Seventh
 Tenth
+Last
 Noble
 Avenging
 Coastal
@@ -9,8 +14,10 @@ Shielded
 Colonial
 New
 Limited
-Executors
+Executor
 Pirate
 Archmages
-Seventh
-Forth
+Beautiful
+Immense
+Generous
+Strong

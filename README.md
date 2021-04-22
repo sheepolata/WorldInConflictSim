@@ -2,6 +2,12 @@
 
 ## News and DevLogs
 
+### 22/04/2021
+
+Added the possibility of a city name to be based on its location (somehting like *LOCATION_NAME's Respite*).
+
+Modifified some text in the Kingdom tab of a community. Added some kingdom names and adjective and fixed some location names.
+
 ### 21/04/2021
 
 When displaying the graph (F1), the edges are now colored depending on the relation (the greener the better, the reder the worst, white for neutral).

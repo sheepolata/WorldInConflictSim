@@ -14,29 +14,29 @@ Suriyar
 Linora
 Sevn
 The Daemon Region
-Upper Billow
-Jester March
-Sand Dunes of Drunken
-Pyres of the Uncharted
+The Upper Billow
+The Jester March
+The Sand Dunes of Drunken
+The Pyres of the Uncharted
 The Blackguard Helm
 Plague Pass
 Clay Frontier
 Stone of Soaring
-Plain of the Sunlit
+The Plain of the Sunlit
 The Fallen Fissure
 Blind Ridge
 Greater Delta
 Strath of Monstrous
-Groove of the Silent
+The Groove of the Silent
 The Forsaken Marshes
-Eerie Islands
-Duchess Mire
-Terrace of Wind
-Desert of the Beasts
+The Eerie Islands
+The Duchess Mire
+The Terrace of Wind
+The Desert of the Beasts
 The Nights Loch
 Emperors Prairie
 Noxious Brine
-Wood of Rotting
+The Wood of Rotting
 Fields of the Sailors
 The Lower Abyss
 Northern Knob
@@ -45,8 +45,8 @@ Crest of Redeemers
 Dells of the Tranquil
 The Haunted Abyss
 Over Canal
-Cursed Mouth
-Tree of Swindlers
+The Cursed Mouth
+The Tree of Swindlers
 Wood of the Black
 The Traders Vent
 Sunlit Sound
@@ -56,5 +56,5 @@ Shelf of the Iron
 The Ebon Meer
 Viceroy Headland
 Noxious Swampland
-Cavern of Skyward
-Crevasse of the Blessed
+The Cavern of Skyward
+The Crevasse of the Blessed
