@@ -420,7 +420,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 500.0
 			self.base_storage[params.ModelParams.WEALTH] = 160.0
 
-			self.trade_factor = params.rng.random()*0.05
+			self.trade_factor = params.randrange(2, 6) / 100.0
 
 			self.base_attractiveness = 8 + params.rng.random()*4
 			self.attractiveness += self.base_attractiveness
@@ -440,7 +440,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 800.0
 			self.base_storage[params.ModelParams.WEALTH] = 400.0
 
-			self.trade_factor = 0.02 + params.rng.random()*0.08
+			self.trade_factor = params.randrange(0, 2) / 100.0
 
 			self.base_attractiveness = -10 - params.rng.random()*5
 			self.attractiveness += self.base_attractiveness
@@ -460,7 +460,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 350.0
 			self.base_storage[params.ModelParams.WEALTH] = 500.0
 
-			self.trade_factor = 0.05 + params.rng.random()*0.07
+			self.trade_factor = params.randrange(5, 10) / 100.0
 
 			self.base_attractiveness = 15 + params.rng.random()*5
 			self.attractiveness += self.base_attractiveness
@@ -480,7 +480,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 650.0
 			self.base_storage[params.ModelParams.WEALTH] = 750.0
 
-			self.trade_factor = 0.04 + params.rng.random()*0.04
+			self.trade_factor = params.randrange(3, 8) / 100.0
 
 			self.base_attractiveness = 0 - params.rng.random()*10
 			self.attractiveness += self.base_attractiveness
@@ -499,7 +499,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 650.0
 			self.base_storage[params.ModelParams.WEALTH] = 400.0
 
-			self.trade_factor = 0.01 + params.rng.random()*0.02
+			self.trade_factor = params.randrange(1, 4) / 100.0
 
 			self.base_attractiveness = 12 + params.rng.random()*4
 			self.attractiveness += self.base_attractiveness
@@ -518,7 +518,7 @@ class Location(object):
 			self.base_storage[params.ModelParams.MATERIALS] = 550.0
 			self.base_storage[params.ModelParams.WEALTH] = 350.0
 
-			self.trade_factor = 0.01 + params.rng.random()*0.04
+			self.trade_factor = params.randrange(2, 6) / 100.0
 
 			self.base_attractiveness = -5 + params.rng.random()*10
 			self.attractiveness += self.base_attractiveness
@@ -642,7 +642,7 @@ class Community(object):
 		self.actual_storage = {}
 		self.actual_production = {}
 
-		self.trade_factor = 0.05 + self.location.trade_factor
+		self.trade_factor = self.location.trade_factor
 
 		self.effective_gain = {}
 		self.effective_consumption = {}
@@ -1032,6 +1032,9 @@ class Community(object):
 		# Descend
 
 	def get_trade_factor(self):
+		return self.get_trade_factor_from_neighours() + self.trade_factor
+
+	def get_trade_factor_from_neighours(self):
 		trade_factor_list = []
 		for nloc in self.location.neighbouring_locations:
 			if nloc.community != None:
@@ -1228,7 +1231,7 @@ class Community(object):
 			return offset
 
 		# lines.append("{}".format(self.name))
-		lines.append("{} at {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
+		lines.append("{} in {} ({}, {:.02f})".format(self.name, self.location.name, params.LocationParams.ARCHETYPES_STR[self.location.archetype].title(), self.location.base_attractiveness))
 		lines.append(f"{'▼' if self.show_kingdom else '►'} {self.kingdom.name} (K to {'hide' if self.show_kingdom else 'show'})")
 		if self.show_kingdom:
 			# lines.append(f"{tab}a{'' if self.kingdom.main_race.name_adjective.lower()[0] in ['d', 'h'] else 'n'} {self.kingdom.main_race.name_adjective} {self.kingdom.gov_type_str} {self.kingdom.governement_name_simple} ({params.KingdomParams.POLITICS_STR[self.kingdom.main_politic]} {params.KingdomParams.POLITICS_STR[self.kingdom.secondary_politic]})")
@@ -1321,6 +1324,7 @@ class Community(object):
 		# lines.append("Randomness of Life: {:+.2f}, Pop. control: {:+.2f}".format(np.mean(list(self.randomness_of_life["birth_rate_factor"].values())) - np.mean(list(self.randomness_of_life["death_rate_factor"].values())), self.population_control))
 		if self.show_ressources:
 			lines.append("▼ Ressources (R to hide)")
+			lines.append(f"{tab}Trade factor: {self.get_trade_factor():0.3f} (Own TF: {self.trade_factor:0.3f}, Neighbours TF: {self.get_trade_factor_from_neighours():0.3f})")
 			for r in self.ressource_stockpile:
 				try:
 					lines.append("{}{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(tab, params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))

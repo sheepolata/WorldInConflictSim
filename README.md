@@ -4,6 +4,8 @@
 
 ### 22/04/2021
 
+Slight change to the trade factor: now takes into account its own TF plus the average TF of all neighbours. It now displayed on the Resources tab.
+
 Added the possibility of a city name to be based on its location (somehting like *LOCATION_NAME's Respite*).
 
 Modifified some text in the Kingdom tab of a community. Added some kingdom names and adjective and fixed some location names.
