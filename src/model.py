@@ -1507,6 +1507,9 @@ class Kingdom(object):
 			self.relations[k]["Aff.Go"] = params.KingdomParams.GOVERNEMENTS_AFFINITY[self.governement][k.governement]
 
 	def yearly_update(self):
+		pass
+
+	def decade_update(self):
 		self.set_ai_controller_auto()
 
 class Model(object):
@@ -1566,6 +1569,8 @@ class Model(object):
 				kingdom.monthly_update()
 			if self.day%365 == 0:
 				kingdom.yearly_update()
+			if self.day%3650 == 0:
+				kingdom.decade_update()
 
 
 		for community in self.communities:
