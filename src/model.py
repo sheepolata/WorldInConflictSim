@@ -1478,8 +1478,8 @@ class AIKingdomController(object):
 		self.diplomatic_stance = diplomatic_stance
 		self.stance_str = params.AIKingdomControllerParams.DIPLOSTANCE_STR[self.diplomatic_stance]
 
-		agriculture_buildings_importance = [4                         , 2                         , 1                            ]
-		agriculture_building_action      = [BuildingFactory.build_barn, BuildingFactory.build_farm, BuildingFactory.build_granary]
+		self.agriculture_buildings_importance = [4                         , 2                         , 1                            ]
+		self.agriculture_building_action      = [BuildingFactory.build_barn, BuildingFactory.build_farm, BuildingFactory.build_granary]
 
 		self.urban_development_action_list = []
 		self.urban_development_action_list.append((AIKingdomController.improve_army       , 1))
@@ -1494,16 +1494,16 @@ class AIKingdomController(object):
 
 		action = params.rng.choice([a[0] for a in actions], p=[a[1]/sum([x[1] for x in actions]) for a in actions])
 
-		action(comm)
+		action(self, comm)
 
-	def improve_army(comm):
+	def improve_army(self, comm):
 		comm.log_event(f"Army improved (WIP)")
 
-	def develop_agriculture(comm):
+	def develop_agriculture(self, comm):
 		action = params.rng.choice(self.agriculture_building_action, p=[x/sum(self.agriculture_buildings_importance) for x in self.agriculture_buildings_importance])
 		action(comm)
 
-	def improve_trace(comm):
+	def improve_trace(self, comm):
 		comm.log_event(f"Trade improved (WIP)")
 
 class Kingdom(object):

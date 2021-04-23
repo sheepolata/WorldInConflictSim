@@ -21,3 +21,10 @@ Beautiful
 Immense
 Generous
 Strong
+Samurai
+Knights
+Peasant
+Uncivilised
+Criminal
+Unstable
+Prosperous
