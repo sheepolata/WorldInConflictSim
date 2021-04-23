@@ -559,6 +559,71 @@ class Location(object):
 			lines.append(lm.to_string())
 		return lines
 
+class Building(object):
+
+	def __init__(self, name, effect, en, cost, cost_increase):
+		self.name          = name
+		self.effect        = effect
+		self.effect_name   = en
+		self.cost          = cost
+		self.cost_increase = cost_increase #percent
+
+	def apply_effect(self, comm):
+		return self.effect(comm)
+
+	def food_consumption_reduction(comm):
+		try:
+			comm.consumption_reduction[params.ModelParams.FOOD]["Building"] -= 0.3 / 100.0
+		except KeyError:
+			comm.consumption_reduction[params.ModelParams.FOOD]["Building"] = -0.3 / 100.0
+
+		return comm.consumption_reduction[params.ModelParams.FOOD]["Building"], True
+
+	def food_production_increase(comm):
+		try:
+			comm.ressource_production_percent_bonus[params.ModelParams.FOOD]["Building"] += 1.0 / 100.0
+		except KeyError:
+			comm.ressource_production_percent_bonus[params.ModelParams.FOOD]["Building"] = 1.0 / 100.0
+
+		return comm.ressource_production_percent_bonus[params.ModelParams.FOOD]["Building"], True
+
+	def food_storage_increase(comm):
+		try:
+			comm.ressource_storage_percent_bonus[params.ModelParams.FOOD]["Building"] += 3.0 / 100.0
+		except KeyError:
+			comm.ressource_storage_percent_bonus[params.ModelParams.FOOD]["Building"] = 3.0 / 100.0	
+
+		return comm.ressource_storage_percent_bonus[params.ModelParams.FOOD]["Building"], True
+
+class BuildingFactory(object):
+
+	BARN    = Building("Barn"      , Building.food_storage_increase     , "Food storage"    , 0, 20)
+	FARM    = Building("Farm field", Building.food_production_increase  , "Food production" , 0, 50)
+	GRANARY = Building("Granary"   , Building.food_consumption_reduction, "Food consumption", 0, 100)
+
+	def _build(building, comm):
+		value, ispercent = building.apply_effect(comm)
+
+		try:
+			_r = (comm.buildings[building.name][0] + 1, {"value":value,"effect_name":building.effect_name,"is_percent":ispercent})
+		except KeyError:
+			_r = (1, {"value":value,"effect_name":building.effect_name,"is_percent":ispercent})
+
+		comm.buildings[building.name] = _r
+		return _r
+
+	def build_barn(comm):
+		r = BuildingFactory._build(BuildingFactory.BARN, comm)
+		comm.log_event(f"Built {BuildingFactory.BARN.name} to level {r[0]}")
+
+	def build_farm(comm):
+		r = BuildingFactory._build(BuildingFactory.FARM, comm)
+		comm.log_event(f"Built {BuildingFactory.FARM.name} to level {r[0]}")
+
+	def build_granary(comm):
+		r = BuildingFactory._build(BuildingFactory.GRANARY, comm)
+		comm.log_event(f"Built {BuildingFactory.GRANARY.name} to level {r[0]}")
+
 class Community(object):
 
 	global_id = 0
@@ -628,15 +693,16 @@ class Community(object):
 
 		self.init_population()
 
-		self.ressource_production_bonus = {}
-		self.ressource_storage_bonus = {}
-		self.ressource_stockpile = {}
-		for r in set(params.ModelParams.RESSOURCES)-set([params.ModelParams.WEALTH]):
-			self.ressource_production_bonus[r] = 0.0
-			self.ressource_storage_bonus[r] = 0.0
-			self.ressource_stockpile[r] = self.location.base_storage[r] / 8.0
-		self.ressource_production_bonus[params.ModelParams.WEALTH] = 0.0
-		self.ressource_storage_bonus[params.ModelParams.WEALTH] = 0.0
+		self.ressource_production_flat_bonus    = {}
+		self.ressource_production_percent_bonus = {}
+		self.ressource_storage_percent_bonus    = {}
+		self.ressource_stockpile                = {}
+		for r in params.ModelParams.RESSOURCES:
+			self.ressource_production_flat_bonus[r]    = {}
+			self.ressource_production_percent_bonus[r] = {}
+			self.ressource_storage_percent_bonus[r]    = {}
+			self.ressource_stockpile[r]                = self.location.base_storage[r] / 8.0
+		
 		self.ressource_stockpile[params.ModelParams.WEALTH] = 0.0
 
 		self.actual_storage = {}
@@ -650,6 +716,10 @@ class Community(object):
 			self.effective_gain[r] = {}
 		for r in params.ModelParams.RESSOURCES:
 			self.effective_consumption[r] = {}
+
+		self.consumption_reduction = {}
+		for r in params.ModelParams.RESSOURCES:
+			self.consumption_reduction[r] = {}
 
 		self.ressources_prev_net_worth = {}
 		for r in params.ModelParams.RESSOURCES:
@@ -693,8 +763,12 @@ class Community(object):
 		self.show_events            = False
 		self.show_kingdom           = False
 		self.show_kingdom_details   = False
+		self.show_buildings         = False
 
 		self.event_log = Community.CommunityLog()
+
+		# buildings[BUILDING_NAME] = (LEVEL, {"value":TOTAL_EFFECT, "effect_name":NAME})
+		self.buildings = {}
 
 	def randomly_generate_name(self):
 		if params.rng.random() > 0.35:
@@ -809,13 +883,12 @@ class Community(object):
 
 	def update_actual_prod_and_store(self):
 		for r in params.ModelParams.RESSOURCES:
-			self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
-			# self.actual_production[r] = self.location.base_production[r] + (self.ressource_production_bonus[r])
-			self.actual_storage[r] = self.location.base_storage[r] * (1.0 + self.ressource_storage_bonus[r])
+			self.actual_production[r] = (self.location.base_production[r] + sum(self.ressource_production_flat_bonus[r].values())) * (1.0 + sum(self.ressource_production_percent_bonus[r].values()))
+			self.actual_storage[r] = self.location.base_storage[r] * (1.0 + sum(self.ressource_storage_percent_bonus[r].values()))
 
 	def update_production_bonus(self):
-		for r in self.ressource_production_bonus.keys():
-			self.ressource_production_bonus[r] = self.get_total_pop()/100.0 * self.location.bonus_per_100_pop[r]
+		for r in self.ressource_production_flat_bonus.keys():
+			self.ressource_production_flat_bonus[r]["POP"] = self.get_total_pop()/100.0 * self.location.bonus_per_100_pop[r]
 	
 	def update_pops(self):
 		# Update pops
@@ -972,8 +1045,9 @@ class Community(object):
 			self.population[_race][params.SocialClassParams.POOR] += poor_pop
 
 			self.caravan_arrived_countdown = self.caravan_arrived_countdown_max
-			myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
-			self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
+			self.log_event(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.")
+			# myglobals.LogConsoleInst.log(f"A caravan of {_pop_number} {_race.name} arrived in {self.name}.", self.model.day)
+			# self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
 
 	def update_social_indexes(self):
 		nobility_prop = (self.get_total_pop_class(params.SocialClassParams.NOBILITY)/self.get_total_pop())
@@ -1060,7 +1134,7 @@ class Community(object):
 		# Consume food 
 
 		self.food_consumption_from_pop = (self.get_total_pop() * self.food_consumption_per_pop) / 7.0
-		self.effective_consumption[params.ModelParams.FOOD]["POP"] = self.food_consumption_from_pop
+		self.effective_consumption[params.ModelParams.FOOD]["POP"] = self.food_consumption_from_pop * (1.0 + sum(self.consumption_reduction[params.ModelParams.FOOD].values()))
 
 		# Production
 
@@ -1207,7 +1281,7 @@ class Community(object):
 		s += "{} inhabitants : {}\n".format(self.get_total_pop(), str_popprop)
 		s += "Happiness : {:.2f}; Growth rate : {:.2f}; Space : {:.2f}/{:.2f}\n".format(self.happiness, self.net_growth_rate, self.space_used, self.location.space)
 		for r in self.ressource_stockpile:
-			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.3f}-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values()))
+			s += "{:.0f}/{:.0f} (+{:.3f}; {:.3f}+{:.3f}-{:.3f})\n".format(self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], sum(self.ressource_production_flat_bonus[r]), sum(self.effective_consumption[r].values()))
 
 		s += "\nFood Shortage value:{}; Fcpp:{:.3f}\n".format(self.food_shortage, self.food_consumption_per_pop)
 
@@ -1328,11 +1402,20 @@ class Community(object):
 			lines.append(f"{tab}Trade factor: {self.get_trade_factor():0.3f} (Own TF: {self.trade_factor:0.3f}, Neighbours TF: {self.get_trade_factor_from_neighours():0.3f})")
 			for r in self.ressource_stockpile:
 				try:
-					lines.append("{}{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(tab, params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], self.ressource_production_bonus[r], sum(self.effective_consumption[r].values())))
+					lines.append("{}{} : {:.0f}/{:.0f} ({:+.3f}; {:.3f}+{:.3f}-{:.3f})".format(tab, params.ModelParams.RESSOURCES_STR[r].lower().title(), self.ressource_stockpile[r], self.actual_storage[r], sum(self.effective_gain[r].values())-sum(self.effective_consumption[r].values()), self.location.base_production[r], sum(self.ressource_production_flat_bonus[r].values()), sum(self.effective_consumption[r].values())))
 				except KeyError:
 					pass
 		else:
 			lines.append("► Ressources (R to show)")
+
+		lines.append(f"{'▼' if self.show_buildings else '►'} Buildings (B to {'hide' if self.show_buildings else 'show'})")
+		if self.show_buildings:
+			# buildings[BUILDING_NAME] = (LEVEL, {"value":TOTAL_EFFECT, "effect_name":NAME})
+			for k in self.buildings:
+				if self.buildings[k][1]['is_percent']:
+					lines.append(f"{tab}{k} lvl {self.buildings[k][0]}, {self.buildings[k][1]['effect_name']}: {(self.buildings[k][1]['value'])*100:+.2f}%")
+				else:
+					lines.append(f"{tab}{k} lvl {self.buildings[k][0]}, {self.buildings[k][1]['effect_name']}: {(self.buildings[k][1]['value']):+.3f}")
 
 		# lines.append("Food Shortage :{:.3f}; Fcpp:{:.3f}".format(self.food_shortage, self.food_consumption_per_pop))
 
@@ -1383,12 +1466,45 @@ class Community(object):
 
 		return s
 
+	def log_event(self, log, to_global_log=""):
+		self.event_log.log(log, self.model.day)
+		if to_global_log != "" or not isinstance(to_global_log, str):
+			myglobals.LogConsoleInst.log(to_global_log, self.model.day)
+
 class AIKingdomController(object):
 	
+
 	def __init__(self, diplomatic_stance):
 		self.diplomatic_stance = diplomatic_stance
-
 		self.stance_str = params.AIKingdomControllerParams.DIPLOSTANCE_STR[self.diplomatic_stance]
+
+		agriculture_buildings_importance = [4                         , 2                         , 1                            ]
+		agriculture_building_action      = [BuildingFactory.build_barn, BuildingFactory.build_farm, BuildingFactory.build_granary]
+
+		self.urban_development_action_list = []
+		self.urban_development_action_list.append((AIKingdomController.improve_army       , 1))
+		self.urban_development_action_list.append((AIKingdomController.improve_trace      , 1))
+		self.urban_development_action_list.append((AIKingdomController.develop_agriculture, 1))
+
+		self.action_list = []
+		self.action_list.append((self.urban_development_action_list, 1))
+
+	def take_action(self, comm):
+		actions = params.rng.choice([a[0] for a in self.action_list], p=[a[1]/sum([x[1] for x in self.action_list]) for a in self.action_list])
+
+		action = params.rng.choice([a[0] for a in actions], p=[a[1]/sum([x[1] for x in actions]) for a in actions])
+
+		action(comm)
+
+	def improve_army(comm):
+		comm.log_event(f"Army improved (WIP)")
+
+	def develop_agriculture(comm):
+		action = params.rng.choice(self.agriculture_building_action, p=[x/sum(self.agriculture_buildings_importance) for x in self.agriculture_buildings_importance])
+		action(comm)
+
+	def improve_trace(comm):
+		comm.log_event(f"Trade improved (WIP)")
 
 class Kingdom(object):
 
@@ -1505,6 +1621,11 @@ class Kingdom(object):
 			self.relations[k]["Aff.MP"] = params.KingdomParams.POLITICS_AFFINITY[self.main_politic][k.main_politic] + (params.KingdomParams.POLITICS_AFFINITY[self.main_politic][k.secondary_politic] / 2.0)
 			self.relations[k]["Aff.SP"] = (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.main_politic] / 2.0) + (params.KingdomParams.POLITICS_AFFINITY[self.secondary_politic][k.secondary_politic] / 4.0)
 			self.relations[k]["Aff.Go"] = params.KingdomParams.GOVERNEMENTS_AFFINITY[self.governement][k.governement]
+
+
+		if self.communities != []:
+			target_comm = params.rng.choice(self.communities)
+			self.ai_controller.take_action(target_comm)
 
 	def yearly_update(self):
 		pass

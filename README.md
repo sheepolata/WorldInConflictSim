@@ -2,6 +2,10 @@
 
 ## News and DevLogs
 
+### 24/04/2021
+
+Added buildings! Yay! For now, every month, each kingdom build (for free) a food building, improving storage, production or reducing consumption. Next will add prices for buildings, and more buildings. Will also need to think of a better structure for AI to chose what to build/do next.
+
 ### 22/04/2021
 
 Starting to work on AI: AIKingdomController is used to set the diplomatic stance of a kingdom. This diplomatic stance will influence the decisions and actions a kingdom will take in its territory, if and when to declare war, what type of relations to have, etc.
