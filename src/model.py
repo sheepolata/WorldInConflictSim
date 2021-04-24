@@ -1050,14 +1050,17 @@ class Community(object):
 			# self.event_log.log(f"A caravan of {_pop_number} {_race.name} arrived ({int(noble_pop)} {params.SocialClassParams.NOBILITY.adjective_short}, {int(bourgeois_pop)} {params.SocialClassParams.BOURGEOISIE.adjective_short}, {int(middle_pop)} {params.SocialClassParams.MIDDLE.adjective_short} and {int(poor_pop)} {params.SocialClassParams.POOR.adjective_short}).", self.model.day)
 
 	def update_social_indexes(self):
-		nobility_prop = (self.get_total_pop_class(params.SocialClassParams.NOBILITY)/self.get_total_pop())
-		wealth_factor  = self.ressource_stockpile[params.ModelParams.WEALTH] / self.actual_storage[params.ModelParams.WEALTH]
+		try:
+			nobility_prop = (self.get_total_pop_class(params.SocialClassParams.NOBILITY)/self.get_total_pop())
+			wealth_factor  = self.ressource_stockpile[params.ModelParams.WEALTH] / self.actual_storage[params.ModelParams.WEALTH]
 
-		self.social_ascension_index = (1.0 * ((1.0-nobility_prop) * wealth_factor)) + self.actual_production[params.ModelParams.WEALTH]
+			self.social_ascension_index = (1.0 * ((1.0-nobility_prop) * wealth_factor)) + self.actual_production[params.ModelParams.WEALTH]
 
-		poor_prop = (self.get_total_pop_class(params.SocialClassParams.POOR)/self.get_total_pop())
+			poor_prop = (self.get_total_pop_class(params.SocialClassParams.POOR)/self.get_total_pop())
 
-		self.social_decay_index = 1.0 + (poor_prop-nobility_prop) + (1.0-wealth_factor) + sum(list(self.effective_consumption[params.ModelParams.WEALTH].values()))
+			self.social_decay_index = 1.0 + (poor_prop-nobility_prop) + (1.0-wealth_factor) + sum(list(self.effective_consumption[params.ModelParams.WEALTH].values()))
+		except ZeroDivisionError:
+			self.log("", f"Error, update_social_indexes -> ZeroDivision (Community must be empty")
 
 	def social_evolution(self):
 		# Ascend
@@ -1489,12 +1492,31 @@ class AIKingdomController(object):
 		self.action_list = []
 		self.action_list.append((self.urban_development_action_list, 1))
 
-	def take_action(self, comm):
+	def take_action_tmp(self, comm):
 		actions = params.rng.choice([a[0] for a in self.action_list], p=[a[1]/sum([x[1] for x in self.action_list]) for a in self.action_list])
 
 		action = params.rng.choice([a[0] for a in actions], p=[a[1]/sum([x[1] for x in actions]) for a in actions])
 
 		action(self, comm)
+
+	def take_action(self, comm):
+		pass
+
+	# Expand military, improve army and defences, etc.
+	def expand_military(self, comm):
+		pass
+
+	# Expand infrastructure, build food and material improvements
+	def expand_infrastructure(self, comm):
+		pass
+
+	# Expand trade, build wealth improvements and trade_Factor boosts
+	def expand_trade(self, comm):
+		pass
+
+	# Engage diplomacy, improve or harm relations,  declare war or make peace
+	def engage_diplomacy(self, comm):
+		pass
 
 	def improve_army(self, comm):
 		comm.log_event(f"Army improved (WIP)")
@@ -1625,7 +1647,7 @@ class Kingdom(object):
 
 		if self.communities != []:
 			target_comm = params.rng.choice(self.communities)
-			self.ai_controller.take_action(target_comm)
+			self.ai_controller.take_action_tmp(target_comm)
 
 	def yearly_update(self):
 		pass

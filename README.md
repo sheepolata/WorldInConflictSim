@@ -4,6 +4,8 @@
 
 ### 24/04/2021
 
+Need some balancing of happiness (mostly the STORED_FOOD_UNREST).
+
 Added buildings! Yay! For now, every month, each kingdom build (for free) a food building, improving storage, production or reducing consumption. Next will add prices for buildings, and more buildings. Will also need to think of a better structure for AI to chose what to build/do next.
 
 ### 22/04/2021
