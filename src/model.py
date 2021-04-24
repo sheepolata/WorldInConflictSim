@@ -912,14 +912,16 @@ class Community(object):
 		base_death_rate = base_birth_rate * 0.52
 		drf_space = 0
 		if self.space_used >= (self.location.space*0.5):
-			drf_space = (self.space_used / self.location.space)
+			drf_space = math.exp(self.space_used / self.location.space) / 2.0 - 1.0
 		drf_wealth = 1 - (self.ressource_stockpile[params.ModelParams.WEALTH]/self.actual_storage[params.ModelParams.WEALTH])
 		drf_food = (self.food_shortage*7) * 0.1
 		# drf_food = 0
 
 		drf_happ = 0
 		if self.happiness < 0:
-			drf_happ = abs(self.happiness * 0.2)
+			# drf_happ = abs(self.happiness * 0.2)
+			drf_happ = math.exp(math.log(abs(self.happiness), 3)) / 100.0
+			# print(drf_happ)
 
 		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
 
@@ -1228,7 +1230,8 @@ class Community(object):
 
 		# Unrest due to lack of stored food
 		stored_food_unrest = (self.ressource_stockpile[params.ModelParams.FOOD] - self.actual_storage[params.ModelParams.FOOD])
-		stored_food_unrest = stored_food_unrest*0.1
+		# stored_food_unrest = stored_food_unrest*0.1 # Old
+		stored_food_unrest = -2 * (math.log(abs(stored_food_unrest)) if abs(stored_food_unrest) > 0 else 0)
 		self.happiness += stored_food_unrest
 		self.happiness_details["STORED_FOOD_UNREST"] = stored_food_unrest
 
@@ -1497,7 +1500,7 @@ class AIKingdomController(object):
 
 		action = params.rng.choice([a[0] for a in actions], p=[a[1]/sum([x[1] for x in actions]) for a in actions])
 
-		action(self, comm)
+		# action(self, comm)
 
 	def take_action(self, comm):
 		pass
