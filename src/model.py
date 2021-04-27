@@ -1477,8 +1477,7 @@ class Community(object):
 		if to_global_log != "" or not isinstance(to_global_log, str):
 			myglobals.LogConsoleInst.log(to_global_log, self.model.day)
 
-class AIKingdomController(object):
-	
+class AIKingdomController(object):	
 
 	def __init__(self, diplomatic_stance):
 		self.diplomatic_stance = diplomatic_stance
