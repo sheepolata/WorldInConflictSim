@@ -1013,7 +1013,7 @@ class Community(object):
 
 	def caravan(self):
 		if self.model != None:
-			_pop_number = (50 + params.rng.random()*100)
+			_pop_number = (60 + params.rng.random()*90)
 			_race = params.rng.choice(params.RaceParams.RACES)
 
 			_nhapp = []

@@ -153,7 +153,7 @@ class SocialClass(object):
 		"Nobility"    : "Nobl.",
 		"Bourgeoisie" : "Bourg.",
 		"Middle"      : "Com.",
-		"Poor"        : "Poor"
+		"Poor"        : "Dest."
 	}
 
 	def __init__(self, name, brf, drf):
@@ -191,7 +191,7 @@ class AIKingdomControllerParams(object):
 		ISOLATIONIST : "Isolationist",
 		MERCANTILE   : "Mercantile",
 
-		NOBEHAVIOUR  : 99
+		NOBEHAVIOUR  : "No Behaviours"
 	}
 
 class KingdomParams(object):
