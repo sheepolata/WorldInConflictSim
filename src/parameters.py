@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-# random_seed = 4011995
+random_seed = 4011995
 random_seed = -1
 if random_seed < 0:
 	rng = np.random.default_rng()

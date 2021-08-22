@@ -900,8 +900,8 @@ class Community(object):
 			brf_space = (1 - (self.space_used / self.location.space)) * 0.5
 		brf_wealth = (self.ressource_stockpile[params.ModelParams.WEALTH]/1000.0)
 		brf_happ = 0
-		if self.happiness > 50:
-			brf_happ = self.happiness / 100.0
+		# if self.happiness > 50:
+		# 	brf_happ = self.happiness / 100.0
 		
 		brf_food = self.ressource_stockpile[params.ModelParams.FOOD]/1000.0
 		# brf_food = self.food_shortage
@@ -920,7 +920,7 @@ class Community(object):
 		drf_happ = 0
 		if self.happiness < 0:
 			# drf_happ = abs(self.happiness * 0.2)
-			drf_happ = math.exp(math.log(abs(self.happiness), 3)) / 100.0
+			drf_happ = math.exp(math.log(abs(self.happiness), 3)) / 1.0
 			# print(drf_happ)
 
 		self.actual_death_rate = base_death_rate * (1 + drf_space + drf_wealth + drf_food + drf_happ)
