@@ -3,7 +3,8 @@ import utils
 import parameters as params
 import numpy as np
 
-#_start and _goal here are Coordinates
+
+# _start and _goal here are Coordinates
 def heuristic_cost_estimate(_current, _goal):
     res = utils.distance2p((_current.x, _current.y), (_goal.x, _goal.y))
     mean_cost = np.mean([params.TileParams.TYPE_TO_COST[k] for k in params.TileParams.TYPE_TO_COST])
@@ -11,17 +12,20 @@ def heuristic_cost_estimate(_current, _goal):
     # res = _goal.getCost()
     return res
 
+
 def reconstructPath(came_from, current):
     total_path = [current]
     while current in came_from.keys():
         current = came_from[current]
         total_path.append(current)
 
-    return list(reversed(total_path)) #+ [total_path[-1]]
+    return list(reversed(total_path))  # + [total_path[-1]]
 
-#start and goal are tiles, heur is the heuristic method
-#map is the grid's environment
-def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_dict=params.TileParams.TYPE_TO_COST, dn=False):
+
+# start and goal are tiles, heur is the heuristic method
+# map is the grid's environment
+def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_dict=params.TileParams.TYPE_TO_COST,
+          dn=False):
     if _goal.get_type() in forbidden:
         print("Error: goal tile has a forbidden type")
         return None
@@ -55,9 +59,8 @@ def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_
             f_score[_map.get_tile(x, y)] = float("inf")
     f_score[_start] = heur(_start, _goal)
 
-
     while openSet:
-        #current = Node in openSet with the lowest f_score
+        # current = Node in openSet with the lowest f_score
         mini = float("inf")
         current = None
         for elt in openSet:
@@ -83,9 +86,9 @@ def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_
             if _neighbour not in openSet:
                 openSet.append(_neighbour)
 
-            #The distance from start to a neighbor
-            #the "dist_between" function may vary as per the solution requirements.
-            #May add utils.distance2p(current.getPose(), _neighbour.getPose()) to cost BUT decrease perf quite a lot
+            # The distance from start to a neighbor
+            # the "dist_between" function may vary as per the solution requirements.
+            # May add utils.distance2p(current.getPose(), _neighbour.getPose()) to cost BUT decrease perf quite a lot
             # tentative_gScore = (g_score[current] + _neighbour.get_cost(cost_dict=cost_dict))
             tentative_gScore = (g_score[current] + cost_dict[_neighbour.get_type()])
 
@@ -99,6 +102,7 @@ def astar(_start, _goal, _map, forbidden=[], heur=heuristic_cost_estimate, cost_
     print("Error: All map explored but no solution")
     return None
 
+
 def computePathLength(path, cost_dict=params.TileParams.TYPE_TO_COST):
     if not path:
         return -1
@@ -111,7 +115,9 @@ def computePathLength(path, cost_dict=params.TileParams.TYPE_TO_COST):
         res = res + cost_dict[path[i].get_type()]
     return res
 
-def getPathLength(tile1, tile2, _map, forbidden=[], heur=heuristic_cost_estimate, approx=False, cost_dict=params.TileParams.TYPE_TO_COST, dn=False):
+
+def getPathLength(tile1, tile2, _map, forbidden=[], heur=heuristic_cost_estimate, approx=False,
+                  cost_dict=params.TileParams.TYPE_TO_COST, dn=False):
     if approx:
         res = utils.distance2p((tile1.x, tile1.y), (tile2.x, tile2.y))
     else:

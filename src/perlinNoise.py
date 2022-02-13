@@ -8,6 +8,7 @@ import parameters as params
 if params.random_seed >= 0:
     random.seed(params.random_seed)
 
+
 def smoothstep(t):
     """Smooth curve with a zero derivative at 0 and 1, making it useful for
     interpolating.
@@ -67,7 +68,7 @@ class PerlinNoiseFactory(object):
         # 1 dimension is special, since the only unit vector is trivial;
         # instead, use a slope between -1 and 1
         if self.dimension == 1:
-            return (random.uniform(-1, 1),)
+            return random.uniform(-1, 1),
 
         # Generate a random point on the surface of the unit n-hypersphere;
         # this is the same as a random unit vector in n dimensions.  Thanks
@@ -164,6 +165,7 @@ class PerlinNoiseFactory(object):
 
         return ret
 
+
 if __name__ == '__main__':
     noise = []
     for i in range(80):
@@ -172,10 +174,10 @@ if __name__ == '__main__':
             noise[i].append(0)
 
     PNFactory = PerlinNoiseFactory(2, octaves=4, tile=(), unbias=True)
-    
+
     for i in range(80):
         for j in range(80):
-            noise[i][j] = PNFactory(i/80.0,j/80.0)
+            noise[i][j] = PNFactory(i / 80.0, j / 80.0)
 
     for i in range(80):
         for j in range(80):

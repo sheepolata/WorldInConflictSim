@@ -1,6 +1,11 @@
 # Custom
 data/fx/map.png
 
+#PyCharm
+venv/
+venv39/
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
