@@ -3,8 +3,6 @@ import os
 
 import sys
 
-sys.path.append('./GraphEngine')
-
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,7 +15,6 @@ from shapely.geometry.polygon import Polygon
 
 import pprint
 
-import console
 import utils
 import graph
 import perlinNoise
@@ -27,6 +24,8 @@ import myglobals
 
 from pygame import Rect
 
+sys.path.append('./GraphEngine')
+import console
 
 class SimThread(threading.Thread):
 
