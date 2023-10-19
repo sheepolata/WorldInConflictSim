@@ -1,14 +1,6 @@
 # import the pygame module, so you can use it
 import pygame
 from pygame.locals import *
-import numpy as np
-import pprint
-
-import sys
-
-sys.path.append('./GraphEngine')
-
-import graphdisplay as gd
 import view
 import myglobals
 import model

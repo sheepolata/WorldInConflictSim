@@ -1,17 +1,18 @@
 import sys
 
-sys.path.append('./GraphEngine')
-
 import math
 import pygame
 
-import ggraph
-import delaunaytriangulation as dt
+import GraphEngine.ggraph
+import GraphEngine.drawer
+import GraphEngine.delaunaytriangulation as dt
 import parameters as params
 import utils
+import warnings
+import numpy as np
 
 
-class CityNode(ggraph.gNode):
+class CityNode(GraphEngine.ggraph.gNode):
     HUMAN_CITY_FILE = "../data/fx/human_city.png"
     HUMAN_CITY_IMAGE = pygame.image.load(HUMAN_CITY_FILE)
     HUMAN_CITY_CONTOUR_FILE = "../data/fx/human_city_contour.png"
@@ -106,7 +107,7 @@ class CityNode(ggraph.gNode):
                         mag_v = np.linalg.norm(np.array(v))
                         u = (v[0] / mag_v, v[1] / mag_v)
                         ep = (e.end.info["pos"][0] - radius * 1.5 * u[0], e.end.info["pos"][1] - radius * 1.5 * u[1])
-                        drawer.arrow(surface, color, self.info["pos"], ep)
+                        GraphEngine.drawer.arrow(surface, color, self.info["pos"], ep)
                     else:
                         pygame.draw.line(surface, color, self.info["pos"], e.end.info["pos"], width=width)
                 except KeyError:
@@ -150,7 +151,7 @@ class CityNode(ggraph.gNode):
             surface.blit(utils.colorize(CityNode.CARAVAN_ICON_IMAGE, (255, 255, 255), toone=True), _rect)
 
 
-class CityGraph(ggraph.gGraph):
+class CityGraph(GraphEngine.ggraph.gGraph):
 
     def __init__(self):
         super(CityGraph, self).__init__(node_type=CityNode, oriented=False)

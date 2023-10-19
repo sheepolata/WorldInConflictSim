@@ -1,12 +1,9 @@
 import time
 import os
 
-import sys
-
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import csv
 import threading
 from scipy.spatial import Voronoi
@@ -24,8 +21,8 @@ import myglobals
 
 from pygame import Rect
 
-sys.path.append('./GraphEngine')
-import console
+import GraphEngine.console
+
 
 class SimThread(threading.Thread):
 
@@ -637,7 +634,7 @@ class BuildingFactory(object):
 class Community(object):
     global_id = 0
 
-    class CommunityLog(console.Console):
+    class CommunityLog(GraphEngine.console.Console):
         class CommunityLogDatetime(object):
             def __init__(self, simu_day):
                 self.simu_day = simu_day

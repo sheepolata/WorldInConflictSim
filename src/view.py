@@ -11,11 +11,8 @@ import matplotlib.pyplot as plt
 
 import parameters as params
 import myglobals
-
-sys.path.append('./GraphEngine')
-import ggraph
-import graphdisplay as gd
-import delaunaytriangulation as dt
+sys.path.append("./GraphEngine")
+import GraphEngine.graphdisplay as gd
 
 
 class UserInterface(gd.GraphDisplay):

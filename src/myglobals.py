@@ -1,10 +1,5 @@
-import sys
-
-sys.path.append('./GraphEngine')
-
 import math
-
-import console
+import GraphEngine.console
 
 
 class myDatetime(object):
@@ -16,7 +11,7 @@ class myDatetime(object):
         self.year = (self.simu_day // 365) + 1
 
 
-class LogConsole(console.Console):
+class LogConsole(GraphEngine.console.Console):
 
     def __init__(self, max_lines=20):
         super(LogConsole, self).__init__(max_lines=max_lines)
@@ -44,5 +39,5 @@ class LogConsole(console.Console):
         super(LogConsole, self).push_front(s)
 
 
-InfoConsole = console.Console(max_lines=1000)
+InfoConsole = GraphEngine.console.Console(max_lines=1000)
 LogConsoleInst = LogConsole(max_lines=18)
